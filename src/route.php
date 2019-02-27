@@ -14,6 +14,22 @@ use request;
  */
 function map(array $methods, string $path, $callback, array $middleware = [])
 {
+    $groups = group();
+
+    if (key_exists('namespace', $groups) && is_string($callback)) {
+        $callback = implode('', $groups['namespace']) . $callback;
+    }
+
+    if (key_exists('path', $groups)) {
+        $path = implode('', $groups['path']) . $path;
+    }
+
+    if (key_exists('middleware', $groups)) {
+        $mws = isset($groups['middleware'][0]) ? $groups['middleware'][0] : [];
+        $middleware = array_merge($mws, $middleware);
+    }
+
+    $path = rtrim($path, '/') ?: '/';
     $path = strtr($path, [
         ':number' => '(\d+)',
         ':id' => '(\d+)',
@@ -22,9 +38,9 @@ function map(array $methods, string $path, $callback, array $middleware = [])
         ':any' => '([^/])',
         ':all' => '(.*)'
     ]);
+
     $methodMatch = in_array(request\method(), $methods);
-    $pathCheck = $path === request\path();
-    $pathMatch = $pathCheck || preg_match("~^$path\$~ixs", request\path(), $params) >= 1;
+    $pathMatch = ($path === request\path()) || preg_match("~^$path\$~ixs", request\path(), $params) >= 1;
     $params = $params ?? [];
 
     if ($methodMatch && $pathMatch) {
@@ -111,20 +127,47 @@ function any(string $path, $callback, array $middleware = [])
     return map(['GET', 'POST', 'PUT', 'DELETE'], $path, $callback, $middleware);
 }
 
+function group($options = null, ?Closure $callback = null)
+{
+    static $groups;
+
+    if ($groups === null) {
+        $groups = [];
+    }
+
+    if ($options === null && $callback === null) {
+        return $groups;
+    }
+
+    if (is_string($options)) {
+        $options = ['path' => $options];
+    }
+
+    foreach ($options as $name => $option) {
+        $groups[$name][] = $option;
+    }
+
+    $callback();
+
+    foreach ($groups as $name => $option) {
+        array_pop($groups[$name]);
+    }
+}
+
 /**
  * @param string $path
- * @param array|object|string $class
+ * @param string $class
  * @param array $middleware
  */
 function resource(string $path, $class, array $middleware = [])
 {
-    get($path, [$class, 'index'], $middleware);
-    get("$path/(\d+)", [$class, 'show'], $middleware);
-    get("$path/create", [$class, 'create'], $middleware);
-    post($path, [$class, 'store'], $middleware);
-    get("$path/edit/(\d+)", [$class, 'edit'], $middleware);
-    put("$path/(\d+)", [$class, 'update'], $middleware);
-    delete("$path/(\d+)", [$class, 'destroy'], $middleware);
+    get($path, "{$class}@index", $middleware);
+    get("$path/(\d+)", "{$class}@show", $middleware);
+    get("$path/create", "{$class}@create", $middleware);
+    post($path, "{$class}@store", $middleware);
+    get("$path/edit/(\d+)", "{$class}@edit", $middleware);
+    put("$path/(\d+)", "{$class}@update", $middleware);
+    delete("$path/(\d+)", "{$class}@destroy", $middleware);
 }
 
 /**
