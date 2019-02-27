@@ -1,0 +1,24 @@
+{
+    "name": "yidemir/micro",
+    "description": "MicroApp",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Yılmaz Demir",
+            "email": "demiriy@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "files": [
+            "src/request.php",
+            "src/response.php",
+            "src/route.php",
+            "src/view.php",
+            "src/validator.php",
+            "src/db.php",
+            "src/crypt.php"
+        ]
+    }
+}
