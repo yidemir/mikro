@@ -1,6 +1,6 @@
 {
     "name": "yidemir/micro",
-    "description": "MicroApp",
+    "description": "Fast and useful micro application framework",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -9,16 +9,24 @@
             "email": "demiriy@gmail.com"
         }
     ],
-    "require": {},
+    "require": {
+        "php": ">=7.1.0",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-openssl": "*",
+        "ext-mbstring": "*",
+        "ext-ctype": "*"
+    },
     "autoload": {
         "files": [
+            "src/crypt.php",
+            "src/db.php",
+            "src/pagination.php",
             "src/request.php",
             "src/response.php",
             "src/route.php",
-            "src/view.php",
             "src/validator.php",
-            "src/db.php",
-            "src/crypt.php"
+            "src/view.php"
         ]
     }
 }

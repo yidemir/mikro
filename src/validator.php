@@ -118,15 +118,14 @@ function messages(?string $rule = null, ?string $message = null): array
 
 function validate(array $values, array $rules): \stdClass
 {
-    $collection = collection();
-    $messages = messages();
     $validator = new \stdClass;
     $validator->errors = [];
+    $validator->fieldErrors = [];
 
     foreach (parse($rules) as $field => $validation) {
         foreach ($validation['rules'] as $ruleData) {
             [$rule, $param] = $ruleData;
-            $check = $collection[$rule]($field, $values, $param);
+            $check = collection()[$rule]($field, $values, $param);
             $nullables = $values['nullables'] ?? [];
 
             if (in_array($field, $nullables)) {
@@ -136,18 +135,32 @@ function validate(array $values, array $rules): \stdClass
                     $rule !== 'nullable' && 
                     !$check
                 ) {
-                    $validator->errors[] = sprintf($messages[$rule], $validation['name']);
+                    $validator->errors[] = sprintf(
+                        messages()[$rule], $validation['name'], $param
+                    );
+                    $validator->fieldErrors[$field][] = sprintf(
+                        messages()[$rule], $validation['name'], $param
+                    );
                 }
             } else {
                 if (!$check) {
-                    $validator->errors[] = sprintf($messages[$rule], $validation['name']);
+                    $validator->errors[] = sprintf(
+                        messages()[$rule], $validation['name'], $param
+                    );
+                    $validator->fieldErrors[$field][] = sprintf(
+                        messages()[$rule], $validation['name'], $param
+                    );
                 }
             }
         }
     }
 
+    unset($values['nullables']);
     $validator->success = empty($validator->errors);
     $validator->fails = !$validator->success;
+    $validator->values = array_filter($values, function($key) use ($validator) {
+        return !array_key_exists($key, $validator->fieldErrors);
+    }, ARRAY_FILTER_USE_KEY);
 
     return $validator;
 }
@@ -180,21 +193,4 @@ function parse(array $parseableRules): array
     }
 
     return $parsedRules;
-}
-
-function validateWithEval(array $data, array $parseableRules): array
-{
-    $errors = [];
-
-    foreach ($parseableRules as $field => $rules) {
-        foreach ($rules as $rule => $message) {
-            $callback = eval('return function($v){return '. $rule .';};');
-
-            if ($callback(@$data[$field])) {
-                $errors[$field] = $message;
-            }
-        }
-    }
-
-    return $errors;
 }
