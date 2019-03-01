@@ -21,6 +21,11 @@ function path(): string
     return $_SERVER['PATH_INFO'] ?? '/';
 }
 
+function all(): array
+{
+    return array_merge($_REQUEST, $_FILES);
+}
+
 /**
  * @param array|string $key
  * @param mixed $default

@@ -85,6 +85,17 @@ function table(string $table, string $primaryKey = 'id')
 
             return delete($this->table, $query, $params);
         }
+
+        public function paginate(string $query = '', array $params = [], array $options = [])
+        {
+            $options['totalItems'] = (int) query(
+                "SELECT COUNT(*) FROM $this->table $query", $params
+            )->fetchColumn();
+            $pagination = pagination\paginate($options);
+            return query(
+                "SELECT $this->select FROM $this->table $query LIMIT $pagination->limit", $params
+            )->fetchAll();
+        }
     };
 }
 

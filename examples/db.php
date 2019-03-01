@@ -20,6 +20,8 @@ db\table('posts')->delete(); // delete all
 db\table('posts')->delete(5);
 db\table('posts')->delete('where id=?', [5]);
 
+db\table('posts')->paginate('where is_published=?', [1], ['perPage' => 25]);
+
 db\query('select * from posts where is_published=?', [true])->fetchAll();
 
 db\insert('posts', $data);

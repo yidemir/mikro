@@ -9,3 +9,5 @@ pagination\paginate([
     'maxPages' => 7,
     'pattern' => '/?page=:number'
 ]);
+
+pagination\data();

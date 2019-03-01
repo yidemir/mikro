@@ -14,6 +14,7 @@ function paginate(array $options)
     $totalItems = $options['totalItems'];
     $currentPage = $options['currentPage'] ?? request\input('page', 1);
     $currentPage = intval($currentPage);
+    $currentPage = $currentPage < 0 ? 0 : $currentPage;
     $perPage = $options['perPage'] ?? 10;
     $totalPages = $perPage == 0 ? 0 : ceil($totalItems / $perPage);
     $totalPages = intval($totalPages);
@@ -74,9 +75,25 @@ function paginate(array $options)
     }
 
     $start = ($currentPage * $perPage) - $perPage;
+    $start = $start < 0 ? 0 : $start;
     $limit = "$start, $perPage";
 
-    return (object) compact(
+    $result = (object) compact(
         'currentPage', 'totalPages', 'perPage', 'start', 'limit', 'pages'
     );
+
+    function data($data = null)
+    {
+        static $pages;
+
+        if ($pages === null) {
+            $pages = $data;
+        }
+
+        return $pages;
+    }
+
+    data($result);
+
+    return $result;
 }
