@@ -46,7 +46,7 @@ route\group([
     });
 });
 
-route\errors(function() {
+route\error(function() {
     if (request\is_ajax()) {
         return response\json(['foobar' => 'bazqux']);
     } else {
