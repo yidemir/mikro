@@ -1,13 +1,16 @@
 <?php
 
-db\connection(new PDO('sqlite:database.sqlite'));
-db\connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-db\connection()->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+db\connection([
+    'default' => new PDO('sqlite:default.sqlite'),
+    'secondary' => new PDO('mysql:...')
+]);
+db\connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // on 'default' named connection
+db\connection('secondary')->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
 
-$posts = db\table('posts')->get('is_published=?', [1]);
-$posts = db\table('posts')->select('title, body')->get();
+$posts = db\table('posts')->connection('secondary')->get('is_published=?', [1]);
+$posts = db\table('posts')->select('title, body')->get(); // on 'secondary' named connection
 
-$post = db\table('posts')->find('id=?', [1]);
+$post = db\table('posts')->conncetion('default')->find('id=?', [1]);
 $post = db\table('posts')->find(1);
 $post = db\table('posts', 'another_primary_key')->find(1);
 
