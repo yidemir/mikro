@@ -6,14 +6,17 @@ namespace db;
 use PDO;
 use PDOStatement;
 
-function connection($name = null): ?PDO
+function connection($name = null)
 {
     static $connections;
     static $default;
 
     $connections = $connections ?? [];
-    $name = $name ?? 'default';
-    $default = $name;
+    $default = $default ?? 'default';
+    
+    if (!is_array($name) && $name !== null) {
+        $default = $name;
+    }
     
     if (is_array($name)) {
         $connections = array_merge($connections, $name);
@@ -47,6 +50,13 @@ function table(string $table, string $primaryKey = 'id')
         public function select(string $select)
         {
             $this->select = $select;
+
+            return $this;
+        }
+
+        public function connection(string $name)
+        {
+            connection($name);
 
             return $this;
         }
