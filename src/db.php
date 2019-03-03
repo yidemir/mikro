@@ -6,13 +6,24 @@ namespace db;
 use PDO;
 use PDOStatement;
 
-function connection(?PDO $pdo = null): ?PDO
+function connection($name = null): ?PDO
 {
-    static $connection;
+    static $connections;
+    static $default;
 
-    if ($pdo !== null) $connection = $pdo;
-
-    return $connection;
+    $connections = $connections ?? [];
+    $name = $name ?? 'default';
+    $default = $name;
+    
+    if (is_array($name)) {
+        $connections = array_merge($connections, $name);
+    } else {
+        if (array_key_exists($default, $connections)) {
+            return $connections[$default];
+        } else {
+            throw new \Exception('Bağlantı mevcut değil: ' . $default);
+        }
+    }
 }
 
 function table(string $table, string $primaryKey = 'id')
