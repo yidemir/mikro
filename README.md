@@ -1,7 +1,7 @@
-# yidemir/micro
+# yidemir/mikro
 Fast and useful micro application framework
 
-## Installation
+## Installation
 ```
-composer require yidemir/micro
+composer require yidemir/mikro
 ```
