@@ -19,6 +19,7 @@
     },
     "autoload": {
         "files": [
+            "src/config.php",
             "src/crypt.php",
             "src/db.php",
             "src/pagination.php",
