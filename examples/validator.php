@@ -11,13 +11,13 @@ $validator = validator\validate([
 ]);
 
 if ($validator->fails) {
-
+    // failed
 }
 
 if ($validator->success) {
-
+    // success
 }
 
 $titleErrors = $validator->fieldErrors['title'] ?? [];
 $allErrors = $validator->errors;
-$validatedValues = $validator->values;
+$validatedValues = $validator->values; // passed values

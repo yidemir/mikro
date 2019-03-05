@@ -175,6 +175,12 @@ function resource(string $path, $class, array $middleware = [])
  */
 function error($callback)
 {
+    $groups = group();
+
+    if (key_exists('namespace', $groups) && is_string($callback)) {
+        $callback = implode('', $groups['namespace']) . $callback;
+    }
+
     if (!defined('ROUTE_MATCHED')) {
         http_response_code(404);
         call($callback);

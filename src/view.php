@@ -22,6 +22,8 @@ function render(string $file, array $data = []): ?string
         require_once $path;
         return ob_get_clean();
     }
+
+    throw new \Exception('Görünüm mevcut değil: ' . $path);
 }
 
 /**
