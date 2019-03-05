@@ -72,6 +72,8 @@ function call($callback, array $params = [])
     ) {
         [$class, $method] = $callback;
         $callback = [new $class, $method];
+    } elseif (is_string($callback) && class_exists($callback)) {
+        $callback = new $callback;
     }
 
     call_user_func_array($callback, $params);
