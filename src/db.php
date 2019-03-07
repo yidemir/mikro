@@ -112,7 +112,7 @@ function table(string $table, string $primaryKey = 'id')
             $options['totalItems'] = (int) query(
                 "SELECT COUNT(*) FROM $this->table $query", $params
             )->fetchColumn();
-            $pagination = pagination\paginate($options);
+            $pagination = \pagination\paginate($options);
             return query(
                 "SELECT $this->select FROM $this->table $query LIMIT $pagination->limit", $params
             )->fetchAll();
