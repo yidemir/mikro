@@ -36,7 +36,7 @@ function json(
 
 function redirect(string $to): void
 {
-    header('Location: ' . $to);
+    \header('Location: ' . $to);
 }
 
 function view(string $file, array $data = []): int

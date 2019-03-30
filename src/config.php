@@ -22,12 +22,12 @@ function get(string $key, $default = null)
 {
     $config = collection();
 
-    if (key_exists($key, $config)) {
+    if (\array_key_exists($key, $config)) {
         return $config[$key];
     }
 
-    return array_reduce(
-        explode('.', $key),
+    return \array_reduce(
+        \explode('.', $key),
         function ($config, $key) use ($default) {
             return isset($config[$key]) ? $config[$key] : $default;
         },
@@ -37,13 +37,13 @@ function get(string $key, $default = null)
 
 function set(string $key, $value)
 {
-    $replace = array_reduce(
-      array_reverse(explode('.', $key)),
+    $replace = \array_reduce(
+      \array_reverse(\explode('.', $key)),
       function ($value, $key) {
         return [$key => $value];
       },
       $value
     );
 
-    return collection(array_replace_recursive(collection(), $replace));
+    return collection(\array_replace_recursive(collection(), $replace));
 }

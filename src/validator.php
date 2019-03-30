@@ -18,16 +18,16 @@ function collection(?string $rule = null, ?Closure $callback = null): array
                 $values['nullables'][] = $key;
             },
             'email' => function($key, $values) {
-                return (bool) filter_var((string) @$values[$key], FILTER_VALIDATE_EMAIL);
+                return (bool) \filter_var((string) @$values[$key], \FILTER_VALIDATE_EMAIL);
             },
             'same' => function($key, $values, $param) {
                 return @$values[$key] === $param;
             },
             'maxlen' => function($key, $values, $param) {
-                return mb_strlen((string) @$values[$key]) <= $param;
+                return \mb_strlen((string) @$values[$key]) <= $param;
             },
             'minlen' => function($key, $values, $param) {
-                return mb_strlen((string) @$values[$key]) >= $param;
+                return \mb_strlen((string) @$values[$key]) >= $param;
             },
             'max' => function($key, $values, $param) {
                 return @$values[$key] <= $param;
@@ -36,40 +36,40 @@ function collection(?string $rule = null, ?Closure $callback = null): array
                 return @$values[$key] >= $param;
             },
             'float' => function($key, $values) {
-                return (bool) filter_var((string) @$values[$key], FILTER_VALIDATE_FLOAT);
+                return (bool) \filter_var((string) @$values[$key], FILTER_VALIDATE_FLOAT);
             },
             'numeric' => function($key, $values) {
-                return is_numeric(@$values[$key]);
+                return \is_numeric(@$values[$key]);
             },
             'alpha' => function($key, $values) {
-                return ctype_alpha(@$values[$key]);
+                return \ctype_alpha(@$values[$key]);
             },
             'alnum' => function($key, $values) {
-                return ctype_alnum(@$values[$key]);
+                return \ctype_alnum(@$values[$key]);
             },
             'time' => function($key, $values) {
-                return date_parse((string) @$values[$key])['error_count'] <= 0;
+                return \date_parse((string) @$values[$key])['error_count'] <= 0;
             },
             'ip' => function($key, $values) {
-                return (bool) filter_var((string) @$values[$key], FILTER_VALIDATE_IP);
+                return (bool) \filter_var((string) @$values[$key], \FILTER_VALIDATE_IP);
             },
             'url' => function($key, $values) {
-                return (bool) filter_var((string) @$values[$key], FILTER_VALIDATE_URL);
+                return (bool) \filter_var((string) @$values[$key], \FILTER_VALIDATE_URL);
             },
             'regex' => function($key, $values, $param) {
-                return (bool) preg_match((string) $param, (string) @$values[$key]);
+                return (bool) \preg_match((string) $param, (string) @$values[$key]);
             },
             'lower' => function($key, $values) {
-                return ctype_lower(@$values[$key]);
+                return \ctype_lower(@$values[$key]);
             },
             'upper' => function($key, $values) {
-                return ctype_upper(@$values[$key]);
+                return \ctype_upper(@$values[$key]);
             },
             'in' => function($key, $values, $param) {
-                return in_array(@$values[$key], explode(',', (string) $param));
+                return \in_array(@$values[$key], \explode(',', (string) $param));
             },
             'notin' => function($key, $values, $param) {
-                return !in_array(@$values[$key], explode(',', (string) $param));
+                return !\in_array(@$values[$key], \explode(',', (string) $param));
             }
         ];
     }
@@ -128,26 +128,26 @@ function validate(array $values, array $rules): \stdClass
             $check = collection()[$rule]($field, $values, $param);
             $nullables = $values['nullables'] ?? [];
 
-            if (in_array($field, $nullables)) {
+            if (\in_array($field, $nullables)) {
                 if (
                     isset($values[$field]) && 
                     $values[$field] !== '' && 
                     $rule !== 'nullable' && 
                     !$check
                 ) {
-                    $validator->errors[] = sprintf(
+                    $validator->errors[] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
-                    $validator->fieldErrors[$field][] = sprintf(
+                    $validator->fieldErrors[$field][] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
                 }
             } else {
                 if (!$check) {
-                    $validator->errors[] = sprintf(
+                    $validator->errors[] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
-                    $validator->fieldErrors[$field][] = sprintf(
+                    $validator->fieldErrors[$field][] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
                 }
@@ -158,9 +158,9 @@ function validate(array $values, array $rules): \stdClass
     unset($values['nullables']);
     $validator->success = empty($validator->errors);
     $validator->fails = !$validator->success;
-    $validator->values = array_filter($values, function($key) use ($validator) {
-        return !array_key_exists($key, $validator->fieldErrors);
-    }, ARRAY_FILTER_USE_KEY);
+    $validator->values = \array_filter($values, function($key) use ($validator) {
+        return !\array_key_exists($key, $validator->fieldErrors);
+    }, \ARRAY_FILTER_USE_KEY);
 
     return $validator;
 }
@@ -170,20 +170,20 @@ function parse(array $parseableRules): array
     $parsedRules = [];
 
     foreach ($parseableRules as $field => $rules) {
-        if (!is_array($rules)) {
-            $rules = explode('|', $rules);
+        if (!\is_array($rules)) {
+            $rules = \explode('|', $rules);
         }
 
-        $field = explode('|', $field);
+        $field = \explode('|', $field);
         $name = $field[1] ?? $field[0];
         $field = $field[0];
 
         foreach ($rules as $rule) {
-            $rule = explode(':', $rule);
+            $rule = \explode(':', $rule);
             $param = $rule[1] ?? null;
             $rule = $rule[0];
 
-            if (!array_key_exists($rule, collection())) {
+            if (!\array_key_exists($rule, collection())) {
                 throw new \Exception('Kural mevcut değil: ' . $rule);
             }
 

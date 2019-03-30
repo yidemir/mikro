@@ -16,11 +16,13 @@ function path(?string $path = null): string
 
 function render(string $file, array $data = []): ?string
 {
-    if (is_file($path = path() . '/' . $file . '.php')) {
-        ob_start();
-        if (!empty($data)) extract($data);
+    if (\is_file($path = path() . '/' . $file . '.php')) {
+        \ob_start();
+        if (!empty($data)) {
+            \extract($data);
+        }
         require_once $path;
-        return ob_get_clean();
+        return \ob_get_clean();
     }
 
     throw new \Exception('Görünüm mevcut değil: ' . $path);
@@ -36,7 +38,7 @@ function blocks($name = null, $data = null)
 {
     static $blocks;
 
-    if (is_null($blocks)) {
+    if (\is_null($blocks)) {
         $blocks = [];
     }
 
@@ -53,7 +55,7 @@ function start(?string $name = null)
 
     if ($name !== null) {
         $block = $name;
-        ob_start();
+        \ob_start();
     }
 
     return $block;
@@ -64,10 +66,10 @@ function stop()
     $block = start();
 
     if ($block === null) {
-        return ob_end_clean();
+        return \ob_end_clean();
     }
 
-    blocks($block, ob_get_clean());
+    blocks($block, \ob_get_clean());
 }
 
 function block(string $name, $default = null)

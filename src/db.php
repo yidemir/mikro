@@ -14,14 +14,14 @@ function connection($name = null)
     $connections = $connections ?? [];
     $default = $default ?? 'default';
     
-    if (!is_array($name) && $name !== null) {
+    if (!\is_array($name) && $name !== null) {
         $default = $name;
     }
     
-    if (is_array($name)) {
-        $connections = array_merge($connections, $name);
+    if (\is_array($name)) {
+        $connections = \array_merge($connections, $name);
     } else {
-        if (array_key_exists($default, $connections)) {
+        if (\array_key_exists($default, $connections)) {
             return $connections[$default];
         } else {
             throw new \Exception('Bağlantı mevcut değil: ' . $default);
@@ -69,7 +69,7 @@ function table(string $table, string $primaryKey = 'id')
 
         public function find($queryPart = '', array $params = [])
         {
-            if (is_numeric($queryPart)) {
+            if (\is_numeric($queryPart)) {
                 $params[] = (int) $queryPart;
                 $queryPart = "WHERE $this->primaryKey=?";
             }
@@ -89,7 +89,7 @@ function table(string $table, string $primaryKey = 'id')
             array $params = []
         ): PDOStatement
         {
-            if (is_numeric($query)) {
+            if (\is_numeric($query)) {
                 $params[] = $query;
                 $query = "WHERE $this->primaryKey=?";
             }
@@ -99,7 +99,7 @@ function table(string $table, string $primaryKey = 'id')
 
         public function delete($query = '', array $params = []): PDOStatement
         {
-            if (is_numeric($query)) {
+            if (\is_numeric($query)) {
                 $params[] = $query;
                 $query = "WHERE $this->primaryKey=?";
             }
@@ -144,11 +144,11 @@ function update(
     $query = "UPDATE $table SET ";
     $query .= arrayToQuery($data, 'update');
     $query .= " $queryPart";
-    $params = array_values($data);
+    $params = \array_values($data);
 
     if (!empty($where)) {
-        $query .= sprintf(' %s', $queryPart);
-        $params = array_merge($params, $queryParams);
+        $query .= \sprintf(' %s', $queryPart);
+        $params = \array_merge($params, $queryParams);
     }
 
     return query($query, $params);
@@ -170,16 +170,16 @@ function arrayToQuery(array $data, string $type): string
 
     switch ($type) {
       case 'insert':
-        $arrayParameters = array_values($data);
-        $columnsString = implode(',', array_keys($data));
-        $valuesString = implode(',', array_fill(0, count($arrayParameters), '?'));
+        $arrayParameters = \array_values($data);
+        $columnsString = \implode(',', \array_keys($data));
+        $valuesString = \implode(',', \array_fill(0, \count($arrayParameters), '?'));
         $string = "({$columnsString}) VALUES ({$valuesString})";
         break;
       case 'update':
         foreach ($data as $key => $value) {
           $string .= "{$key}=?,";
         }
-        $string = rtrim($string, ',');
+        $string = \rtrim($string, ',');
         break;
     }
 

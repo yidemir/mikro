@@ -13,11 +13,11 @@ function paginate(array $options)
 
     $totalItems = $options['totalItems'];
     $currentPage = $options['currentPage'] ?? request\input('page', 1);
-    $currentPage = intval($currentPage);
+    $currentPage = \intval($currentPage);
     $currentPage = $currentPage < 0 ? 0 : $currentPage;
     $perPage = $options['perPage'] ?? 10;
-    $totalPages = $perPage == 0 ? 0 : ceil($totalItems / $perPage);
-    $totalPages = intval($totalPages);
+    $totalPages = $perPage == 0 ? 0 : \ceil($totalItems / $perPage);
+    $totalPages = \intval($totalPages);
     $maxPages = $options['maxPages'] ?? 7;
     $pattern = $options['pattern'] ?? '?page=:number';
 
@@ -32,8 +32,8 @@ function paginate(array $options)
     }
 
     $create = function(?int $number = null, bool $current = false) use ($pattern)  {
-        $url = $number !== null ? str_replace(':number', $number, $pattern) : null;
-        return (object) compact('number', 'url', 'current');
+        $url = $number !== null ? \str_replace(':number', $number, $pattern) : null;
+        return (object) \compact('number', 'url', 'current');
     };
 
     if ($totalPages <= $maxPages) {
@@ -78,7 +78,7 @@ function paginate(array $options)
     $start = $start < 0 ? 0 : $start;
     $limit = "$start, $perPage";
 
-    $result = (object) compact(
+    $result = (object) \compact(
         'currentPage', 'totalPages', 'perPage', 'start', 'limit', 'pages'
     );
 

@@ -23,7 +23,7 @@ function path(): string
 
 function all(): array
 {
-    return array_merge($_REQUEST, $_FILES);
+    return \array_merge($_REQUEST, $_FILES);
 }
 
 /**
@@ -34,10 +34,10 @@ function all(): array
  */
 function input($key, $default = null)
 {
-    if (is_array($key)) {
+    if (\is_array($key)) {
         $collect = [];
         foreach ($key as $k) {
-            if (input($k) && !is_array($k)) {
+            if (input($k) && !\is_array($k)) {
                 $collect[$k] = input($k);
             }
         }
@@ -62,7 +62,7 @@ function input($key, $default = null)
 function is_ajax(): bool
 {
     return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+        \strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 }
 
 /**
@@ -73,7 +73,7 @@ function is_ajax(): bool
  */
 function session($key, $default = null)
 {
-    if (is_array($key)) {
+    if (\is_array($key)) {
         foreach ($key as $k => $v) {
             $_SESSION[$k] = $v;
         }
@@ -98,14 +98,14 @@ function get_flash(string $type = 'default'): array
 
 function get_csrf(): string
 {
-    if (empty(session_id())) {
+    if (empty(\session_id())) {
         throw new \Exception('Session not statrted');
     }
 
-    return \crypt\encrypt(session_id());
+    return \crypt\encrypt(\session_id());
 }
 
 function check_csrf(string $token)
 {
-    return session_id() === \crypt\decrypt($token);
+    return \session_id() === \crypt\decrypt($token);
 }

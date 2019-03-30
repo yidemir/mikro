@@ -16,21 +16,21 @@ function map(array $methods, string $path, $callback, array $middleware = [])
 {
     $groups = group();
 
-    if (key_exists('namespace', $groups) && is_string($callback)) {
-        $callback = implode('', $groups['namespace']) . $callback;
+    if (\array_key_exists('namespace', $groups) && is_string($callback)) {
+        $callback = \implode('', $groups['namespace']) . $callback;
     }
 
-    if (key_exists('path', $groups)) {
-        $path = implode('', $groups['path']) . $path;
+    if (\array_key_exists('path', $groups)) {
+        $path = \implode('', $groups['path']) . $path;
     }
 
-    if (key_exists('middleware', $groups)) {
+    if (\array_key_exists('middleware', $groups)) {
         $mws = isset($groups['middleware'][0]) ? $groups['middleware'][0] : [];
-        $middleware = array_merge($mws, $middleware);
+        $middleware = \array_merge($mws, $middleware);
     }
 
-    $path = rtrim($path, '/') ?: '/';
-    $path = strtr($path, [
+    $path = \rtrim($path, '/') ?: '/';
+    $path = \strtr($path, [
         ':number' => '(\d+)',
         ':id' => '(\d+)',
         ':string' => '(\w+)',
@@ -39,18 +39,18 @@ function map(array $methods, string $path, $callback, array $middleware = [])
         ':all' => '(.*)'
     ]);
 
-    $methodMatch = in_array(request\method(), $methods);
-    $pathMatch = ($path === request\path()) || preg_match("~^$path\$~ixs", request\path(), $params) >= 1;
+    $methodMatch = \in_array(request\method(), $methods);
+    $pathMatch = ($path === request\path()) || \preg_match("~^$path\$~ixs", request\path(), $params) >= 1;
     $params = $params ?? [];
 
     if ($methodMatch && $pathMatch) {
         foreach ($middleware as $mw) call($mw);
 
-        if (!defined('ROUTE_MATCHED')) {
-            define('ROUTE_MATCHED', true);
+        if (!\defined('ROUTE_MATCHED')) {
+            \define('ROUTE_MATCHED', true);
         }
 
-        call($callback, array_slice($params, 1));
+        call($callback, \array_slice($params, 1));
     }
 }
 
@@ -61,22 +61,22 @@ function map(array $methods, string $path, $callback, array $middleware = [])
 function call($callback, array $params = [])
 {
     $pattern = '!^([^\:]+)\@([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$!';
-    if (is_string($callback) && preg_match($pattern, $callback) >= 1) {
-        $callback = explode('@', $callback, 2);
+    if (\is_string($callback) && \preg_match($pattern, $callback) >= 1) {
+        $callback = \explode('@', $callback, 2);
     }
 
     if (
-        is_array($callback) && 
+        \is_array($callback) && 
         isset($callback[0]) && 
-        is_string($callback[0])
+        \is_string($callback[0])
     ) {
         [$class, $method] = $callback;
         $callback = [new $class, $method];
-    } elseif (is_string($callback) && class_exists($callback)) {
+    } elseif (\is_string($callback) && \class_exists($callback)) {
         $callback = new $callback;
     }
 
-    call_user_func_array($callback, $params);
+    \call_user_func_array($callback, $params);
 }
 
 /**
@@ -141,7 +141,7 @@ function group($options = null, ?Closure $callback = null)
         return $groups;
     }
 
-    if (is_string($options)) {
+    if (\is_string($options)) {
         $options = ['path' => $options];
     }
 
@@ -152,7 +152,7 @@ function group($options = null, ?Closure $callback = null)
     $callback();
 
     foreach ($groups as $name => $option) {
-        array_pop($groups[$name]);
+        \array_pop($groups[$name]);
     }
 }
 
@@ -179,12 +179,12 @@ function error($callback)
 {
     $groups = group();
 
-    if (key_exists('namespace', $groups) && is_string($callback)) {
-        $callback = implode('', $groups['namespace']) . $callback;
+    if (\array_key_exists('namespace', $groups) && \is_string($callback)) {
+        $callback = \implode('', $groups['namespace']) . $callback;
     }
 
-    if (!defined('ROUTE_MATCHED')) {
-        http_response_code(404);
+    if (!\defined('ROUTE_MATCHED')) {
+        \http_response_code(404);
         call($callback);
     }
 }
