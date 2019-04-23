@@ -16,7 +16,7 @@ function map(array $methods, string $path, $callback, array $middleware = [])
 {
     $groups = group();
 
-    if (\array_key_exists('namespace', $groups) && is_string($callback)) {
+    if (\array_key_exists('namespace', $groups) && \is_string($callback)) {
         $callback = \implode('', $groups['namespace']) . $callback;
     }
 
@@ -168,6 +168,20 @@ function resource(string $path, $class, array $middleware = [])
     get("$path/create", "{$class}@create", $middleware);
     post($path, "{$class}@store", $middleware);
     get("$path/edit/(\d+)", "{$class}@edit", $middleware);
+    put("$path/(\d+)", "{$class}@update", $middleware);
+    delete("$path/(\d+)", "{$class}@destroy", $middleware);
+}
+
+/**
+ * @param string $path
+ * @param string $class
+ * @param array $middleware
+ */
+function api_resource(string $path, $class, array $middleware = [])
+{
+    get($path, "{$class}@index", $middleware);
+    get("$path/(\d+)", "{$class}@show", $middleware);
+    post($path, "{$class}@store", $middleware);
     put("$path/(\d+)", "{$class}@update", $middleware);
     delete("$path/(\d+)", "{$class}@destroy", $middleware);
 }
