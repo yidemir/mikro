@@ -41,6 +41,9 @@ function get(string $name, array $args = [])
     throw new Exception(\sprintf('Öğe mevcut değil: "%s"', $name));
 }
 
+/**
+ * @param mixed $data
+ */
 function set(string $name, $data)
 {
     collection([$name => $data]);

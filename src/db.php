@@ -64,6 +64,7 @@ function table(string $table, string $primaryKey = 'id')
         public function get(string $queryPart = '', array $params = [])
         {
             $query = "SELECT $this->select FROM $this->table $queryPart";
+
             return query($query, $params)->fetchAll();
         }
 
@@ -75,6 +76,7 @@ function table(string $table, string $primaryKey = 'id')
             }
 
             $query = "SELECT $this->select FROM $this->table $queryPart";
+
             return query($query, $params)->fetch();
         }
 
@@ -113,6 +115,7 @@ function table(string $table, string $primaryKey = 'id')
                 "SELECT COUNT(*) FROM $this->table $query", $params
             )->fetchColumn();
             $pagination = \pagination\paginate($options);
+
             return query(
                 "SELECT $this->select FROM $this->table $query LIMIT $pagination->limit", $params
             )->fetchAll();
@@ -124,6 +127,7 @@ function query(string $query, array $params = []): PDOStatement
 {
     $sth = connection()->prepare($query);
     $sth->execute($params);
+
     return $sth;
 }
 
@@ -131,6 +135,7 @@ function insert(string $table, array $data): PDOStatement
 {
     $query = "INSERT INTO $table ";
     $query .= arrayToQuery($data, 'insert');
+
     return query($query, array_values($data));
 }
 
@@ -161,6 +166,7 @@ function delete(
 ): PDOStatement
 {
     $query = "DELETE FROM $table $queryPart";
+    
     return query($query, $params);
 }
 

@@ -18,6 +18,9 @@ function collection(array $configs = [])
     return $collection;
 }
 
+/**
+ * @param mixed $default
+ */
 function get(string $key, $default = null)
 {
     $config = collection();
@@ -35,6 +38,9 @@ function get(string $key, $default = null)
     );
 }
 
+/**
+ * @param mixed $value
+ */
 function set(string $key, $value)
 {
     $replace = \array_reduce(
