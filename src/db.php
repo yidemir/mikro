@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace db;
 
 use PDO;
+use Closure;
 use PDOStatement;
 
 function connection($name = null)
@@ -22,7 +23,8 @@ function connection($name = null)
         $connections = \array_merge($connections, $name);
     } else {
         if (\array_key_exists($default, $connections)) {
-            return $connections[$default];
+            $connection = $connections[$default];
+            return ($connection instanceof Closure) ? $connection() : $connection;
         } else {
             throw new \Exception('Bağlantı mevcut değil: ' . $default);
         }
