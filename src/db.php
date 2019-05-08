@@ -133,10 +133,40 @@ function query(string $query, array $params = []): PDOStatement
     return $sth;
 }
 
+function fetch(string $query, array $params = [])
+{
+    return query($query, $params)->fetch();
+}
+
+function fetch_object(string $query, array $params = [])
+{
+    return query($query, $params)->fetch(\PDO::FETCH_OBJ);
+}
+
+function fetch_all(string $query, array $params = [])
+{
+    return query($query, $params)->fetchAll();
+}
+
+function fetch_all_object(string $query, array $params = [])
+{
+    return query($query, $params)->fetchAll(\PDO::FETCH_OBJ);
+}
+
+function fetch_column(string $query, array $params = [])
+{
+    return query($query, $params)->fetchColumn();
+}
+
+function exec(string $query): int
+{
+    return connection()->exec($query);
+}
+
 function insert(string $table, array $data): PDOStatement
 {
     $query = "INSERT INTO $table ";
-    $query .= arrayToQuery($data, 'insert');
+    $query .= array_to_query($data, 'insert');
 
     return query($query, array_values($data));
 }
@@ -149,7 +179,7 @@ function update(
 ): PDOStatement
 {
     $query = "UPDATE $table SET ";
-    $query .= arrayToQuery($data, 'update');
+    $query .= array_to_query($data, 'update');
     $query .= " $queryPart";
     $params = \array_values($data);
 
@@ -172,7 +202,7 @@ function delete(
     return query($query, $params);
 }
 
-function arrayToQuery(array $data, string $type): string
+function array_to_query(array $data, string $type): string
 {
     $string = '';
 

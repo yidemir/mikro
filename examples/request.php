@@ -18,3 +18,6 @@ $messages = request\get_flash();
 
 $token = request\get_csrf();
 request\check_csrf($token);
+
+$headers = request\headers();
+$header = request\get_header('Foo');

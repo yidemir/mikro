@@ -23,7 +23,7 @@ function path(): string
 
 function all(): array
 {
-    return \array_merge($_REQUEST, $_FILES);
+    return \array_merge($_REQUEST, $_FILES, content());
 }
 
 /**

@@ -21,7 +21,7 @@ function render(string $file, array $data = []): ?string
         if (!empty($data)) {
             \extract($data);
         }
-        require_once $path;
+        require $path;
         return \ob_get_clean();
     }
 
@@ -72,7 +72,38 @@ function stop()
     blocks($block, \ob_get_clean());
 }
 
-function block(string $name, $default = null)
+function block($name, $default = null)
 {
     return blocks()[$name] ?? $default;
+}
+
+function set($name, $value)
+{
+    blocks($name, $value);
+}
+
+function get($name, array $args = [])
+{
+    $block = block($name);
+
+    if (\is_callable($block)) {
+        return \call_user_func_array($block, [$args]);
+    }
+
+    return $block;
+}
+
+function parent()
+{
+    $block = start();
+    $blocks = blocks();
+
+    if ($block && \array_key_exists($block, $blocks)) {
+        return $blocks[$block];
+    }
+}
+
+function e($string): string
+{
+    return \htmlentities((string) $string, \ENT_QUOTES);
 }
