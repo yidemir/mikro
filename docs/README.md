@@ -31,13 +31,17 @@ route\any('/', 'HomeController@index');
 There are four defined response types. The `output` method can be used for specific responses.
 
 ## HTML Response
-```response\html(string $content, int $code = 200, array $headers = []): int```
+```php
+response\html(string $content, int $code = 200, array $headers = []): int
+```
 ```php
 response\html('<b>HTML Content</b>');
 ```
 
 ## JSON Response
-```response\json(mixed $content, int $code = 200, array $headers = []): int```
+```php
+response\json(mixed $content, int $code = 200, array $headers = []): int
+```
 ```php
 response\json(['message' => 'Ok']);
 ```
@@ -45,13 +49,17 @@ response\json(['message' => 'Ok']);
 ## View Response
 Refer to section View before using this method.
 
-```response\view(string $file, array $data = [], int $code = 200, array $headers = []): int```
+```php
+response\view(string $file, array $data = [], int $code = 200, array $headers = []): int
+```
 ```php
 response\view('index', ['foo' => 'bar']);
 ```
 
 ## Redirect Response
-```redirect(string $to, int $code = 301): void```
+```php
+redirect(string $to, int $code = 301): void
+```
 ```php
 response\redirect('/foo/bar/url');
 ```
