@@ -44,6 +44,7 @@ response\json(['message' => 'Ok']);
 
 ## View Response
 Refer to section View before using this method.
+
 `response\view(string $file, array $data = [], int $code = 200, array $headers = []): int`
 ```php
 response\view('index', ['foo' => 'bar']);
