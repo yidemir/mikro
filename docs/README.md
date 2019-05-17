@@ -37,7 +37,7 @@ response\html(string $content, int $code = 200, array $headers = []): int
 ```php
 response\html('<b>HTML Content</b>');
 ```
-
+---
 ## JSON Response
 ```php
 response\json(mixed $content, int $code = 200, array $headers = []): int
@@ -45,7 +45,7 @@ response\json(mixed $content, int $code = 200, array $headers = []): int
 ```php
 response\json(['message' => 'Ok']);
 ```
-
+---
 ## View Response
 Refer to section View before using this method.
 
@@ -55,11 +55,27 @@ response\view(string $file, array $data = [], int $code = 200, array $headers = 
 ```php
 response\view('index', ['foo' => 'bar']);
 ```
-
+---
 ## Redirect Response
 ```php
-redirect(string $to, int $code = 301): void
+response\redirect(string $to, int $code = 301): void
 ```
 ```php
 response\redirect('/foo/bar/url');
+```
+---
+## Specified Response
+```php
+response\output(string $content, int $code = 200, array $headers = []): int
+```
+```php
+response\output('Text content', 200, ['Content-Type' => 'text/plain']);
+```
+---
+## Headers
+```php
+response\send_header(string $key, string $value, ...$args): void
+```
+```php
+response\send_header('Content-Type', 'text/plain');
 ```
