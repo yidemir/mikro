@@ -141,3 +141,78 @@ Refer to section Crypt before using this methods.
 request\get_csrf(): string
 request\check_csrf(string $token): bool
 ```
+---
+# Routing
+The router supports all REST methods and is resourceful. Each route you define is checked when calling.
+
+```php
+route\map(array $methods, string $path, $callback, array $middleware = []): void
+```
+```php
+route\map(['GET'], '/', 'HomeController@index');
+
+route\map(['GET', 'POST'], '/test', function() {
+  return response\json(['msg' => 'Hello world!']);
+});
+```
+---
+## Route Methods
+```php
+route\get(string $path, $callback, array $middleware = []): void
+route\post(string $path, $callback, array $middleware = []): void
+route\put(string $path, $callback, array $middleware = []): void
+route\delete(string $path, $callback, array $middleware = []): void
+route\any(string $path, $callback, array $middleware = []): void
+```
+
+```php
+route\any('/', function() {
+  return response\html('Hello world');
+});
+
+route\get('/', 'HomeController@index');
+```
+---
+## Route Groups
+```php
+route\group($options = null, ?Closure $callback = null): void
+```
+```php
+route\group(['namespace' => 'App\Controllers\\'], function() {
+  route\get('/', 'HomeController@index');
+  // ... route definitions
+  route\group(['path' => '/admin', 'namespace' => 'Admin\\'], function() {
+    route\get('/', 'DashboardController@index');
+  }, ['middleware_callback', new MiddlewareCallback]);
+});
+
+// or simple
+
+route\group('/simple', function() {
+  route\get('/', 'SimpleController@foo'); // matches /simple
+  route\get('/hard', 'SimpleController@hard'); // matches /simple/hard
+});
+```
+---
+## Resourceful Routes
+```php
+route\resource(string $path, $class, array $middleware = []): void
+route\api_resource(string $path, $class, array $middleware = []): void
+```
+```php
+route\resource('/posts', 'App\Controllers\PostController');
+route\resource('/categories', App\Controllers\CategoryController::class);
+
+route\api_resource('/admin/posts', App\Controllers\Admin\PostController::class');
+```
+---
+## Handle 404
+```php
+route\error($callback): void
+```
+```php
+route\error('ErrorController@notFound');
+route\error(function() {
+  return response\view('errors/404');
+});
+```
