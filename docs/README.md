@@ -37,7 +37,7 @@ route\any('/', 'HomeController@index');
 
 ---
 
-# Responses
+# Response
 There are four defined response types. The `output` method can be used for specific responses.
 
 ## HTML Response
@@ -111,7 +111,7 @@ response\send_header('Content-Type', 'text/plain');
 
 ---
 
-# Requests
+# Request
 The methods in this section make it easy to process incoming request parameters and headers.
 
 **Retrieving request method:**
