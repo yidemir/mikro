@@ -278,3 +278,36 @@ route\error(function() {
   return response\view('errors/404');
 });
 ```
+
+# View
+Soon
+
+# Database
+Soon
+
+# Container
+Soon
+
+# Config
+Soon
+
+# Pagination
+Soon
+
+# Validator
+Soon
+
+# Cache
+Soon
+
+# Crypt
+Soon
+
+# Event
+Soon
+
+# Lang
+Soon
+
+# Log
+Soon
