@@ -280,13 +280,248 @@ route\error(function() {
 ```
 
 # View
-Soon
+Before using View, you must specify the directory where the view files are located.
+
+```php
+route\path('/path/to/views');
+```
+
+---
+
+## Render a view file
+
+```php
+view\render(string $file, array $data = []): ?string
+```
+
+```php
+view\render('viewfile', ['data' => 'value']);
+```
+
+---
+
+## View Blocks
+
+`index.php` file:
+```html
+<?php view\start('content') ?>
+  <p>Block content</p>
+<?php view\stop() ?>
+
+<?php view\start('scripts') ?>
+  <script src="vue.min.js"></script>
+<?php view\stop() ?>
+
+<?php echo view\render('layout') ?>
+```
+
+`layout.php` file:
+
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello world!</title>
+</head>
+<body>
+  <div id="app" class="continer">
+    <?php echo view\block('content') ?>
+  </div>
+  
+  <?php echo view\block('scripts') ?>
+</body>
+</html>
+```
+
+**Set block in one line**
+
+```php
+view\set('title', 'Hello framework!');
+
+view\set('callbable_block', function($args) {
+  return "<title>$args['title']</title>";
+});
+```
+
+**Getting block**
+```php
+echo view\block('title');
+echo view\get('title');
+
+echo view\get('callable_block', ['title' => 'Hello World!']);
+```
+
+**Parent **
+```html
+<?php view\start('content') ?>
+  <p>Hello world</p>
+<?php view\stop() ?>
+
+<?php view\start('content') ?>
+  <?php view\parent() ?>
+  <p>Second content</p>
+<?php view\stop() ?>
+```
+
+**Escaping unsafe content**
+```html
+<input type="text" name="title" value="<?php echo view\e($post->title) ?>">
+```
+
+**References**
+```php
+view\path(?string $path = null): string
+view\render(string $file, array $data = []): ?string
+view\blocks($name = null, $data = null): array
+view\start(?string $name = null): string
+view\stop(): void
+view\block($name, $default = null): mixed
+view\set($name, $value): void
+view\get($name, array $args = []): mixed
+view\parent(): mixed
+view\e($string): string
+```
+
+---
 
 # Database
-Soon
+In order to perform database operations, you must first provide a database connection. By default, you need to define a database named 'default'.
+
+```php
+db\connection([
+  'default' => new PDO('mysql..'),
+  'sqlite' => new PDO('sqlite:..')
+]);
+```
+
+**PDO database connection**
+```php
+$pdo = db\connection(); // 'default' connection
+$pdo = db\connection('sqlite');
+```
+
+---
+
+## Table Method
+
+```php
+db\table(string $table, string $primaryKey = 'id'): object
+db\table('table')->select(string $select): object
+db\table('table')->connection(string $name): object
+db\table('table')->get(string $queryPart = '', array $params = []): mixed
+db\table('table')->find($queryPart = '', array $params = []): mixed
+db\table('table')->insert(array $data): PDOStatement
+db\table('table')->update(array $data, string $query = '', array $params = []): PDOStatement
+db\table('table')->delete($query = '', array $params = []): PDOStatement
+db\table('table')->paginate(string $query = '', array $params = [], array $options = []): mixed
+```
+
+## Select
+
+```php
+db\table('posts')->get(); // all posts
+db\table('posts')->find(5); // get post 5
+db\table('posts')->get('order by created_at desc');
+db\table('posts')->get('where is_approved=1 and type=?', ['post']);
+db\table('posts')->select('id, title, body')->get();
+db\table('posts', 'post_id')->find('where id=?', [5]);
+```
+
+---
+
+## Insert
+
+```php
+$data = [
+  'title' => 'Lorem lipsum',
+  'body' => 'foo bar'
+];
+
+// $data = request\input(['title', 'body']);
+
+db\table('posts')->insert($data);
+
+$id = connection()->lastInsertId();
+```
+
+---
+
+## Update
+
+```php
+$data = ['title' => 'Lorem lipsum dolor sit amet'];
+
+db\table('posts')->update($data, 5);
+db\table('posts')->update($data, 'where id=?', [5]);
+```
+
+---
+
+## Delete
+
+```php
+db\table('posts')->delete(5);
+db\table('posts')->delete('where id=?', [5]);
+```
+
+---
+
+## Querying
+
+```php
+db\query(string $query, array $params = []): PDOStatement
+```
+
+```php
+db\query('select * from posts')->fetchAll();
+db\query('select * from posts where id=?', [$id])->fetch()
+```
+
+---
+
+## Fetch Methods
+
+```php
+db\fetch('select * from ...');
+db\fetch_object('select * from ...');
+db\fetch_all('select * from ...');
+db\fetch_all_object('select * from ...');
+db\fetch_column('select count(*) from ...');
+db\exec('query');
+```
+
+---
 
 # Container
-Soon
+Container items are stored in the `collection` method.
+
+**New container item**
+```php
+container\set('item', function() {
+  return new stdClass;
+});
+```
+
+**Check item exists**
+```php
+if (contaner\has('item')) {
+  var_dump(container\get('item'));
+}
+```
+
+**Get container item**
+```php
+$service = container\get('foo.service');
+```
+
+**New singleton item**
+```php
+container\singleton('bar.service', function() {
+  return new FooBarService;
+});
+```
+
 
 # Config
 Soon
