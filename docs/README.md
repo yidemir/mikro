@@ -27,6 +27,11 @@ require __DIR__ . '/mikro/autoload.php';
 route\any('/', 'HomeController@index');
 ```
 ---
+# Documentation
+  * [Response](#response) 
+  * [Request](#request)
+  * [Routing](#routing)
+---
 # Responses
 There are four defined response types. The `output` method can be used for specific responses.
 
