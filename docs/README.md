@@ -522,12 +522,85 @@ container\singleton('bar.service', function() {
 });
 ```
 
-
 # Config
-Soon
+Configuration items are stored in the `collection` method.
+
+```php
+config\collection(array $configs = []): array
+config\get(string $key, $default = null): mixed
+config\set(string $key, mixed $value): array
+```
+
+**Config collection**
+```php
+config\collection([
+  'site' => [
+    'name' => 'Framework',
+    'url' => 'http://0.0.0.0:8000'
+  ],
+  
+  'databases' => [
+    'default' => new PDO(...),
+    'sqlite' => new PDO(...)
+  ]
+]);
+```
+
+**Get config item**
+```php
+config\get('site.name'); // 'Framework'
+config\get('databases'); // Array
+config\get('site.foo', 'bar'); // 'bar'
+```
+
+**Set config item**
+```php
+config\set('site.name', 'Hello world');
+config\set('foo', 'bar');
+```
 
 # Pagination
-Soon
+
+```php
+pagination\paginate(array $options): object
+pagination\data($data = null): object
+```
+
+**Array pagination**
+```php
+$array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+pagination\paginate([
+  'totalItems' => count($array)
+]);
+
+var_dump(pagination\data());
+/*
+stdClass {
+  'currentPage' => 1, 
+  'totalPages' => 5,
+  'perPage' => 2,
+  'start' => 1,
+  'limit' => '1,5',
+  'pages' => Array
+}
+*/
+```
+
+**Pagination with DB**
+```php
+$count = db\fetch_column('select count(*) from posts');
+$pagination = pagination\paginate([
+  'total_items' => $count,
+  'current_page' => request\input('page', 1),
+  'per_page' => 5,
+  'pattern' => '/foo/bar?page_number=:number'
+]);
+
+// use on view: $pagination = pagination\data();
+
+$posts = db\fetch_all("select * from posts limit {$pagination->limit}");
+```
 
 # Validator
 Soon
