@@ -1,4 +1,4 @@
-# Introduction
+# Mikro PHP Framework
 **Mikro** is a small and fast micro PHP framework.
 
 ---
