@@ -34,6 +34,17 @@ route\any('/', 'HomeController@index');
   * [Response](#response) 
   * [Request](#request)
   * [Routing](#routing)
+  * [View](#view)
+  * [Database](#database)
+  * [Container](#container)
+  * [Config](#config)
+  * [Pagination](#pagination)
+  * [Validator](#validator)
+  * [Caching](#caching)
+  * [Encryption](#encryption)
+  * [Event Handling](#event-handling)
+  * [Language](#language)
+  * [Loging](Logging)
 
 ---
 
@@ -522,6 +533,8 @@ container\singleton('bar.service', function() {
 });
 ```
 
+---
+
 # Config
 Configuration items are stored in the `collection` method.
 
@@ -558,6 +571,8 @@ config\get('site.foo', 'bar'); // 'bar'
 config\set('site.name', 'Hello world');
 config\set('foo', 'bar');
 ```
+
+---
 
 # Pagination
 
@@ -602,20 +617,30 @@ $pagination = pagination\paginate([
 $posts = db\fetch_all("select * from posts limit {$pagination->limit}");
 ```
 
+---
+
 # Validator
 Soon
 
-# Cache
+---
+
+# Caching
 Soon
 
-# Crypt
+---
+
+# Encryption
 Soon
 
-# Event
+---
+
+# Event Handling
 Soon
 
-# Lang
+# Language
 Soon
 
-# Log
+---
+
+# Logging
 Soon
