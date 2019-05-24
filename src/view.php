@@ -16,6 +16,8 @@ function path(?string $path = null): string
 
 function render(string $file, array $data = []): ?string
 {
+    $file = str_replace('.', '/', $file);
+    
     if (\is_file($path = path() . '/' . $file . '.php')) {
         \ob_start();
         if (!empty($data)) {
