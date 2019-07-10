@@ -48,6 +48,19 @@ function json(
     return output($json, $code, $headers);
 }
 
+function text(
+    string $content,
+    int $code = 200,
+    array $headers = []
+): int
+{
+    if (!\array_key_exists('Content-Type', $headers)) {
+        $headers['Content-Type'] = 'text/plain;charset=utf-8';
+    }
+
+    return output($content, $code, $headers);
+}
+
 function redirect(string $to, int $code = 301): void
 {
     \http_response_code($code);
