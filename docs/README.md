@@ -277,7 +277,7 @@ route\api_resource('/admin/posts', App\Controllers\Admin\PostController::class')
 
 ---
 
-## Handle 404
+## Handling 404
 
 ```php
 route\error($callback): void
@@ -288,6 +288,19 @@ route\error('ErrorController@notFound');
 route\error(function() {
   return response\view('errors/404');
 });
+```
+
+## Route Collection and Matching
+
+```php
+/** @var array */
+$routes = route\collection();
+
+/** @var object */
+$matchedRoute = route\resolve();
+
+// runs the matched route
+route\run();
 ```
 
 # View
@@ -620,27 +633,96 @@ $posts = db\fetch_all("select * from posts limit {$pagination->limit}");
 ---
 
 # Validator
-Soon
+Validator performs a simple array validation according to the given rules.
+
+```php
+$validator = validator\validate(request\all(), [
+  'name' => 'required|minlen:4|maxlen:255',
+  'email' => 'required|email',
+  'amount' => 'required|numeric',
+  'website' => 'nullable|url',
+  'age' => 'nullable|min:18'
+]);
+
+$validator->success; // boolean
+$validator->fails; // boolean
+$validator->values; // array, passed values in array
+$validator->errors; // error messages array
+$validator->errorByFields; // error by fields array
+```
+
+**Add new rule**
+```php
+validator\collection('in_any_case_passes', function($key, $values, $param = null) {
+  return true;
+});
+
+validator\message('in_any_case_passes', 'No, that\'s not possible');
+
+validator\validate([/* data */], [
+  'key' => 'required|in_any_case_passes'
+]);
+```
+
+**References**
+```php
+collection(?string $rule = null, ?Closure $callback = null): array
+messages(?string $rule = null, ?string $message = null): array
+validate(array $values, array $rules): stdClass
+```
 
 ---
 
 # Caching
-Soon
+
+**References**
+```php
+path(?string $path = null): string
+get(string $key, $default = null)
+set(string $key, $value, $ttl = 0): void
+remove(string $key): void
+has(string $key): bool
+flush(): void
+remember(string $key, Closure $callback, $ttl = 0)
+```
 
 ---
 
 # Encryption
-Soon
+
+**References**
+```php
+secret(?string $secret = null): string
+encrypt(string $data): string
+decrypt(string $data)
+```
 
 ---
 
 # Event Handling
-Soon
+**References**
+```php
+listen(?string $name = null, ?Closure $callback = null)
+emit(string $name, array $args = [])
+```
 
 # Language
-Soon
+**References**
+```php
+path(?string $path = null): string
+lang(?string $code = null)
+get(string $key, $default = null)
+phrase(string $phrase, ?string $file = null)
+```
 
 ---
 
 # Logging
-Soon
+**References**
+```php
+path(?string $path = null): string
+write(string $type, $data)
+error($data)
+info($data)
+debug($data)
+```

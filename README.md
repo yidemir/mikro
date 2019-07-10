@@ -36,9 +36,10 @@ route\put('/update/:id', function($id) {
 route\group([
     'path' => '/admin',
     'namespace' => 'App\Controllers\Admin\\',
-    'middleware' => ['check_admin_middleware']
+    'middleware' => ['check_admin_middleware'],
+    'name' => 'admin.'
 ], function() {
-    route\get('/', 'DashboardController@index');
+    route\get('/', 'DashboardController@index', 'home');
     route\resource('/posts', 'PostController');
     route\resource('/categories', 'CategoryController');
     route\get('/foo', function() {
@@ -53,5 +54,7 @@ route\error(function() {
         return response\view('errors/404');
     }
 });
+
+route\run();
 ```
 more examples in examples directory.
