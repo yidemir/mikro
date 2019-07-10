@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace validator;
 
 use Closure;
+use stdClass;
 
 function collection(?string $rule = null, ?Closure $callback = null): array
 {
@@ -116,11 +117,11 @@ function messages(?string $rule = null, ?string $message = null): array
     return $messages;
 }
 
-function validate(array $values, array $rules): \stdClass
+function validate(array $values, array $rules): stdClass
 {
-    $validator = new \stdClass;
+    $validator = new stdClass;
     $validator->errors = [];
-    $validator->fieldErrors = [];
+    $validator->errorByFields = [];
 
     foreach (parse($rules) as $field => $validation) {
         foreach ($validation['rules'] as $ruleData) {
@@ -138,7 +139,7 @@ function validate(array $values, array $rules): \stdClass
                     $validator->errors[] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
-                    $validator->fieldErrors[$field][] = \sprintf(
+                    $validator->errorByFields[$field][] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
                 }
@@ -147,7 +148,7 @@ function validate(array $values, array $rules): \stdClass
                     $validator->errors[] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
-                    $validator->fieldErrors[$field][] = \sprintf(
+                    $validator->errorByFields[$field][] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
                 }
@@ -159,7 +160,7 @@ function validate(array $values, array $rules): \stdClass
     $validator->success = empty($validator->errors);
     $validator->fails = !$validator->success;
     $validator->values = \array_filter($values, function($key) use ($validator) {
-        return !\array_key_exists($key, $validator->fieldErrors);
+        return !\array_key_exists($key, $validator->errorByFields);
     }, \ARRAY_FILTER_USE_KEY);
 
     return $validator;
