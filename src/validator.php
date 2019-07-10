@@ -121,7 +121,7 @@ function validate(array $values, array $rules): stdClass
 {
     $validator = new stdClass;
     $validator->errors = [];
-    $validator->errorByFields = [];
+    $validator->errorsByField = [];
 
     foreach (parse($rules) as $field => $validation) {
         foreach ($validation['rules'] as $ruleData) {
@@ -139,7 +139,7 @@ function validate(array $values, array $rules): stdClass
                     $validator->errors[] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
-                    $validator->errorByFields[$field][] = \sprintf(
+                    $validator->errorsByField[$field][] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
                 }
@@ -148,7 +148,7 @@ function validate(array $values, array $rules): stdClass
                     $validator->errors[] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
-                    $validator->errorByFields[$field][] = \sprintf(
+                    $validator->errorsByField[$field][] = \sprintf(
                         messages()[$rule], $validation['name'], $param
                     );
                 }
@@ -160,7 +160,7 @@ function validate(array $values, array $rules): stdClass
     $validator->success = empty($validator->errors);
     $validator->fails = !$validator->success;
     $validator->values = \array_filter($values, function($key) use ($validator) {
-        return !\array_key_exists($key, $validator->errorByFields);
+        return !\array_key_exists($key, $validator->errorsByField);
     }, \ARRAY_FILTER_USE_KEY);
 
     return $validator;
