@@ -5,6 +5,37 @@ namespace route;
 
 use Closure;
 use request;
+use stdClass;
+
+function collection(?stdClass $route = null)
+{
+    static $collection;
+
+    if ($collection === null) {
+        $collection = [];
+    }
+
+    if ($route === null) {
+        return $collection;
+    }
+
+    $collection[implode('|', $route->methods) . ' ' . $route->path] = $route;
+}
+
+function names(?array $name = null)
+{
+    static $names;
+
+    if ($names === null) {
+        $names = [];
+    }
+
+    if ($name === null) {
+        return $names;
+    }
+
+    $names = \array_merge($names, $name);
+}
 
 /**
  * @param array $methods
@@ -12,7 +43,13 @@ use request;
  * @param Closure|array|string $callback
  * @param array $middleware
  */
-function map(array $methods, string $path, $callback, array $middleware = [])
+function map(
+    array $methods,
+    string $path,
+    $callback,
+    ?string $name = null,
+    array $middleware = []
+)
 {
     $groups = group();
 
@@ -29,6 +66,10 @@ function map(array $methods, string $path, $callback, array $middleware = [])
         $middleware = \array_merge($mws, $middleware);
     }
 
+    if (\array_key_exists('name', $groups) && !is_null($name)) {
+        $name = \implode('', $groups['name']) . $name;
+    }
+
     $path = \rtrim($path, '/') ?: '/';
     $path = \strtr($path, [
         ':number' => '(\d+)',
@@ -39,19 +80,15 @@ function map(array $methods, string $path, $callback, array $middleware = [])
         ':all' => '(.*)'
     ]);
 
-    $methodMatch = \in_array(request\method(), $methods);
-    $pathMatch = ($path === request\path()) || \preg_match("~^$path\$~ixs", request\path(), $params) >= 1;
-    $params = $params ?? [];
+    $route = (object) \compact(
+        'methods', 'path', 'callback', 'name', 'middleware'
+    );
 
-    if ($methodMatch && $pathMatch) {
-        foreach ($middleware as $mw) call($mw);
-
-        if (!\defined('ROUTE_MATCHED')) {
-            \define('ROUTE_MATCHED', true);
-        }
-
-        call($callback, \array_slice($params, 1));
+    if ($name !== null) {
+        names([$route->name => $route->path]);
     }
+
+    collection($route);
 }
 
 /**
@@ -84,9 +121,9 @@ function call($callback, array $params = [])
  * @param array|object|string $callback
  * @param array $middleware
  */
-function get(string $path, $callback, array $middleware = [])
+function get(string $path, $callback, ?string $name = null, array $middleware = [])
 {
-    return map(['GET'], $path, $callback, $middleware);
+    return map(['GET'], $path, $callback, $name, $middleware);
 }
 
 /**
@@ -94,9 +131,9 @@ function get(string $path, $callback, array $middleware = [])
  * @param array|object|string $callback
  * @param array $middleware
  */
-function post(string $path, $callback, array $middleware = [])
+function post(string $path, $callback, ?string $name = null, array $middleware = [])
 {
-    return map(['POST'], $path, $callback, $middleware);
+    return map(['POST'], $path, $callback, $name, $middleware);
 }
 
 /**
@@ -104,9 +141,9 @@ function post(string $path, $callback, array $middleware = [])
  * @param array|object|string $callback
  * @param array $middleware
  */
-function put(string $path, $callback, array $middleware = [])
+function put(string $path, $callback, ?string $name = null, array $middleware = [])
 {
-    return map(['PUT'], $path, $callback, $middleware);
+    return map(['PUT'], $path, $callback, $name, $middleware);
 }
 
 /**
@@ -114,9 +151,9 @@ function put(string $path, $callback, array $middleware = [])
  * @param array|object|string $callback
  * @param array $middleware
  */
-function delete(string $path, $callback, array $middleware = [])
+function delete(string $path, $callback, ?string $name = null, array $middleware = [])
 {
-    return map(['DELETE'], $path, $callback, $middleware);
+    return map(['DELETE'], $path, $callback, $name, $middleware);
 }
 
 /**
@@ -124,9 +161,9 @@ function delete(string $path, $callback, array $middleware = [])
  * @param array|object|string $callback
  * @param array $middleware
  */
-function any(string $path, $callback, array $middleware = [])
+function any(string $path, $callback, ?string $name = null, array $middleware = [])
 {
-    return map(['GET', 'POST', 'PUT', 'DELETE'], $path, $callback, $middleware);
+    return map(['GET', 'POST', 'PUT', 'DELETE'], $path, $callback, $name, $middleware);
 }
 
 function group($options = null, ?Closure $callback = null)
@@ -161,15 +198,19 @@ function group($options = null, ?Closure $callback = null)
  * @param string $class
  * @param array $middleware
  */
-function resource(string $path, $class, array $middleware = [])
+function resource(string $path, $class, ?string $name = null, array $middleware = [])
 {
-    get($path, "{$class}@index", $middleware);
-    get("$path/(\d+)", "{$class}@show", $middleware);
-    get("$path/create", "{$class}@create", $middleware);
-    post($path, "{$class}@store", $middleware);
-    get("$path/edit/(\d+)", "{$class}@edit", $middleware);
-    put("$path/(\d+)", "{$class}@update", $middleware);
-    delete("$path/(\d+)", "{$class}@destroy", $middleware);
+    if ($name === null) {
+        $name = str_replace('/', '.', trim($path, '/'));
+    }
+
+    get($path, "{$class}@index", $name, $middleware);
+    get("$path/(\d+)", "{$class}@show", $name, $middleware);
+    get("$path/create", "{$class}@create", $name, $middleware);
+    post($path, "{$class}@store", $name, $middleware);
+    get("$path/edit/(\d+)", "{$class}@edit", $name, $middleware);
+    put("$path/(\d+)", "{$class}@update", $name, $middleware);
+    delete("$path/(\d+)", "{$class}@destroy", $name, $middleware);
 }
 
 /**
@@ -177,28 +218,90 @@ function resource(string $path, $class, array $middleware = [])
  * @param string $class
  * @param array $middleware
  */
-function api_resource(string $path, $class, array $middleware = [])
+function api_resource(string $path, $class, ?string $name = null, array $middleware = [])
 {
-    get($path, "{$class}@index", $middleware);
-    get("$path/(\d+)", "{$class}@show", $middleware);
-    post($path, "{$class}@store", $middleware);
-    put("$path/(\d+)", "{$class}@update", $middleware);
-    delete("$path/(\d+)", "{$class}@destroy", $middleware);
+    if ($name === null) {
+        $name = str_replace('/', '.', trim($path, '/'));
+    }
+
+    get($path, "{$class}@index", $name, $middleware);
+    get("$path/(\d+)", "{$class}@show", $name, $middleware);
+    post($path, "{$class}@store", $name, $middleware);
+    put("$path/(\d+)", "{$class}@update", $name, $middleware);
+    delete("$path/(\d+)", "{$class}@destroy", $name, $middleware);
 }
 
 /**
- * @param Closure|string|array $callback
+ * @param Closure|string|array|null $callback
  */
-function error($callback)
+function error($callback = null)
 {
-    $groups = group();
+    static $cb;
 
-    if (\array_key_exists('namespace', $groups) && \is_string($callback)) {
-        $callback = \implode('', $groups['namespace']) . $callback;
+    if ($callback === null) {
+        return $cb;
     }
 
-    if (!\defined('ROUTE_MATCHED')) {
-        \http_response_code(404);
-        call($callback);
+    $cb = $callback;
+}
+
+/**
+ * @return stdClass|boolean
+ */
+function resolve()
+{
+    $routes = collection();
+    $method = request\method();
+    $path = request\path();
+
+    if (\array_key_exists($key = $method . ' ' . $path, $routes)) {
+        return $routes[$key];
+    }
+
+    foreach ($routes as $route) {
+        $methodMatch = \in_array($method, $route->methods);
+        $pathMatch = $route->path == $path || \preg_match(
+            "~^{$route->path}$~ixs", $path, $params
+        ) >= 1;
+        $params = $params ?? [];
+
+        if ($methodMatch && $pathMatch) {
+            return $route;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * @return mixed
+ */
+function run()
+{
+    $route = resolve();
+
+    if ($route !== false ) {
+        foreach ($route->middleware as $mw) call($mw);
+        return call($route->callback);
+    }
+
+    \http_response_code(404);
+    $error = error() ?? function() {};
+    return call($error);
+}
+
+function url(string $name, ...$args) {
+    if (isset($args[0]) && \is_array($args[0])) {
+        $args = $args[0];
+    }
+
+    if (\array_key_exists($name, $names = names())) {
+        $pattern = $names[$name];
+
+        foreach ($args as $arg) {
+            $pattern = \preg_replace('/\(.*?\)/', $arg, $pattern, 1);
+        }
+
+        return $pattern;
     }
 }
