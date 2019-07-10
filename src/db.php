@@ -140,7 +140,7 @@ function fetch(string $query, array $params = [])
 
 function fetch_object(string $query, array $params = [])
 {
-    return query($query, $params)->fetch(\PDO::FETCH_OBJ);
+    return query($query, $params)->fetch(PDO::FETCH_OBJ);
 }
 
 function fetch_all(string $query, array $params = [])
@@ -150,7 +150,7 @@ function fetch_all(string $query, array $params = [])
 
 function fetch_all_object(string $query, array $params = [])
 {
-    return query($query, $params)->fetchAll(\PDO::FETCH_OBJ);
+    return query($query, $params)->fetchAll(PDO::FETCH_OBJ);
 }
 
 function fetch_column(string $query, array $params = [])
