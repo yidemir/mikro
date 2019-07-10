@@ -4,6 +4,8 @@ route\get('/', function() {
     return response\html('Hello world!');
 });
 
+route\get('/foo/bar', function() {}, 'route.name');
+
 view\path('/path/to/views'); // set views path
 route\get('/show_template', function() {
     return route\view('template', ['data' => 'data']); // rendered: /path/to/views/template.php
@@ -17,7 +19,8 @@ route\any('/hello', 'HelloController@index');
 route\group([
     'path' => '/admin',
     'namespace' => 'App\Controllers\Admin\\',
-    'middleware' => []
+    'middleware' => [],
+    'name' => 'admin.'
 ], function() {
     route\get('/', 'Dashboard@index');
 
@@ -46,3 +49,11 @@ route\error(function() {
     return response\json(['error' => 404]);
 });
 
+route\url('route.name'); // return "/foo/bar"
+
+route\get('/show/page/:id', 'PageController@show', 'show.page');
+route\url('show.page', 5); // "/show/page/5"
+
+route\collection(); // returns route collection
+route\resolve(); // returns matched route
+route\run(); // runs matched route
