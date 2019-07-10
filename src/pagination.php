@@ -7,7 +7,7 @@ use request;
 
 function paginate(array $options)
 {
-    if (!key_exists('totalItems', $options)) {
+    if (!\array_key_exists('totalItems', $options)) {
         throw new \InvalidArgumentException('Toplam sayfa sayısı belirlenmelidir');
     }
 
