@@ -5,11 +5,11 @@ namespace request;
 
 function method(): string
 {
-    if (key_exists('_method', $_POST)) {
+    if (\array_key_exists('_method', $_POST)) {
         return $_POST['_method'];
     }
 
-    if (key_exists('REQUEST_METHOD', $_SERVER)) {
+    if (\array_key_exists('REQUEST_METHOD', $_SERVER)) {
         return $_SERVER['REQUEST_METHOD'];
     }
 
@@ -79,7 +79,7 @@ function headers(): array
         function (array $headers, $key): array {
             if ($key == 'CONTENT_TYPE') $headers[] = $key;
             if ($key == 'CONTENT_LENGTH') $headers[] = $key;
-            if (substr($key, 0, 5) == 'HTTP_') $headers[] = $key;
+            if (\substr($key, 0, 5) == 'HTTP_') $headers[] = $key;
 
             return $headers;
         },
