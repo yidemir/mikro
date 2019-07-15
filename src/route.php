@@ -264,6 +264,8 @@ function resolve()
             "~^{$route->path}$~ixs", $path, $params
         ) >= 1;
         $params = $params ?? [];
+        \array_shift($params);
+        $route->params = $params;
 
         if ($methodMatch && $pathMatch) {
             return $route;
@@ -279,10 +281,11 @@ function resolve()
 function run()
 {
     $route = resolve();
+    $params = $route->params ?? [];
 
     if ($route !== false ) {
         foreach ($route->middleware as $mw) call($mw);
-        return call($route->callback);
+        return call($route->callback, $params);
     }
 
     \http_response_code(404);
