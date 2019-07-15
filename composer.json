@@ -19,9 +19,14 @@
     },
     "autoload": {
         "files": [
+            "src/cache.php",
             "src/config.php",
+            "src/container.php",
             "src/crypt.php",
             "src/db.php",
+            "src/event.php",
+            "src/lang.php",
+            "src/log.php",
             "src/pagination.php",
             "src/request.php",
             "src/response.php",
