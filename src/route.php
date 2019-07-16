@@ -181,6 +181,10 @@ function group($options = null, ?Closure $callback = null)
     if (\is_string($options)) {
         $options = ['path' => $options];
     }
+    
+    if (\array_key_exists('middleware', $options) && !\is_array($options['middleware'])) {
+        $options['middleware'] = [$options['middleware']];
+    }
 
     foreach ($options as $name => $option) {
         $groups[$name][] = $option;
