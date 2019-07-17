@@ -21,7 +21,7 @@ container\get('object'); // stdClass instance
 container\get('object') === container\get('object'); // false
 
 
-container\singleton('object_tow', function() {
+container\singleton('object_two', function() {
     return new class {
         public function sayHello(string $name)
         {
