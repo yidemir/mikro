@@ -203,7 +203,7 @@ request\check_csrf(string $token): bool
 The router supports all REST methods and is resourceful. Each route you define is checked when calling.
 
 ```php
-route\map(array $methods, string $path, $callback, array $middleware = []): void
+route\map(array $methods, string $path, $callback, ?string $name, array $middleware = []): void
 ```
 
 ```php
@@ -219,11 +219,11 @@ route\map(['GET', 'POST'], '/test', function() {
 ## Route Methods
 
 ```php
-route\get(string $path, $callback, array $middleware = []): void
-route\post(string $path, $callback, array $middleware = []): void
-route\put(string $path, $callback, array $middleware = []): void
-route\delete(string $path, $callback, array $middleware = []): void
-route\any(string $path, $callback, array $middleware = []): void
+route\get(string $path, $callback, ?string $name = null, array $middleware = []): void
+route\post(string $path, $callback, ?string $name = null, array $middleware = []): void
+route\put(string $path, $callback, ?string $name = null, array $middleware = []): void
+route\delete(string $path, $callback, ?string $name = null, array $middleware = []): void
+route\any(string $path, $callback, ?string $name = null, array $middleware = []): void
 ```
 
 ```php
@@ -248,7 +248,7 @@ route\group(['namespace' => 'App\Controllers\\'], function() {
   // ... route definitions
   route\group(['path' => '/admin', 'namespace' => 'Admin\\'], function() {
     route\get('/', 'DashboardController@index');
-  }, ['middleware_callback', new MiddlewareCallback]);
+  });
 });
 
 // or simple
@@ -272,7 +272,7 @@ route\api_resource(string $path, $class, array $middleware = []): void
 route\resource('/posts', 'App\Controllers\PostController');
 route\resource('/categories', App\Controllers\CategoryController::class);
 
-route\api_resource('/admin/posts', App\Controllers\Admin\PostController::class');
+route\api_resource('/admin/posts', App\Controllers\Admin\PostController::class);
 ```
 
 ---
