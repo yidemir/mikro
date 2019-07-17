@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace route;
 
 use Closure;
-use request;
 use stdClass;
+use Exception;
+use function request\{method, path};
+use function response\redirect as response_redirect;
 
 function collection(?stdClass $route = null)
 {
@@ -19,7 +21,7 @@ function collection(?stdClass $route = null)
         return $collection;
     }
 
-    $collection[implode('|', $route->methods) . ' ' . $route->path] = $route;
+    $collection[\implode('|', $route->methods) . ' ' . $route->path] = $route;
 }
 
 function names(?array $name = null)
@@ -205,7 +207,7 @@ function group($options = null, ?Closure $callback = null)
 function resource(string $path, $class, ?string $name = null, array $middleware = [])
 {
     if ($name === null) {
-        $name = str_replace('/', '.', trim($path, '/'));
+        $name = \str_replace('/', '.', \trim($path, '/'));
     }
 
     get($path, "{$class}@index", $name, $middleware);
@@ -225,7 +227,7 @@ function resource(string $path, $class, ?string $name = null, array $middleware 
 function api_resource(string $path, $class, ?string $name = null, array $middleware = [])
 {
     if ($name === null) {
-        $name = str_replace('/', '.', trim($path, '/'));
+        $name = \str_replace('/', '.', \trim($path, '/'));
     }
 
     get($path, "{$class}@index", $name, $middleware);
@@ -311,4 +313,11 @@ function url(string $name, ...$args) {
 
         return $pattern;
     }
+
+    throw new Exception('Named route not exists: ' . $name);
+}
+
+function redirect(string $name, ...$args)
+{
+    return response_redirect(url($name, ...$args));
 }
