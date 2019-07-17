@@ -4,11 +4,12 @@ declare(strict_types=1);
 namespace pagination;
 
 use request;
+use InvalidArgumentException;
 
 function paginate(array $options)
 {
     if (!\array_key_exists('totalItems', $options)) {
-        throw new \InvalidArgumentException('Toplam sayfa sayısı belirlenmelidir');
+        throw new InvalidArgumentException('Toplam sayfa sayısı belirlenmelidir');
     }
 
     $totalItems = $options['totalItems'];
