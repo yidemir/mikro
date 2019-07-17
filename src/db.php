@@ -27,7 +27,7 @@ function connection($name = null)
             $connection = $connections[$default];
             return ($connection instanceof Closure) ? $connection() : $connection;
         } else {
-            throw new Exception('Bağlantı mevcut değil: ' . $default);
+            throw new Exception('Database connection not exists: ' . $default);
         }
     }
 }

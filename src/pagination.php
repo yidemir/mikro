@@ -9,7 +9,7 @@ use InvalidArgumentException;
 function paginate(array $options)
 {
     if (!\array_key_exists('totalItems', $options)) {
-        throw new InvalidArgumentException('Toplam sayfa sayısı belirlenmelidir');
+        throw new InvalidArgumentException('The total number of items parameter is not specified.');
     }
 
     $totalItems = $options['totalItems'];

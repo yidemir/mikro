@@ -22,7 +22,7 @@ function emit(string $name, array $args = [])
     $events = listen();
 
     if (!\array_key_exists($name, $events)) {
-        throw new Exception('Olay mevcut değil: ' . $name);
+        throw new Exception('Event not exists: ' . $name);
     }
 
     foreach ($events[$name] as $event) {

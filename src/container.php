@@ -38,7 +38,7 @@ function get(string $name, array $args = [])
         }
     }
 
-    throw new Exception(\sprintf('Öğe mevcut değil: "%s"', $name));
+    throw new Exception(\sprintf('Container item not exists: "%s"', $name));
 }
 
 /**

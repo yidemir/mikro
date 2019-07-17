@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace view;
 
+use Exception;
+
 function path(?string $path = null): string
 {
     static $viewPath = '';
@@ -27,7 +29,7 @@ function render(string $file, array $data = []): ?string
         return \ob_get_clean();
     }
 
-    throw new \Exception('Görünüm mevcut değil: ' . $path);
+    throw new Exception('View not exists: ' . $path);
 }
 
 /**
