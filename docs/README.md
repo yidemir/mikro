@@ -44,7 +44,8 @@ route\any('/', 'HomeController@index');
   * [Encryption](#encryption)
   * [Event Handling](#event-handling)
   * [Language](#language)
-  * [Loging](Logging)
+  * [Loging](#logging)
+  * [Html](#html)
 
 ---
 
@@ -725,4 +726,81 @@ write(string $type, $data)
 error($data)
 info($data)
 debug($data)
+```
+
+---
+
+# Html
+The HTML tool allows you to create simple form interfaces and HTML tags. It is not used for DOM manipulation.
+
+**References**
+```php
+tag(string $name, string|array $content = '', array $attributes = []): object
+div(string|array $content = '', array $attributes = []): object
+p(array|string $content = '', array $attributes = []): object
+span(array|string $content = '', array $attributes = []): object
+label(array|string $content = '', ?string $for = null, array $attributes = []): object
+input(string $type, ?string $name = null, array $attributes = []): object
+textarea(array|string $content = '', ?string $name = null, array $attributes = []): object
+select(array $options = [], ?string $name = null, array $attributes = []): object
+button(array|string $content = '', array $attributes = []): object
+```
+
+**Creating HTML tags**
+```php
+html\tag('div', 'Hello world!', ['class' => 'alert alert-success']);
+// or
+html\tag('div', 'Hello world!')->class('alert alert-success');
+// returns <div class="alert alert-success">Hello world!</div>
+
+html\tag('div', [
+  html\tag('label', 'Username')->for('username'),
+  html\tag('input')
+    ->type('text')
+    ->name('username')
+    ->id('username')
+    ->class('form-control')
+])->class('form-group');
+
+// returns
+// <div class="form-group">
+// <label for="username">Username</label>
+// <input type="text" name="username" id="username" class="form-control">
+// </div>
+
+// or
+html\div([
+  html\label('Username', 'username'),
+  html\input('text', 'username')->class('form-control')
+])->class('form-group')
+```
+
+**Form Select Element**
+```php
+$options = ['' => 'Please Select', 1 => 'One', 2 => 'Two'];
+
+html\select($options, 'category_id');
+// returns
+// <select name="category_id" id="category_id">
+// <option value="">Please Select</option>
+// <option value="1">One</option>
+// <option value="2">Two</option>
+// </select>
+
+// If we want to change the attributes of the option element:
+html\select($options, 'category_id', [
+  'selectedOption' => 1,
+  'optionAttributes' => [
+    1 => ['data-foo' => 'bar'],
+    2 => ['x' => 'y']
+  ],
+  'class' => 'form-control'
+])->onclick("alert('Select clicked')")
+
+// returns
+// <select name="category_id" id="category_id" class="form-control" onclick="alert('Select clicked')">
+// <option value="">Please Select</option>
+// <option value="1" selected data-foo="bar">One</option>
+// <option value="2" x="y">Two</option>
+// </select>
 ```

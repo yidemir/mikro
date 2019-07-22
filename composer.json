@@ -25,6 +25,7 @@
             "src/crypt.php",
             "src/db.php",
             "src/event.php",
+            "src/html.php",
             "src/lang.php",
             "src/log.php",
             "src/pagination.php",
