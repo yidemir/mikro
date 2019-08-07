@@ -10,11 +10,14 @@ composer require yidemir/mikro
 * String encryption/decryption
 * Database functionality (create, read, update, delete, querying)
 * Pagination (array pagination)
-* Request processiong
+* Request processing
 * Response methods
 * Router (methods, groups, resources)
 * Validator (simple validation)
 * View (simple layout and blocks)
+* Session, Cookie, CSRF and Flash message components
+* Logging, event handling and HTML generation components
+* and much more
 
 ## Usage
 ```php
@@ -29,14 +32,14 @@ route\post('/save', function() {
 route\put('/update/:id', function($id) {
     $data = request\input(['title', 'body', 'tags', 'created_at']);
     db\table('posts')->update($data, $id);
-    request\flash('post updated!');
+    flash\push('post updated!');
     return response\redirect('/');
 });
 
 route\group([
     'path' => '/admin',
     'namespace' => 'App\Controllers\Admin\\',
-    'middleware' => ['check_admin_middleware'],
+    'middleware' => ['App\Middlewares\CheckAdmin'],
     'name' => 'admin.'
 ], function() {
     route\get('/', 'DashboardController@index', 'home');
@@ -56,5 +59,19 @@ route\error(function() {
 });
 
 route\run();
+```
+
+Database examples
+```php
+$items = db\table('items')->get('where weight=? order by created_at desc', [37]);
+$item = db\table('items')->find('where is_new=:is_new and foo=:foo', [
+    'is_new' => true,
+    'foo' => 'bar'
+]);
+$itemCount = db\table('items')->select('count(*)')->column('where foo=?', ['bar']);
+
+$items = db\query('select * from items')->fetchAll();
+$item = db\query('select * from posts where id=?', [100])->fetch();
+$itemCount = db\query('select count(*) from items')->fetchColumn();
 ```
 more examples in examples directory.

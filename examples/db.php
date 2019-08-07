@@ -27,12 +27,6 @@ db\table('posts')->paginate('where is_published=?', [1], ['perPage' => 25]);
 
 db\query('select * from posts where is_published=?', [true])->fetchAll();
 
-$post = db\fetch('select * from posts where id=?', [5]);
-$post = db\fetch_object('select * from posts where id=?', [5]);
-$posts = db\fetch_all('select * from posts');
-$posts = db\fetch_all_object('select * from posts');
-$count = db\fetch_column('select count(*) from posts');
-
 db\insert('posts', $data);
 db\update('posts', $data, 'where id=?', [5]);
 db\delete('posts', 'where id=?', [7]);

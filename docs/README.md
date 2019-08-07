@@ -483,14 +483,9 @@ db\query('select * from posts where id=?', [$id])->fetch()
 
 ---
 
-## Fetch Methods
+## Executing Queries
 
 ```php
-db\fetch('select * from ...');
-db\fetch_object('select * from ...');
-db\fetch_all('select * from ...');
-db\fetch_all_object('select * from ...');
-db\fetch_column('select count(*) from ...');
 db\exec('query');
 ```
 

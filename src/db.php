@@ -86,6 +86,13 @@ function table(string $table, string $primaryKey = 'id')
             return query($query, $params)->fetch();
         }
 
+        public function column($queryPart = '', array $params = [])
+        {
+            $query = "SELECT $this->select FROM $this->table $queryPart";
+
+            return query($query, $params)->fetchColumn();
+        }
+
         public function insert(array $data): PDOStatement
         {
             return insert($this->table, $data);
@@ -135,31 +142,6 @@ function query(string $query, array $params = []): PDOStatement
     $sth->execute($params);
 
     return $sth;
-}
-
-function fetch(string $query, array $params = [])
-{
-    return query($query, $params)->fetch();
-}
-
-function fetch_object(string $query, array $params = [])
-{
-    return query($query, $params)->fetch(PDO::FETCH_OBJ);
-}
-
-function fetch_all(string $query, array $params = [])
-{
-    return query($query, $params)->fetchAll();
-}
-
-function fetch_all_object(string $query, array $params = [])
-{
-    return query($query, $params)->fetchAll(PDO::FETCH_OBJ);
-}
-
-function fetch_column(string $query, array $params = [])
-{
-    return query($query, $params)->fetchColumn();
 }
 
 function exec(string $query): int
