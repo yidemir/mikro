@@ -5,13 +5,14 @@ namespace validator;
 
 use Closure;
 use stdClass;
+use Exception;
 
 function collection(?string $rule = null, ?Closure $callback = null): array
 {
     static $collection;
 
     if ($collection === null) {
-        return [
+        $collection = [
             'required' => function($key, $values) {
                 return isset($values[$key]) && !empty($values[$key]);
             },
@@ -166,6 +167,9 @@ function validate(array $values, array $rules): stdClass
     return $validator;
 }
 
+/**
+ * @throws Exception
+ */
 function parse(array $parseableRules): array
 {
     $parsedRules = [];
@@ -185,7 +189,7 @@ function parse(array $parseableRules): array
             $rule = $rule[0];
 
             if (!\array_key_exists($rule, collection())) {
-                throw new \Exception('Kural mevcut değil: ' . $rule);
+                throw new Exception('Rule not exists: ' . $rule);
             }
 
             $parsedRules[$field]['name'] = $name;

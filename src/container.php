@@ -26,6 +26,9 @@ function has(string $name): bool
     return \array_key_exists($name, collection());
 }
 
+/**
+ * @throws Exception
+ */
 function get(string $name, array $args = [])
 {
     $items = collection();

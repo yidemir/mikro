@@ -31,7 +31,7 @@ function get(string $key, $default = null)
     $file = \array_shift($dots);
     $path = \sprintf('%s/%s/%s.php', path(), lang(), $file);
 
-    if (is_file($path)) {
+    if (\is_file($path)) {
         static $loaded = [];
 
         if (\array_key_exists($file, $loaded)) {

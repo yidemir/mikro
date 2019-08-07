@@ -210,13 +210,13 @@ function resource(string $path, $class, ?string $name = null, array $middleware 
         $name = \str_replace('/', '.', \trim($path, '/'));
     }
 
-    get($path, "{$class}@index", $name, $middleware);
-    get("$path/(\d+)", "{$class}@show", $name, $middleware);
-    get("$path/create", "{$class}@create", $name, $middleware);
-    post($path, "{$class}@store", $name, $middleware);
-    get("$path/edit/(\d+)", "{$class}@edit", $name, $middleware);
-    put("$path/(\d+)", "{$class}@update", $name, $middleware);
-    delete("$path/(\d+)", "{$class}@destroy", $name, $middleware);
+    get($path, "{$class}@index", "{$name}.index", $middleware);
+    get("$path/(\d+)", "{$class}@show", "{$name}.show", $middleware);
+    get("$path/create", "{$class}@create", "{$name}.create", $middleware);
+    post($path, "{$class}@store", "{$name}.store", $middleware);
+    get("$path/edit/(\d+)", "{$class}@edit", "{$name}.edit", $middleware);
+    put("$path/(\d+)", "{$class}@update", "{$name}.update", $middleware);
+    delete("$path/(\d+)", "{$class}@destroy", "{$name}.destroy", $middleware);
 }
 
 /**
@@ -230,11 +230,11 @@ function api_resource(string $path, $class, ?string $name = null, array $middlew
         $name = \str_replace('/', '.', \trim($path, '/'));
     }
 
-    get($path, "{$class}@index", $name, $middleware);
-    get("$path/(\d+)", "{$class}@show", $name, $middleware);
-    post($path, "{$class}@store", $name, $middleware);
-    put("$path/(\d+)", "{$class}@update", $name, $middleware);
-    delete("$path/(\d+)", "{$class}@destroy", $name, $middleware);
+    get($path, "{$class}@index", "{$name}.index", $middleware);
+    get("$path/(\d+)", "{$class}@show", "{$name}.show", $middleware);
+    post($path, "{$class}@store", "{$name}.store", $middleware);
+    put("$path/(\d+)", "{$class}@update", "{$name}.update", $middleware);
+    delete("$path/(\d+)", "{$class}@destroy", "{$name}.destroy", $middleware);
 }
 
 /**
@@ -257,8 +257,8 @@ function error($callback = null)
 function resolve()
 {
     $routes = collection();
-    $method = request\method();
-    $path = request\path();
+    $method = method();
+    $path = path();
 
     if (\array_key_exists($key = $method . ' ' . $path, $routes)) {
         return $routes[$key];
@@ -299,6 +299,9 @@ function run()
     return call($error);
 }
 
+/**
+ * @throws Exception
+ */
 function url(string $name, ...$args) {
     if (isset($args[0]) && \is_array($args[0])) {
         $args = $args[0];

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace request;
 
+use Exception;
+
 function method(): string
 {
     if (\array_key_exists('_method', $_POST)) {
@@ -120,49 +122,4 @@ function is_ajax(): bool
 {
     return isset($_SERVER['X-Requested-With']) &&
         \strtolower($_SERVER['X-Requested-With']) == 'xmlhttprequest';
-}
-
-/**
- * @param string|array $key
- * @param mixed $default
- *
- * @return mixed
- */
-function session($key, $default = null)
-{
-    if (\is_array($key)) {
-        foreach ($key as $k => $v) {
-            $_SESSION[$k] = $v;
-        }
-
-        return;
-    }
-
-    return $_SESSION[$key] ?? $default;
-}
-
-function flash(string $message, string $type = 'default'): void
-{
-    $_SESSION['_FLASH'][$type][] = $message;
-}
-
-function get_flash(string $type = 'default'): array
-{
-    $messages = $_SESSION['_FLASH'][$type] ?? [];
-    unset($_SESSION['_FLASH'][$type]);
-    return $messages;
-}
-
-function get_csrf(): string
-{
-    if (empty(\session_id())) {
-        throw new \Exception('Session not statrted');
-    }
-
-    return \crypt\encrypt(\session_id());
-}
-
-function check_csrf(string $token): bool
-{
-    return \session_id() === \crypt\decrypt($token);
 }

@@ -8,6 +8,9 @@ use Closure;
 use Exception;
 use PDOStatement;
 
+/**
+ * @throws Exception
+ */
 function connection($name = null)
 {
     static $connections;

@@ -67,6 +67,9 @@ function redirect(string $to, int $code = 301): void
     send_header('Location', $to);
 }
 
+/**
+ * @throws Exception
+ */
 function view(
     string $file,
     array $data = [],

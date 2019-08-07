@@ -17,6 +17,9 @@ function listen(?string $name = null, ?Closure $callback = null)
     $collection[$name][] = $callback;
 }
 
+/**
+ * @throws Exception
+ */
 function emit(string $name, array $args = [])
 {
     $events = listen();

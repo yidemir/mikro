@@ -28,8 +28,8 @@ function get(string $key, $default = null)
     }
 
     $filename = \sprintf('%s/%s.cache', path(), \md5($key));
-    $data = @\file_get_contents($filename);
-    @[$value, $ttl] = @\unserialize($data);
+    $data = \file_get_contents($filename) ?? null;
+    [$value, $ttl] = @\unserialize($data) ?? [null, null];
 
     if (\is_numeric($ttl)) {
         if ($ttl != 0 && \time() >= $ttl) {
@@ -84,6 +84,8 @@ function flush(): void
 
 /**
  * @param string|int $ttl
+ *
+ * @return mixed
  */
 function remember(string $key, Closure $callback, $ttl = 0)
 {

@@ -16,6 +16,9 @@ function path(?string $path = null): string
     return $viewPath;
 }
 
+/**
+ * @throws Exception
+ */
 function render(string $file, array $data = []): ?string
 {
     $file = str_replace('.', '/', $file);
