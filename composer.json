@@ -21,7 +21,7 @@
         "files": [
             "src/cache.php",
             "src/config.php",
-            "src/console.php"
+            "src/console.php",
             "src/container.php",
             "src/cookie.php",
             "src/crypt.php",
