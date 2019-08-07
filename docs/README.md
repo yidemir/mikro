@@ -45,8 +45,12 @@ route\any('/', 'HomeController@index');
   * [Event Handling](#event-handling)
   * [Language](#language)
   * [Loging](#logging)
-  * [Html](#html)
+  * [HTML](#html)
   * [Console](#console)
+  * [Cookie](#cookie)
+  * [CSRF](#csrf)
+  * [Flash](#flash)
+  * [Session](#session)
 
 ---
 
@@ -170,33 +174,6 @@ request\input(mixed $key, mixed $default = null): mixed
 $id = request\input('id');
 $page = request\input('page', 1); // if page parameter not exists, page is 1
 $fields = request\input(['title', 'body', 'tags', 'created_at']);
-```
-
----
-
-## Sessions
-
-```php
-request\session(mixed $key, mixed $default = null): mixed
-```
-
----
-
-## Flash Messages
-
-```php
-request\flash(string $message, string $type = 'default'): void
-request\get_flash(string $type = 'default'): array
-```
-
----
-
-## CSRF Protection
-Refer to section Crypt before using this methods.
-
-```php
-request\get_csrf(): string
-request\check_csrf(string $token): bool
 ```
 
 ---
@@ -816,4 +793,53 @@ register(string $command, Closure $callback, array $details = [])
 run(array $argv)
 running_on_cli(): bool
 register_framework_commands()
+```
+
+---
+
+# Cookie
+**References**
+```php
+disable_encryption(?bool $is = null): bool
+get(string $key, $default = null)
+set(
+    $key,
+    $value,
+    $expires = 0,
+    string $path = '',
+    string $domain = '',
+    bool $secure = false,
+    bool $httpOnly = false
+): bool
+```
+
+---
+
+# CSRF
+**References**
+```php
+token(): string
+field(): string
+check(?string $token = null)
+```
+
+---
+
+# Flash
+**References**
+```php
+push(string $message, string $type = 'default')
+message(string $message)
+error(string $message)
+get(string $type = 'default'): array
+```
+
+---
+
+# Session
+**References**
+```php
+get(string $key, $default = null)
+set($key, $value = null)
+all(): array
 ```
