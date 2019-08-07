@@ -21,10 +21,14 @@
         "files": [
             "src/cache.php",
             "src/config.php",
+            "src/console.php"
             "src/container.php",
+            "src/cookie.php",
             "src/crypt.php",
+            "src/csrf.php",
             "src/db.php",
             "src/event.php",
+            "src/flash.php",
             "src/html.php",
             "src/lang.php",
             "src/log.php",
@@ -32,6 +36,7 @@
             "src/request.php",
             "src/response.php",
             "src/route.php",
+            "src/session.php",
             "src/validator.php",
             "src/view.php"
         ]
