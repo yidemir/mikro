@@ -789,7 +789,7 @@ html\select($options, 'category_id', [
 **References**
 ```php
 collection(array $command = [])
-register(string $command, Closure $callback, array $details = [])
+register(string $command, Closure $callback)
 run(array $argv)
 running_on_cli(): bool
 register_framework_commands()

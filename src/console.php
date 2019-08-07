@@ -21,10 +21,9 @@ function collection(array $command = [])
     return $collection;
 }
 
-function register(string $command, Closure $callback, array $details = [])
+function register(string $command, Closure $callback)
 {
-    $details['callback'] = $callback;
-    collection([$command => $details]);
+    collection([$command => $callback]);
 }
 
 function run(array $argv)
