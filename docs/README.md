@@ -46,6 +46,7 @@ route\any('/', 'HomeController@index');
   * [Language](#language)
   * [Loging](#logging)
   * [Html](#html)
+  * [Console](#console)
 
 ---
 
@@ -450,7 +451,7 @@ db\table('posts')->find(5); // get post 5
 db\table('posts')->get('order by created_at desc');
 db\table('posts')->get('where is_approved=1 and type=?', ['post']);
 db\table('posts')->select('id, title, body')->get();
-db\table('posts', 'post_id')->find('where id=?', [5]);
+db\table('posts', 'post_id')->find(5); // get post_id=5
 ```
 
 ---
@@ -803,4 +804,16 @@ html\select($options, 'category_id', [
 // <option value="1" selected data-foo="bar">One</option>
 // <option value="2" x="y">Two</option>
 // </select>
+```
+
+---
+
+# Console
+**References**
+```php
+collection(array $command = [])
+register(string $command, Closure $callback, array $details = [])
+run(array $argv)
+running_on_cli(): bool
+register_framework_commands()
 ```
