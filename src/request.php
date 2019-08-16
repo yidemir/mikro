@@ -21,8 +21,10 @@ function method(): string
 function path(): string
 {
     $path = $_SERVER['REQUEST_URI'] ?? '/';
+    $path = \explode('?', $path, 2);
+    $path = \rtrim($path[0], '/');
 
-    return \explode('?', $path, 2)[0];
+    return $path;
 }
 
 function query_string(): string
