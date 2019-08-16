@@ -20,7 +20,21 @@ function method(): string
 
 function path(): string
 {
-    return $_SERVER['PATH_INFO'] ?? '/';
+    $path = $_SERVER['REQUEST_URI'] ?? '/';
+
+    return \explode('?', $path, 2)[0];
+}
+
+function query_string(): string
+{
+    return $_SERVER['QUERY_STRING'] ?? '';
+}
+
+function query(): array
+{
+    \parse_str(query_string(), $query);
+
+    return $query;
 }
 
 function all(): array

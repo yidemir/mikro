@@ -43,17 +43,22 @@ function names(?array $name = null)
  * @param array $methods
  * @param string $path
  * @param Closure|array|string $callback
- * @param array $middleware
+ * @param array|string $options
  */
-function map(
-    array $methods,
-    string $path,
-    $callback,
-    ?string $name = null,
-    array $middleware = []
-)
+function map(array $methods, string $path, $callback, $options = [])
 {
     $groups = group();
+
+    if (\is_string($options)) {
+        $options = ['name' => $options];
+    }
+
+    if (
+        \array_key_exists('middleware', $options) && 
+        !\is_array($options['middleware'])
+    ) {
+        $options['middleware'] = (array) $options['middleware'];
+    }
 
     if (\array_key_exists('namespace', $groups) && \is_string($callback)) {
         $callback = \implode('', $groups['namespace']) . $callback;
@@ -63,10 +68,15 @@ function map(
         $path = \implode('', $groups['path']) . $path;
     }
 
+    $middleware = $options['middleware'] ?? [];
+
     if (\array_key_exists('middleware', $groups)) {
         $mws = isset($groups['middleware'][0]) ? $groups['middleware'][0] : [];
+        $middleware = \is_array($middleware) ? $middleware : [$middleware];
         $middleware = \array_merge($mws, $middleware);
     }
+
+    $name = $options['name'] ?? null;
 
     if (\array_key_exists('name', $groups) && !is_null($name)) {
         $name = \implode('', $groups['name']) . $name;
@@ -100,6 +110,7 @@ function map(
 function call($callback, array $params = [])
 {
     $pattern = '!^([^\:]+)\@([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$!';
+
     if (\is_string($callback) && \preg_match($pattern, $callback) >= 1) {
         $callback = \explode('@', $callback, 2);
     }
@@ -121,51 +132,51 @@ function call($callback, array $params = [])
 /**
  * @param string $path
  * @param array|object|string $callback
- * @param array $middleware
+ * @param array|string $options
  */
-function get(string $path, $callback, ?string $name = null, array $middleware = [])
+function get(string $path, $callback, $options = [])
 {
-    return map(['GET'], $path, $callback, $name, $middleware);
+    return map(['GET'], $path, $callback, $options);
 }
 
 /**
  * @param string $path
  * @param array|object|string $callback
- * @param array $middleware
+ * @param array|string $options
  */
-function post(string $path, $callback, ?string $name = null, array $middleware = [])
+function post(string $path, $callback, $options = [])
 {
-    return map(['POST'], $path, $callback, $name, $middleware);
+    return map(['POST'], $path, $callback, $options);
 }
 
 /**
  * @param string $path
  * @param array|object|string $callback
- * @param array $middleware
+ * @param array|string $options
  */
-function put(string $path, $callback, ?string $name = null, array $middleware = [])
+function put(string $path, $callback, $options = [])
 {
-    return map(['PUT'], $path, $callback, $name, $middleware);
+    return map(['PUT'], $path, $callback, $options);
 }
 
 /**
  * @param string $path
  * @param array|object|string $callback
- * @param array $middleware
+ * @param array|string $options
  */
-function delete(string $path, $callback, ?string $name = null, array $middleware = [])
+function delete(string $path, $callback, $options = [])
 {
-    return map(['DELETE'], $path, $callback, $name, $middleware);
+    return map(['DELETE'], $path, $callback, $options);
 }
 
 /**
  * @param string $path
  * @param array|object|string $callback
- * @param array $middleware
+ * @param array|string $options
  */
-function any(string $path, $callback, ?string $name = null, array $middleware = [])
+function any(string $path, $callback, $options = [])
 {
-    return map(['GET', 'POST', 'PUT', 'DELETE'], $path, $callback, $name, $middleware);
+    return map(['GET', 'POST', 'PUT', 'DELETE'], $path, $callback, $options);
 }
 
 function group($options = null, ?Closure $callback = null)
@@ -184,7 +195,10 @@ function group($options = null, ?Closure $callback = null)
         $options = ['path' => $options];
     }
     
-    if (\array_key_exists('middleware', $options) && !\is_array($options['middleware'])) {
+    if (
+        \array_key_exists('middleware', $options) &&
+        !\is_array($options['middleware'])
+    ) {
         $options['middleware'] = [$options['middleware']];
     }
 
@@ -202,21 +216,87 @@ function group($options = null, ?Closure $callback = null)
 /**
  * @param string $path
  * @param string $class
- * @param array $middleware
+ * @param array $options
  */
-function resource(string $path, $class, ?string $name = null, array $middleware = [])
+function resource(string $path, $class, $options = [])
 {
-    if ($name === null) {
-        $name = \str_replace('/', '.', \trim($path, '/'));
+    if (\is_string($options)) {
+        $options = ['name' => $options];
     }
 
-    get($path, "{$class}@index", "{$name}.index", $middleware);
-    get("$path/(\d+)", "{$class}@show", "{$name}.show", $middleware);
-    get("$path/create", "{$class}@create", "{$name}.create", $middleware);
-    post($path, "{$class}@store", "{$name}.store", $middleware);
-    get("$path/edit/(\d+)", "{$class}@edit", "{$name}.edit", $middleware);
-    put("$path/(\d+)", "{$class}@update", "{$name}.update", $middleware);
-    delete("$path/(\d+)", "{$class}@destroy", "{$name}.destroy", $middleware);
+    $name = $options['name'] ?? \str_replace('/', '.', \trim($path, '/'));
+    $middleware = $options['middleware'] ?? [];
+    $middleware = (array) $middleware;
+
+    $only = $options['only'] ?? [
+        'index', 'show', 'create', 'store', 'edit', 'update', 'destroy'
+    ];
+
+    $only = \is_string($only) ? \explode('|', $only) : $only;
+
+    $methods = [
+        'index' => 'get',
+        'show' => 'get',
+        'create' => 'get',
+        'store' => 'post',
+        'edit' => 'get',
+        'update' => 'put',
+        'destroy' => 'delete'
+    ];
+
+    if (\is_object($class)) {
+        $only = \get_class_methods($class);
+    } elseif (\is_array($class)) {
+        $only = \array_keys($class);
+    }
+
+    foreach ($only as $method) {
+        if (!\array_key_exists($method, $methods)) {
+            return false;
+        }
+
+        $ownPath = $path;
+
+        switch ($method) {
+            case 'show':
+            case 'update': 
+            case 'destroy': 
+                $ownPath .= '/(\d+)';
+                break;
+            case 'create':
+                $ownPath .=  '/create';
+                break;
+            case 'edit':
+                $ownPath .= '/(\d+)/edit';
+                break;
+        }
+
+        if (\is_string($class)) {
+            \call_user_func_array(
+                'route\\' . $methods[$method],
+                [$ownPath, $class . '@' . $method, [
+                    'name' => $name . '.' . $method,
+                    'middleware' => $middleware
+                ]]
+            );
+        } elseif (\is_object($class)) {
+            \call_user_func_array(
+                'route\\' . $methods[$method],
+                [$ownPath, [$class, $method], [
+                    'name' => $name . '.' . $method,
+                    'middleware' => $middleware
+                ]]
+            );
+        } elseif (\is_array($class)) {
+            \call_user_func_array(
+                'route\\' . $methods[$method],
+                [$ownPath, $class[$method], [
+                    'name' => $name . '.' . $method,
+                    'middleware' => $middleware
+                ]]
+            );
+        }
+    }
 }
 
 /**
@@ -224,17 +304,17 @@ function resource(string $path, $class, ?string $name = null, array $middleware 
  * @param string $class
  * @param array $middleware
  */
-function api_resource(string $path, $class, ?string $name = null, array $middleware = [])
+function api_resource(string $path, $class, $options = [])
 {
-    if ($name === null) {
-        $name = \str_replace('/', '.', \trim($path, '/'));
+    if (\is_string($options)) {
+        $options = ['name' => $options];
     }
 
-    get($path, "{$class}@index", "{$name}.index", $middleware);
-    get("$path/(\d+)", "{$class}@show", "{$name}.show", $middleware);
-    post($path, "{$class}@store", "{$name}.store", $middleware);
-    put("$path/(\d+)", "{$class}@update", "{$name}.update", $middleware);
-    delete("$path/(\d+)", "{$class}@destroy", "{$name}.destroy", $middleware);
+    $options['only'] = $options['only'] ?? [
+        'index', 'show', 'store', 'update', 'destroy'
+    ];
+
+    return resource($path, $class, $options);    
 }
 
 /**

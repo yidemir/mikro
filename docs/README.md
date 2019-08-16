@@ -198,11 +198,11 @@ route\map(['GET', 'POST'], '/test', function() {
 ## Route Methods
 
 ```php
-route\get(string $path, $callback, ?string $name = null, array $middleware = []): void
-route\post(string $path, $callback, ?string $name = null, array $middleware = []): void
-route\put(string $path, $callback, ?string $name = null, array $middleware = []): void
-route\delete(string $path, $callback, ?string $name = null, array $middleware = []): void
-route\any(string $path, $callback, ?string $name = null, array $middleware = []): void
+route\get(string $path, $callback, string|array $options = []): void
+route\post(string $path, $callback, string|array $options = []): void
+route\put(string $path, $callback, string|array $options = []): void
+route\delete(string $path, $callback, string|array $options = []): void
+route\any(string $path, $callback, string|array $options = []): void
 ```
 
 ```php
@@ -211,6 +211,12 @@ route\any('/', function() {
 });
 
 route\get('/', 'HomeController@index');
+
+route\get('/foo', 'FooClass@method', 'route.name');
+route\get('/bar', 'Bar@baz', [
+  'name' => 'route.name',
+  'middleware' => ['FooMiddleware', function() {}]
+]);
 ```
 
 ---
@@ -243,15 +249,45 @@ route\group('/simple', function() {
 ## Resourceful Routes
 
 ```php
-route\resource(string $path, $class, array $middleware = []): void
-route\api_resource(string $path, $class, array $middleware = []): void
+route\resource(string $path, $class, array|string $options = []): void
+route\api_resource(string $path, $class, array|string $options = []): void
 ```
 
 ```php
 route\resource('/posts', 'App\Controllers\PostController');
+route\resource('/posts', 'App\Controllers\PostController', 'resource.name');
 route\resource('/categories', App\Controllers\CategoryController::class);
+route\resource('/categories', App\Controllers\CategoryController::class, [
+  'name' => 'resource.name',
+  'middleware' => ['MiddlewareCallback']
+]);
 
 route\api_resource('/admin/posts', App\Controllers\Admin\PostController::class);
+
+route\resource('/foo', new class {
+  public function index()
+  {
+    return response\view('foo.index');
+  }
+
+  public function show($id) {}
+  public function create() {}
+  public function store() {}
+  public function edit($id) {}
+  public function update($id) {}
+  public function destroy($id) {}
+}, [
+  'name' => 'groupname',
+  'middleware' => ['FooMiddleware']
+]);
+
+route\resource('/bar', [
+  'index' => function() {
+
+  }
+
+  // other resource methods
+]);
 ```
 
 ---

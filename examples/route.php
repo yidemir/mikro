@@ -45,6 +45,40 @@ route\group([
     route\api_resource('/categories', 'CategoryController');
 });
 
+route\resource('/posts', 'App\Controllers\PostController');
+route\resource('/posts', 'App\Controllers\PostController', 'resource.name');
+route\resource('/categories', App\Controllers\CategoryController::class);
+route\resource('/categories', App\Controllers\CategoryController::class, [
+  'name' => 'resource.name',
+  'middleware' => ['MiddlewareCallback'],
+  'only' => ['index', 'show']
+]);
+
+route\api_resource('/admin/posts', App\Controllers\Admin\PostController::class);
+
+route\resource('/foo', new class {
+  public function index()
+  {
+    return response\view('foo.index');
+  }
+
+  public function show($id) {}
+  public function create() {}
+  public function store() {}
+  public function edit($id) {}
+  public function update($id) {}
+  public function destroy($id) {}
+}, [
+  'name' => 'groupname',
+  'middleware' => ['FooMiddleware']
+]);
+
+route\resource('/bar', [
+  'index' => function() {}
+
+  // other resource methods
+]);
+
 route\error(function() {
     return response\json(['error' => 404]);
 });
