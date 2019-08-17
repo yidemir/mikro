@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace cache;
 
 use Closure;
+use Exception;
 
 function path(?string $path = null): string
 {
@@ -28,8 +29,20 @@ function get(string $key, $default = null)
     }
 
     $filename = \sprintf('%s/%s.cache', path(), \md5($key));
-    $data = \file_get_contents($filename) ?? null;
-    [$value, $ttl] = @\unserialize($data) ?? [null, null];
+
+    if (\is_readable($filename)) {
+        $data = \file_get_contents($filename) ?? null;
+    } else {
+        throw new Exception('Cache file is not readable');
+    }
+    
+    $data = @\unserialize($data);
+
+    if ($data === false || (\is_array($data) && count($data) !== 2)) {
+        throw new Exception('Cache file content not valid');
+    }
+    
+    [$value, $ttl] = $data;
 
     if (\is_numeric($ttl)) {
         if ($ttl != 0 && \time() >= $ttl) {
@@ -62,7 +75,11 @@ function set(string $key, $value, $ttl = 0): void
 
     $ttl = ($ttl === 0 || $ttl === false) ? 0 : $ttl;
 
-    @\file_put_contents($filename, @\serialize([$value, $ttl]));
+    if (!\is_writable($dirname = \dirname($filename))) {
+        throw new Exception(\sprintf('Cache path not writable: "%s"', $dirname));
+    }
+
+    \file_put_contents($filename, \serialize([$value, $ttl]));
 }
 
 function remove(string $key): void

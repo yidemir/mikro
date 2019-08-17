@@ -67,7 +67,7 @@ function parse(array $args)
                 $newArgs[$matches['key']] = $matches['value'];
             }
         } else {
-            array_push($newArgs, $arg);
+            \array_push($newArgs, $arg);
         }
     }
 
