@@ -25,7 +25,7 @@ function emit(string $name, array $args = [])
     $events = listen();
 
     if (!\array_key_exists($name, $events)) {
-        throw new Exception('Event not exists: ' . $name);
+        throw new Exception(\sprintf('"%s" named event does not exists', $name));
     }
 
     foreach ($events[$name] as $event) {

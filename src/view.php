@@ -32,7 +32,7 @@ function render(string $file, array $data = []): ?string
         return \ob_get_clean();
     }
 
-    throw new Exception('View not exists: ' . $path);
+    throw new Exception(\sprintf('"%s" named view file does not exists', $path));
 }
 
 /**
@@ -92,6 +92,10 @@ function set($name, $value)
 function get($name, array $args = [])
 {
     $block = block($name);
+
+    if ($block === null) {
+        throw new Exception(\sprintf('"%s" named view block does not exists', $name));
+    }
 
     if (\is_callable($block)) {
         return \call_user_func_array($block, [$args]);

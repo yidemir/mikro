@@ -189,7 +189,7 @@ function parse(array $parseableRules): array
             $rule = $rule[0];
 
             if (!\array_key_exists($rule, collection())) {
-                throw new Exception('Rule not exists: ' . $rule);
+                throw new Exception(\sprintf('"%s" named rule does not exists'));
             }
 
             $parsedRules[$field]['name'] = $name;

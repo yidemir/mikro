@@ -397,7 +397,7 @@ function url(string $name, ...$args) {
         return $pattern;
     }
 
-    throw new Exception('Named route not exists: ' . $name);
+    throw new Exception(\sprintf('"%s" named route does not exists', $name));
 }
 
 function redirect(string $name, ...$args)

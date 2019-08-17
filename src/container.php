@@ -41,7 +41,7 @@ function get(string $name, array $args = [])
         }
     }
 
-    throw new Exception(\sprintf('Container item not exists: "%s"', $name));
+    throw new Exception(\sprintf('"%s" named container item does not exists', $name));
 }
 
 /**

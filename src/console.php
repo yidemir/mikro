@@ -36,7 +36,7 @@ function run(array $argv)
     if (\array_key_exists($command, $commands)) {
         return \call_user_func_array($commands[$command]['callback'], [$args]);
     } else {
-        throw new InvalidArgumentException(\sprintf('Command not exists: %s', $command));
+        throw new InvalidArgumentException(\sprintf('"%s" named command does not exists', $command));
     }
 }
 
