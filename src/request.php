@@ -23,6 +23,7 @@ function path(): string
     $path = $_SERVER['REQUEST_URI'] ?? '/';
     $path = \explode('?', $path, 2);
     $path = \rtrim($path[0], '/');
+    $path = $path === '' ? '/' : $path;
 
     return $path;
 }
