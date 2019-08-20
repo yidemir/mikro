@@ -71,9 +71,8 @@ function map(array $methods, string $path, $callback, $options = [])
     $middleware = $options['middleware'] ?? [];
 
     if (\array_key_exists('middleware', $groups)) {
-        $mws = isset($groups['middleware'][0]) ? $groups['middleware'][0] : [];
         $middleware = \is_array($middleware) ? $middleware : [$middleware];
-        $middleware = \array_merge($mws, $middleware);
+        $middleware = \array_merge((array) $groups['middleware'], $middleware);
     }
 
     $name = $options['name'] ?? null;
@@ -193,13 +192,6 @@ function group($options = null, ?Closure $callback = null)
 
     if (\is_string($options)) {
         $options = ['path' => $options];
-    }
-    
-    if (
-        \array_key_exists('middleware', $options) &&
-        !\is_array($options['middleware'])
-    ) {
-        $options['middleware'] = [$options['middleware']];
     }
 
     foreach ($options as $name => $option) {
@@ -397,7 +389,7 @@ function url(string $name, ...$args) {
         return $pattern;
     }
 
-    throw new Exception(\sprintf('"%s" named route does not exists', $name));
+    throw new Exception('Named route not exists: ' . $name);
 }
 
 function redirect(string $name, ...$args)
