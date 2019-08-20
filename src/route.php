@@ -53,13 +53,6 @@ function map(array $methods, string $path, $callback, $options = [])
         $options = ['name' => $options];
     }
 
-    if (
-        \array_key_exists('middleware', $options) && 
-        !\is_array($options['middleware'])
-    ) {
-        $options['middleware'] = (array) $options['middleware'];
-    }
-
     if (\array_key_exists('namespace', $groups) && \is_string($callback)) {
         $callback = \implode('', $groups['namespace']) . $callback;
     }
@@ -69,10 +62,13 @@ function map(array $methods, string $path, $callback, $options = [])
     }
 
     $middleware = $options['middleware'] ?? [];
-
+    
     if (\array_key_exists('middleware', $groups)) {
+        $groups['middleware'] = array_map(function($item) {
+            return isset($item[0]) ? $item[0] : $item;
+        }, $groups['middleware']);
         $middleware = \is_array($middleware) ? $middleware : [$middleware];
-        $middleware = \array_merge((array) $groups['middleware'], $middleware);
+        $middleware = \array_merge($groups['middleware'], $middleware);
     }
 
     $name = $options['name'] ?? null;
