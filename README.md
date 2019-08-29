@@ -31,8 +31,10 @@ route\post('/save', function() {
 
 route\put('/update/:id', function($id) {
     $data = request\input(['title', 'body', 'tags', 'created_at']);
+
     db\table('posts')->update($data, $id);
     flash\push('post updated!');
+    
     return response\redirect('/');
 });
 
@@ -43,8 +45,29 @@ route\group([
     'name' => 'admin.'
 ], function() {
     route\get('/', 'DashboardController@index', 'home');
+
     route\resource('/posts', 'PostController');
-    route\resource('/categories', 'CategoryController');
+
+    route\resource('/categories', 'CategoryController', [
+        'only' => 'index|show|create|store'
+    ]);
+
+    route\resource('/items', new class {
+        public function index()
+        {
+            $items = db\table('items')->get();
+
+            return response\view('items.index', compact('items'));
+        }
+
+        public function show($id)
+        {
+            $item = db\table('items')->find($id);
+
+            return response\view('items.show', compact('item'));
+        }
+    });
+
     route\get('/foo', function() {
         return response\html('admin panel');
     });
@@ -64,14 +87,18 @@ route\run();
 Database examples
 ```php
 $items = db\table('items')->get('where weight=? order by created_at desc', [37]);
+
 $item = db\table('items')->find('where is_new=:is_new and foo=:foo', [
     'is_new' => true,
     'foo' => 'bar'
 ]);
+
 $itemCount = db\table('items')->select('count(*)')->column('where foo=?', ['bar']);
 
 $items = db\query('select * from items')->fetchAll();
+
 $item = db\query('select * from posts where id=?', [100])->fetch();
+
 $itemCount = db\query('select count(*) from items')->fetchColumn();
 ```
 more examples in examples directory.

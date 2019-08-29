@@ -6,6 +6,7 @@ namespace route;
 use Closure;
 use stdClass;
 use Exception;
+use InvalidArgumentException;
 use function request\{method, path};
 use function response\redirect as response_redirect;
 
@@ -49,6 +50,16 @@ function map(array $methods, string $path, $callback, $options = [])
 {
     $groups = group();
 
+    if (
+        \is_array($options) &&
+        \array_key_exists('middleware', $options) && 
+        !\is_array($options['middleware'])
+    ) {
+        throw new InvalidArgumentException(
+            'Route middleware can only be array type'
+        );
+    }
+
     if (\is_string($options)) {
         $options = ['name' => $options];
     }
@@ -67,17 +78,18 @@ function map(array $methods, string $path, $callback, $options = [])
         $groups['middleware'] = array_map(function($item) {
             return isset($item[0]) ? $item[0] : $item;
         }, $groups['middleware']);
-        $middleware = \is_array($middleware) ? $middleware : [$middleware];
+
         $middleware = \array_merge($groups['middleware'], $middleware);
     }
 
     $name = $options['name'] ?? null;
 
-    if (\array_key_exists('name', $groups) && !is_null($name)) {
+    if (\array_key_exists('name', $groups) && $name !== null) {
         $name = \implode('', $groups['name']) . $name;
     }
 
     $path = \rtrim($path, '/') ?: '/';
+
     $path = \strtr($path, [
         ':number' => '(\d+)',
         ':id' => '(\d+)',
@@ -87,13 +99,13 @@ function map(array $methods, string $path, $callback, $options = [])
         ':all' => '(.*)'
     ]);
 
+    if ($name !== null) {
+        names([$name => $path]);
+    }
+
     $route = (object) \compact(
         'methods', 'path', 'callback', 'name', 'middleware'
     );
-
-    if ($name !== null) {
-        names([$route->name => $route->path]);
-    }
 
     collection($route);
 }
@@ -190,6 +202,15 @@ function group($options = null, ?Closure $callback = null)
         $options = ['path' => $options];
     }
 
+    if (
+        \array_key_exists('middleware', $options) && 
+        !\is_array($options['middleware'])
+    ) {
+        throw new InvalidArgumentException(
+            'Route middleware can only be array type'
+        );
+    }
+
     foreach ($options as $name => $option) {
         $groups[$name][] = $option;
     }
@@ -212,9 +233,18 @@ function resource(string $path, $class, $options = [])
         $options = ['name' => $options];
     }
 
+    if (
+        \array_key_exists('middleware', $options) && 
+        !\is_array($options['middleware'])
+    ) {
+        throw new InvalidArgumentException(
+            'Route middleware can only be array type'
+        );
+    }
+
     $name = $options['name'] ?? \str_replace('/', '.', \trim($path, '/'));
+
     $middleware = $options['middleware'] ?? [];
-    $middleware = (array) $middleware;
 
     $only = $options['only'] ?? [
         'index', 'show', 'create', 'store', 'edit', 'update', 'destroy'
@@ -261,7 +291,7 @@ function resource(string $path, $class, $options = [])
 
         if (\is_string($class)) {
             \call_user_func_array(
-                'route\\' . $methods[$method],
+                '\route\\' . $methods[$method],
                 [$ownPath, $class . '@' . $method, [
                     'name' => $name . '.' . $method,
                     'middleware' => $middleware
@@ -269,7 +299,7 @@ function resource(string $path, $class, $options = [])
             );
         } elseif (\is_object($class)) {
             \call_user_func_array(
-                'route\\' . $methods[$method],
+                '\route\\' . $methods[$method],
                 [$ownPath, [$class, $method], [
                     'name' => $name . '.' . $method,
                     'middleware' => $middleware
@@ -277,7 +307,7 @@ function resource(string $path, $class, $options = [])
             );
         } elseif (\is_array($class)) {
             \call_user_func_array(
-                'route\\' . $methods[$method],
+                '\route\\' . $methods[$method],
                 [$ownPath, $class[$method], [
                     'name' => $name . '.' . $method,
                     'middleware' => $middleware
@@ -358,7 +388,7 @@ function run()
     $params = $route->params ?? [];
 
     if ($route !== false ) {
-        foreach ($route->middleware as $mw) call($mw);
+        foreach ($route->middleware as $middleware) call($middleware);
         return call($route->callback, $params);
     }
 
@@ -385,7 +415,7 @@ function url(string $name, ...$args) {
         return $pattern;
     }
 
-    throw new Exception('Named route not exists: ' . $name);
+    throw new Exception(\sprintf('Named route not exists "%s"', $name));
 }
 
 function redirect(string $name, ...$args)

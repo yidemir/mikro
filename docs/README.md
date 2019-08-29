@@ -182,7 +182,7 @@ $fields = request\input(['title', 'body', 'tags', 'created_at']);
 The router supports all REST methods and is resourceful. Each route you define is checked when calling.
 
 ```php
-route\map(array $methods, string $path, $callback, ?string $name, array $middleware = []): void
+route\map(array $methods, string $path, $callback, string|array $options = []): void
 ```
 
 ```php
