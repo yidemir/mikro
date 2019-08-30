@@ -4,16 +4,21 @@ declare(strict_types=1);
 namespace view;
 
 use Exception;
+use InvalidArgumentException;
 
-function path(?string $path = null): string
+function path($path = null): array
 {
-    static $viewPath = '';
+    static $paths = [];
 
-    if ($path !== null) {
-        $viewPath = $path;
+    if (\is_string($path)) {
+        $path = ['default' => $path];
     }
 
-    return $viewPath;
+    if ($path !== null && \is_array($path)) {
+        $paths = \array_merge($paths, $path);
+    }
+
+    return $paths;
 }
 
 /**
@@ -21,14 +26,31 @@ function path(?string $path = null): string
  */
 function render(string $file, array $data = []): ?string
 {
-    $file = str_replace('.', '/', $file);
+    if (\strpos($file, ':') !== false) {
+        [$section, $file] = \explode(':', $file, 2);
+    } else {
+        $section = 'default';
+    }
+
+    $paths = path();
+
+    if (!\array_key_exists($section, $paths)) {
+        throw new Exception(
+            sprintf('%s named view path does not exists', $section)
+        );
+    }
+
+    $file = \str_replace('.', '/', $file);
     
-    if (\is_file($path = path() . '/' . $file . '.php')) {
+    if (\is_file($path = $paths[$section] . '/' . $file . '.php')) {
         \ob_start();
+        
         if (!empty($data)) {
             \extract($data);
         }
+
         require $path;
+
         return \ob_get_clean();
     }
 

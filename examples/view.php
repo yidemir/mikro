@@ -1,8 +1,10 @@
 <?php
 
 view\path(__DIR__ . '/views');
+view\path(['secondary' => __DIR__ . '/secondary/view/files']);
 
-view\render('home', ['name' => 'Renas']);
+view\render('home', ['name' => 'Renas']); // rendered file: /views/home.php
+view\render('secondary:home'); // rendered file: /secondary/view/files/home.php
 
 view\start('content');
 echo 'content block!';

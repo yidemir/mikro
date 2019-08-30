@@ -84,7 +84,7 @@ route\error(function() {
 route\run();
 ```
 
-Database examples
+**Database examples**
 ```php
 $items = db\table('items')->get('where weight=? order by created_at desc', [37]);
 

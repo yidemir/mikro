@@ -322,7 +322,17 @@ route\run();
 Before using View, you must specify the directory where the view files are located.
 
 ```php
-route\path('/path/to/views');
+view\path('/path/to/views');
+```
+
+You can also use the View files under a namespace. Directory names that are not specified by default are set to 'default'.
+
+```php
+view\path([
+  'default' => '/path/to/views',
+  'module1' => '/path/to/module1/directory',
+  'new' => '/path/to/new/directory'
+]);
 ```
 
 ---
@@ -330,13 +340,19 @@ route\path('/path/to/views');
 ## Render a view file
 
 ```php
-view\render(string $file, array $data = []): ?string
+echo view\render(string $file, array $data = []): ?string
 ```
 
 ```php
-view\render('viewfile', ['data' => 'value']);
+echo view\render('viewfile', ['data' => 'value']);
 ```
 
+Or the namespace can be used.
+
+```php
+echo view\render('module1:viewfile');
+echo view\render('new:path.to.view.file')
+``
 ---
 
 ## View Blocks
@@ -410,7 +426,7 @@ echo view\get('callable_block', ['title' => 'Hello World!']);
 
 **References**
 ```php
-view\path(?string $path = null): string
+view\path(string|array $path = null): array
 view\render(string $file, array $data = []): ?string
 view\blocks($name = null, $data = null): array
 view\start(?string $name = null): string
