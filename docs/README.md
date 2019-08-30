@@ -352,7 +352,8 @@ Or the namespace can be used.
 ```php
 echo view\render('module1:viewfile');
 echo view\render('new:path.to.view.file')
-``
+```
+
 ---
 
 ## View Blocks
