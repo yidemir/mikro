@@ -144,7 +144,7 @@ function query(string $query, array $params = []): PDOStatement
     return $sth;
 }
 
-function exec(string $query): int
+function exec(string $query)
 {
     return connection()->exec($query);
 }

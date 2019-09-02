@@ -72,6 +72,14 @@ function map(array $methods, string $path, $callback, $options = [])
         $path = \implode('', $groups['path']) . $path;
     }
 
+    $path = \rtrim($path, '/') ?: '/';
+
+    $pattern = '!^([^\:]+)\@([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$!';
+
+    if (\is_string($callback) && \preg_match($pattern, $callback) >= 1) {
+        names([$callback => $path]);
+    }
+
     $middleware = $options['middleware'] ?? [];
     
     if (\array_key_exists('middleware', $groups)) {
@@ -87,8 +95,6 @@ function map(array $methods, string $path, $callback, $options = [])
     if (\array_key_exists('name', $groups) && $name !== null) {
         $name = \implode('', $groups['name']) . $name;
     }
-
-    $path = \rtrim($path, '/') ?: '/';
 
     $path = \strtr($path, [
         ':number' => '(\d+)',
