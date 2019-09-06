@@ -67,6 +67,13 @@ function redirect(string $to, int $code = 301): void
     send_header('Location', $to);
 }
 
+function redirect_back(int $code = 301): void
+{
+    \http_response_code($code);
+    $referer = $_SERVER['HTTP_REFERER'] ?? '/';
+    send_header('Location', $referer);
+}
+
 /**
  * @throws Exception
  */
