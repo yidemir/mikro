@@ -160,8 +160,11 @@ function validate(array $values, array $rules): stdClass
     unset($values['nullables']);
     $validator->success = empty($validator->errors);
     $validator->fails = !$validator->success;
-    $validator->values = \array_filter($values, function($key) use ($validator) {
-        return !\array_key_exists($key, $validator->errorsByField);
+    $validator->values = \array_filter(
+        $values, function($key) use ($validator, $rules) {
+            return !\array_key_exists($key, $validator->errorsByField) &&
+                \array_key_exists($key, parse($rules)
+        );
     }, \ARRAY_FILTER_USE_KEY);
 
     return $validator;
