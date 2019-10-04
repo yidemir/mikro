@@ -30,6 +30,7 @@
             "src/event.php",
             "src/flash.php",
             "src/html.php",
+            "src/jwt.php",
             "src/lang.php",
             "src/log.php",
             "src/pagination.php",
