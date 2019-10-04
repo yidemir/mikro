@@ -891,3 +891,40 @@ get(string $key, $default = null)
 set($key, $value = null)
 all(): array
 ```
+
+---
+
+# JWT
+**References**
+```php
+secret(?string $secret = null): string
+decode(string $jwt, bool $verify = true): object
+encode($payload, string $algo = 'HS256'): string
+```
+
+**Setting up secret**
+If you do not set the secret key, the secret in the crypt component will be used by default.
+```php
+jwt\secret('p3iElQrAvQUB6n2VNPFljRz95x7ltnMa9nzq2GObxe304m0pH7BeTgEc2LSc');
+```
+
+**Encoding**
+```php
+$user = [
+  'id' => 462,
+  'username' => 'foo',
+  'email' => 'foo@bar.net'
+];
+
+$jwt = jwt\encode($user);
+```
+
+**Decoding**
+```php
+$jwt = 'a.b.c';
+$user = jwt\decode($jwt);
+
+$user->id; // 462
+$user->username; // foo
+$user->email; // foo@bar.net
+```
