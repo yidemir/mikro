@@ -99,9 +99,9 @@ function map(array $methods, string $path, $callback, $options = [])
     $path = \strtr($path, [
         ':number' => '(\d+)',
         ':id' => '(\d+)',
-        ':string' => '(\w+)',
+        ':string' => '([\wüğışçöÜĞİŞÇÖ -_]+)',
         ':slug' => '([a-zA-Z0-9\-]+)',
-        ':any' => '([^/])',
+        ':any' => '([^/]+)',
         ':all' => '(.*)'
     ]);
 
