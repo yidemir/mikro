@@ -34,10 +34,10 @@ function get(string $key, $default = null)
 }
 
 function set(
-    $key,
-    $value,
+    string $key,
+    string $value,
     $expires = 0,
-    string $path = '',
+    string $path = '/',
     string $domain = '',
     bool $secure = false,
     bool $httpOnly = false
@@ -54,4 +54,9 @@ function set(
     return \setcookie(
         $key, $value, $expires, $path, $domain, $secure, $httpOnly
     );
+}
+
+function forget(string $key, string $path = '/', string $domain = '')
+{
+    return set($key, '', -2628000, $path, $domain);
 }
