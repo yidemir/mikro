@@ -1,66 +1,105 @@
 <?php
+
 declare(strict_types=1);
 
-namespace container;
-
-use Closure;
-use Exception;
-
-function collection(array $items = []): array
+namespace Container
 {
-    static $collection;
+    /**
+     * Defines a new container item
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Container\set('variable', 'string');
+     * Container\set('closure', fn() => new stdClass())
+     * ```
+     */
+    function set(string $name, mixed $value): void
+    {
+        global $mikro;
 
-    if ($collection === null) {
-        $collection = [];
+        $mikro[COLLECTION][$name] = $value;
     }
 
-    if ($items !== []) {
-        $collection = \array_merge($collection, $items);
-    }
-
-    return $collection;
-}
-
-function has(string $name): bool
-{
-    return \array_key_exists($name, collection());
-}
-
-/**
- * @throws Exception
- */
-function get(string $name, array $args = [])
-{
-    $items = collection();
-
-    if (\array_key_exists($name, $items)) {
-        if ($items[$name] instanceof Closure) {
-            return \call_user_func_array($items[$name], $args);
-        } else {
-            return $items[$name];
-        }
-    }
-
-    throw new Exception(\sprintf('"%s" named container item does not exists', $name));
-}
-
-/**
- * @param mixed $data
- */
-function set(string $name, $data)
-{
-    collection([$name => $data]);
-}
-
-function singleton(string $name, Closure $callback)
-{
-    collection([$name => function() use ($callback) {
-        static $object;
-
-        if ($object === null) {
-            $object = $callback();
+    /**
+     * Returns the defined container item
+     *
+      * {@inheritDoc} **Example:**
+     * ```php
+     * Container\get('variable'); // 'string'
+     * Container\get('closure'); // Closure
+     * ```
+     */
+    function get(string $name): mixed
+    {
+        if (! has($name)) {
+            throw new \Exception('Container item not exists');
         }
 
-        return $object;
-    }]);
-}
+        global $mikro;
+
+        return $mikro[COLLECTION][$name];
+    }
+
+    /**
+     * Returns the value of the defined container item
+     *
+      * {@inheritDoc} **Example:**
+     * ```php
+     * Container\value('closure'); // stdClass
+     * ```
+     *
+     * @throws \Exception If the value is not callable
+     */
+    function value(string $name, array $args = []): mixed
+    {
+        if (! \is_callable($value = get($name))) {
+            throw new \Exception('Value is not callable');
+        }
+
+        return \call_user_func_array($value, $args);
+    }
+
+    /**
+     * Defines a new container item with singleton pattern
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Container\set('closure', fn() => new stdClass());
+     * Container\value('closure') === Container\value('closure'); // true
+     * ```
+     */
+    function singleton(string $name, \Closure $callback): void
+    {
+        set($name, function () use ($callback) {
+            static $object;
+
+            if ($object === null) {
+                $object = $callback();
+            }
+
+            return $object;
+        });
+    }
+
+    /**
+     * Checks whether the container item is defined
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Container\has('item'); // true or false
+     * ```
+     */
+    function has(string $name): bool
+    {
+        global $mikro;
+
+        return \array_key_exists($name, $mikro[COLLECTION] ?? []);
+    }
+
+    /**
+     * Container collection constant
+     *
+     * @internal
+     */
+    const COLLECTION = 'Container\COLLECTION';
+};

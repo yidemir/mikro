@@ -1,55 +1,58 @@
 <?php
+
 declare(strict_types=1);
 
-namespace config;
-
-function collection(array $configs = [])
+namespace Config
 {
-    static $collection;
+    /**
+     * Sets the configuration value
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Config\set('foo.bar', 'baz');
+     * ```
+     */
+    function set(string $key, mixed $value): void
+    {
+        global $mikro;
 
-    if ($collection === null) {
-        $collection = [];
+        $replace = \array_reduce(
+            \array_reverse(\explode('.', $key)),
+            fn($value, $key) => [$key => $value],
+            $value
+        );
+
+        $mikro[COLLECTION] = \array_replace_recursive($mikro[COLLECTION] ?? [], $replace);
     }
 
-    if ($configs !== []) {
-        $collection = $configs;
+    /**
+     * Returns the configuration value
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Config\get('foo.bar');
+     * Config\get('foo')['bar'];
+     * ```
+     */
+    function get(string $key, mixed $default = null): mixed
+    {
+        global $mikro;
+
+        if (\array_key_exists($key, $mikro[COLLECTION] ?? [])) {
+            return $mikro[COLLECTION][$key];
+        }
+
+        return \array_reduce(
+            \explode('.', $key),
+            fn($config, $key) => $config[$key] ?? $default,
+            $mikro[COLLECTION] ?? []
+        ) ?? $default;
     }
 
-    return $collection;
-}
-
-/**
- * @param mixed $default
- */
-function get(string $key, $default = null)
-{
-    $config = collection();
-
-    if (\array_key_exists($key, $config)) {
-        return $config[$key];
-    }
-
-    return \array_reduce(
-        \explode('.', $key),
-        function ($config, $key) use ($default) {
-            return isset($config[$key]) ? $config[$key] : $default;
-        },
-        $config
-    );
-}
-
-/**
- * @param mixed $value
- */
-function set(string $key, $value)
-{
-    $replace = \array_reduce(
-      \array_reverse(\explode('.', $key)),
-      function ($value, $key) {
-        return [$key => $value];
-      },
-      $value
-    );
-
-    return collection(\array_replace_recursive(collection(), $replace));
-}
+    /**
+     * Config collection constant
+     *
+     * @internal
+     */
+    const COLLECTION = 'Config\COLLECTION';
+};

@@ -1,233 +1,116 @@
 <?php
+
 declare(strict_types=1);
 
-namespace html;
-
-/**
- * @param  string|array $content
- * @return object
- */
-function tag(string $name, $content = '', array $attributes = [])
+namespace Html
 {
-    return new class ($name, $content, $attributes) {
-
-        /** @var string */
-        protected $name;
-
-        /** @var string */
-        protected $content;
-
-        /** @var array */
-        protected $attributes;
-
-        /**
-         * @param string|array $content
-         */
-        public function __construct(
-            string $name,
-            $content,
-            array $attributes = []
-        )
-        {
-            $this->name = $name;
-
-            if (\is_array($content)) {
-                $content = \implode('', \array_map(function($tag) {
-                    return (string) $tag;
-                }, $content));
-            }
-
-            $this->content = (string) $content;
-            $this->attributes = $attributes;
-        }
-
-        public function __call(string $name, array $args)
-        {
-            $this->attributes[$name] = $args[0] ?? null;
-
-            return $this;
-        }
-
-        public function __toString()
-        {
-            $attributes = '';
-
-            foreach ($this->attributes as $key => $value) {
-                if (\is_array($value)) {
-                    $value = \implode('', \array_map(function($key, $value) {
-                        return "{$key}:{$value};";
-                    }, \array_keys($value), \array_values($value)));
+    /**
+     * Creates a Html tag
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * echo Html\tag('br'); // <br>
+     * echo Html\tag('table') // <table></table>
+     * echo Html\tag('p', 'Hello world!'); // <p>Hello world!</p>
+     * echo Html\tag('p', 'Hey!', ['class' => 'hey']); // <p class="hey">Hey!</p>
+     * echo Html\tag('p', 'Hey!')->class('hey'); // <p class="hey">Hey!</p>
+     * echo Html\tag('p', 'Hey!', ['PascalCase' => 'true'])->snakeCase('true')->kebabCase('false');
+     * // <p PascalCase="true" snake-case="true" kebab-case="false">Hey!</p>
+     *
+     * echo Html\tag('div', [
+     *     Html\tag('a', 'Link')->href('http://url.com')->style('text-decoration:none;'),
+     *     Html'tag('a', 'Link')->href('http://url.com')->style(['text-decoration' => 'none'])
+     * ]); // same result
+     * ```
+     */
+    function tag(string $name, \Stringable|string|array $content = '', array $attributes = []): object
+    {
+        return new class ($name, $content, $attributes) implements \Stringable {
+            public function __construct(
+                protected string $name,
+                protected \Stringable|string|array $content,
+                protected array $attributes = []
+            ) {
+                if (\is_array($content)) {
+                    $content = \implode('', \array_map(fn($tag) => (string) $tag, $content));
                 }
 
-                if ($value === null) {
-                    $attributes .= "{$key} ";
-                } elseif ($value === false) {
-                    // pass
-                } else {
-                    $attributes .= \sprintf('%s="%s" ', $key, $value);
+                $this->content = (string) $content;
+            }
+
+            public function __call(string $name, array $args): self
+            {
+                $name = \strtolower(\preg_replace('/(?<!^)[A-Z]/', '-$0', $name));
+                $this->attributes[$name] = $args[0] ?? null;
+
+                return $this;
+            }
+
+            public function __toString(): string
+            {
+                $attributes = '';
+
+                foreach ($this->attributes as $key => $value) {
+                    if (\is_array($value)) {
+                        $value = \implode('', \array_map(function ($key, $value) {
+                            return "{$key}:{$value};";
+                        }, \array_keys($value), \array_values($value)));
+                    }
+
+                    if ($value === null) {
+                        $attributes .= "{$key} ";
+                    } elseif ($value === false) {
+                        // pass
+                    } else {
+                        $attributes .= \sprintf('%s="%s" ', $key, $value);
+                    }
                 }
+
+                $attributes = empty($attributes) ? '' : ' ' . \trim($attributes);
+                $tag = \sprintf('<%s%s>', $this->name, $attributes);
+
+                if ($this->content === "0" || $this->content) {
+                    $tag .= $this->content;
+                }
+
+                $selfCloseTags = [
+                    'br',
+                    'hr',
+                    'col',
+                    'img',
+                    'wbr',
+                    'area',
+                    'base',
+                    'link',
+                    'meta',
+                    'embed',
+                    'input',
+                    'param',
+                    'track',
+                    'source',
+                ];
+
+                if (! \in_array($this->name, $selfCloseTags)) {
+                    $tag .= \sprintf('</%s>', $this->name);
+                }
+
+                return $tag;
             }
 
-            $attributes = empty($attributes) ? '' : ' ' . \trim($attributes);
-
-            $tag = \sprintf('<%s%s>', $this->name, $attributes);
-
-            if ($this->content === "0" || $this->content) {
-                $tag .= $this->content;
+            public function __set(string $attribute, mixed $value): void
+            {
+                $this->attributes[$attribute] = $value;
             }
 
-            $selfCloseTags = [
-                'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 
-                'link', 'meta', 'param', 'source', 'track', 'wbr'
-            ];
-
-            if (!\in_array($this->name, $selfCloseTags)) {
-                $tag .= \sprintf('</%s>', $this->name);
+            public function __get(string $attribute): mixed
+            {
+                return $this->attributes[$attribute] ?? null;
             }
 
-            return $tag;
-        }
-
-        public function __set(string $attribute, $value)
-        {
-            $this->attributes[$attribute] = $value;
-        }
-
-        public function __get(string $attribute)
-        {
-            return $this->attributes[$attribute] ?? null;
-        }
-
-        public function __isset(string $attribute)
-        {
-            return \array_key_exists($attribute, $this->attributes);
-        }
-    };
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function div($content = '', array $attributes = [])
-{
-    return tag('div', $content, $attributes);
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function p($content = '', array $attributes = [])
-{
-    return tag('p', $content, $attributes);
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function span($content = '', array $attributes = [])
-{
-    return tag('span', $content, $attributes);
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function label($content = '', ?string $for = null, array $attributes = [])
-{
-    if ($for !== null) {
-        $attributes['for'] = $for;
+            public function __isset(string $attribute): bool
+            {
+                return \array_key_exists($attribute, $this->attributes);
+            }
+        };
     }
-
-    return tag('label', $content, $attributes);
-}
-
-/**
- * @return object
- */
-function input(string $type, ?string $name = null, array $attributes = [])
-{
-    $attributes['type'] = $type;
-
-    if ($name !== null) {
-        $attributes['name'] = $name;
-        $attributes['id'] = $name;
-    }
-
-    return tag('input', '', $attributes);
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function textarea($content = '', ?string $name = null, array $attributes = [])
-{
-    if ($name !== null) {
-        $attributes['name'] = $name;
-        $attributes['id'] = $name;
-    }
-
-    return tag('textarea', $content, $attributes);
-}
-/**
- * @return object
- */
-function select(array $options = [], ?string $name = null, array $attributes = [])
-{
-    $selectedOption = \array_key_exists('selectedOption', $attributes) ?
-        $attributes['selectedOption'] : null;
-
-    unset($attributes['selectedOption']);
-
-    $optionAttributes = \array_key_exists('optionAttributes', $attributes) ?
-        $attributes['optionAttributes'] : [];
-
-    unset($attributes['optionAttributes']);
-
-    $options = \array_map(function($key, $value) use ($selectedOption, $optionAttributes) {
-        $attributes = ['value' => $key];
-
-        if ($selectedOption === $key) {
-            $attributes['selected'] = null;
-        }
-
-        if (\array_key_exists($key, $optionAttributes)) {
-            $attributes = \array_merge($attributes, (array) $optionAttributes[$key]);
-        }
-
-        return tag('option', $value, $attributes);
-    }, \array_keys($options), \array_values($options));
-
-    if ($name !== null) {
-        $attributes['name'] = $name;
-        $attributes['id'] = $name;
-    }
-
-    return tag('select', $options, $attributes);
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function button($content = '', array $attributes = [])
-{
-    return tag('button', $content, $attributes);
-}
-
-/**
- * @param  string|array $content
- * @return object
- */
-function a($content = '', ?string $href = null, array $attributes = [])
-{
-    if ($href !== null) {
-        $attributes['href'] = $href;
-    }
-
-    return tag('a', $content, $attributes);
-}
+};

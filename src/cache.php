@@ -1,115 +1,132 @@
 <?php
+
 declare(strict_types=1);
 
-namespace cache;
-
-use Closure;
-use Exception;
-
-function path(?string $path = null): string
+namespace Cache
 {
-    static $cachePath = '';
+    /**
+     * Get cache path
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $mikro[Cache\PATH] = 'path/to/app/storage/cache';
+     * Cache\path(); // 'path/to/app/storage/cache'
+     * ```
+     *
+     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     */
+    function path(?string $key = null): string
+    {
+        global $mikro;
 
-    if ($path !== null) {
-        $cachePath = $path;
+        if (! isset($mikro[PATH])) {
+            throw new \Exception('Please set the cache path');
+        }
+
+        return $key === null ?
+            $mikro[PATH] : \sprintf('%s/%s.cache', $mikro[PATH], \md5($key));
     }
 
-    return $cachePath;
-}
+    /**
+     * Returns a defined cache item
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Cache\get('items');
+     * ```
+     *
+     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     */
+    function get(string $key): mixed
+    {
+        if (! has($key)) {
+            return null;
+        }
 
-/**
- * @param mixed $default
- *
- * @return mixed
- */
-function get(string $key, $default = null)
-{
-    if (!has($key)) {
-        return $default;
+        return \unserialize(\file_get_contents(path($key)));
     }
 
-    $filename = \sprintf('%s/%s.cache', path(), \md5($key));
+    /**
+     * Defines a new cache item
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Cache\set('items', DB\table('items')->get());
+     * ```
+     *
+     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     */
+    function set(string $key, mixed $data): void
+    {
+        if (! \is_writable($dirname = \dirname(path($key)))) {
+            throw new \Exception(\sprintf('Cache path not writable: %s', $dirname));
+        }
 
-    if (\is_readable($filename)) {
-        $data = \file_get_contents($filename) ?? null;
-    } else {
-        throw new Exception('Cache file is not readable');
+        \file_put_contents(path($key), \serialize($data));
     }
-    
-    $data = @\unserialize($data);
 
-    if ($data === false || (\is_array($data) && count($data) !== 2)) {
-        throw new Exception('Cache file content not valid');
+    /**
+     * Checks whether the Cache item is defined
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Cache\has('items'); // true or false
+     * ```
+     *
+     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     */
+    function has(string $key): bool
+    {
+        return \is_readable(path($key));
     }
-    
-    [$value, $ttl] = $data;
 
-    if (\is_numeric($ttl)) {
-        if ($ttl != 0 && \time() >= $ttl) {
-            remove($key);
-            return $default;
-        } else {
-            return $value;
+    /**
+     * Deletes a defined cache item from the file system
+
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Cache\remove('items');
+     * ```
+     *
+     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     */
+    function remove(string $key): void
+    {
+        if (! has($key) || ! \is_writable(path())) {
+            return;
+        }
+
+        \unlink(path($key));
+    }
+
+    /**
+     * Deletes all defined cache items from the file system
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Cache\flush();
+     * ```
+     *
+     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     */
+    function flush(): void
+    {
+        if (! \is_writable(path())) {
+            throw new \Exception(\sprintf('Cache path not writable: %s', path()));
+        }
+
+        foreach (\glob(path() . '/*.cache') as $file) {
+            \unlink($file);
         }
     }
 
-    return $default;
-}
-
-/**
- * @param mixed $value
- * @param string|int $ttl
- */
-function set(string $key, $value, $ttl = 0): void
-{
-    $time = \time();
-    $filename = \sprintf('%s/%s.cache', path(), \md5($key));
-
-    if (\is_string($ttl)) {
-        $ttl = strtotime($ttl);
-    }
-
-    if ($ttl !== 0 && $ttl < $time) {
-        $ttl += $time;
-    }
-
-    $ttl = ($ttl === 0 || $ttl === false) ? 0 : $ttl;
-
-    if (!\is_writable($dirname = \dirname($filename))) {
-        throw new Exception(\sprintf('Cache path not writable: "%s"', $dirname));
-    }
-
-    \file_put_contents($filename, \serialize([$value, $ttl]));
-}
-
-function remove(string $key): void
-{
-    @\unlink(\sprintf('%s/%s.cache', path(), \md5($key)));
-}
-
-function has(string $key): bool
-{
-    return \is_file(\sprintf('%s/%s.cache', path(), \md5($key)));
-}
-
-function flush(): void
-{
-    foreach (\glob(path() . '/*.cache') as $file) {
-        @\unlink($file);
-    }
-}
-
-/**
- * @param string|int $ttl
- *
- * @return mixed
- */
-function remember(string $key, Closure $callback, $ttl = 0)
-{
-    if (has($key)) {
-        return get($key);
-    }
-
-    set($key, $callback(), $ttl);
-    return $callback();
-}
+    /**
+     * Cache path constant
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $mikro[Cache\PATH] = '/path/to/cache';
+     * ```
+     */
+    const PATH = 'Cache\PATH';
+};

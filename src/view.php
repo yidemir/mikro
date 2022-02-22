@@ -1,142 +1,165 @@
 <?php
+
 declare(strict_types=1);
 
-namespace view;
-
-use Exception;
-use InvalidArgumentException;
-
-function path($path = null): array
+namespace View
 {
-    static $paths = [];
+    /**
+     * Render view file
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $mikro[View\PATH] = 'path/to/views';
+     *
+     * echo View\render('view_file');
+     * echo View\render('view_file', ['foo' => 'bar']);
+     * ```
+     *
+     * @throws \Exception If view path not set on global $mikro array
+     * @throws \Exception If view file not found
+     */
+    function render(string $file, array $data = []): string
+    {
+        global $mikro;
 
-    if (\is_string($path)) {
-        $path = ['default' => $path];
-    }
+        if (! isset($mikro[PATH])) {
+            throw new \Exception('Please set the view path');
+        }
 
-    if ($path !== null && \is_array($path)) {
-        $paths = \array_merge($paths, $path);
-    }
+        $path = $mikro[PATH] . \DIRECTORY_SEPARATOR . $file . ($mikro[EXTENSION] ?? '.php');
 
-    return $paths;
-}
+        if (! \is_file($path)) {
+            throw new \Exception('View file not found in: ' . $path);
+        }
 
-/**
- * @throws Exception
- */
-function render(string $file, array $data = []): ?string
-{
-    if (\strpos($file, ':') !== false) {
-        [$section, $file] = \explode(':', $file, 2);
-    } else {
-        $section = 'default';
-    }
-
-    $paths = path();
-
-    if (!\array_key_exists($section, $paths)) {
-        throw new Exception(
-            sprintf('%s named view path does not exists', $section)
-        );
-    }
-
-    $file = \str_replace('.', '/', $file);
-    
-    if (\is_file($path = $paths[$section] . '/' . $file . '.php')) {
         \ob_start();
-        
-        if (!empty($data)) {
+
+        if (! empty($data)) {
             \extract($data);
         }
 
         require $path;
 
-        return \ob_get_clean();
+        return \ltrim((string) \ob_get_clean());
     }
 
-    throw new Exception(\sprintf('"%s" named view file does not exists', $path));
-}
-
-/**
- * @param string|null $name
- * @param mixed $data
- *
- * @return array
- */
-function blocks($name = null, $data = null)
-{
-    static $blocks;
-
-    if (\is_null($blocks)) {
-        $blocks = [];
+    /**
+     * Escape string
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * echo View\e('<script>');
+     * ```
+     */
+    function e(string $string): string
+    {
+        return \htmlentities((string) $string, \ENT_QUOTES);
     }
 
-    if ($name !== null) {
-        $blocks[$name] = $data;
-    }
+    /**
+     * Turn on output buffering for view
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * View\start('content');
+     * ```
+     */
+    function start(string $name): void
+    {
+        global $mikro;
 
-    return $blocks;
-}
+        $mikro[ACTUAL_BLOCKS][] = $name;
 
-function start(?string $name = null)
-{
-    static $block;
-
-    if ($name !== null) {
-        $block = $name;
         \ob_start();
     }
 
-    return $block;
-}
+    /**
+     * Turn off output buffering and set the view block
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * View\stop();
+     * ```
+     */
+    function stop(): void
+    {
+        global $mikro;
 
-function stop()
-{
-    $block = start();
+        if (! isset($mikro[ACTUAL_BLOCKS]) || empty($mikro[ACTUAL_BLOCKS])) {
+            throw new \Exception('View block not started');
+        }
 
-    if ($block === null) {
-        return \ob_end_clean();
+        set(\array_pop($mikro[ACTUAL_BLOCKS]), \ob_get_clean());
     }
 
-    blocks($block, \ob_get_clean());
-}
+    /**
+     * Set new view block
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * View\set('title', 'Page Title');
+     * View\set('count', 5);
+     * View\set('input', function (string $name) {
+     *     return Html\tag('input')->name($name);
+     * });
+     * ```
+     */
+    function set(string $name, mixed $value): void
+    {
+        global $mikro;
 
-function block($name, $default = null)
-{
-    return blocks()[$name] ?? $default;
-}
-
-function set($name, $value)
-{
-    blocks($name, $value);
-}
-
-function get($name, array $args = [])
-{
-    $block = block($name);
-
-    if ($block === null) {
-        throw new Exception(\sprintf('"%s" named view block does not exists', $name));
+        $mikro[BLOCKS][$name] = $value;
     }
 
-    if (\is_callable($block)) {
-        return \call_user_func_array($block, [$args]);
+    /**
+     * Gets view block
+     *
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * View\get('title');
+     * View\get('count');
+     * View\get('input')('title');
+     */
+    function get(string $name, mixed $default = null): mixed
+    {
+        global $mikro;
+
+        return $mikro[BLOCKS][$name] ?? ($default instanceof \Closure ? $default() : $default);
     }
 
-    return $block;
-}
+    /**
+     * View path constant
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $mikro[View\PATH] = '/path/to/views';
+     * ```
+     */
+    const PATH = 'View\PATH';
 
-function parent()
-{
-    $block = start();
-    $blocks = blocks();
+    /**
+     * View extension constant
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * // default .php
+     * $mikro[View\EXTENSION] = '.tpl';
+     * ```
+     */
+    const EXTENSION = 'View\EXTENSION';
 
-    if ($block && \array_key_exists($block, $blocks)) {
-        return $blocks[$block];
-    }
-}
+    /**
+     * View actual block constant
+     *
+     * @internal
+     */
+    const ACTUAL_BLOCKS = 'View\ACTUAL_BLOCKS';
 
-function e($string): string
-{
-    return \htmlentities((string) $string, \ENT_QUOTES);
-}
+    /**
+     * View secret constant
+     *
+     * @internal
+     */
+    const BLOCKS = 'View\BLOCKS';
+};

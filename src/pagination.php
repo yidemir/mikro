@@ -1,100 +1,55 @@
 <?php
+
 declare(strict_types=1);
 
-namespace pagination;
-
-use request;
-use InvalidArgumentException;
-
-function paginate(array $options)
+namespace Pagination
 {
-    if (!\array_key_exists('totalItems', $options)) {
-        throw new InvalidArgumentException('The total number of items parameter is not specified.');
-    }
-
-    $totalItems = $options['totalItems'];
-    $currentPage = $options['currentPage'] ?? request\input('page', 1);
-    $currentPage = \intval($currentPage);
-    $currentPage = $currentPage < 0 ? 0 : $currentPage;
-    $perPage = $options['perPage'] ?? 10;
-    $totalPages = $perPage == 0 ? 0 : \ceil($totalItems / $perPage);
-    $totalPages = \intval($totalPages);
-    $maxPages = $options['maxPages'] ?? 7;
-    $pattern = $options['pattern'] ?? '?page=:number';
-
-    $pages = [];
-
-    if ($totalPages <= 1) {
-        return [];
-    }
-
-    if ($maxPages < 3) {
-        $maxPages = 3;
-    }
-
-    $create = function(?int $number = null, bool $current = false) use ($pattern)  {
-        $url = $number !== null ? \str_replace(':number', $number, $pattern) : null;
-        return (object) \compact('number', 'url', 'current');
-    };
-
-    if ($totalPages <= $maxPages) {
-        for ($i = 1; $i <= $totalPages; $i++) {
-            $pages[] = $create($i, $i === $currentPage);
-        }
-    } else {
-        $numAdjacents = (int) floor(($maxPages - 3) / 2);
-        if ($currentPage + $numAdjacents > $totalPages) {
-            $slidingStart = $totalPages - $maxPages + 2;
-        } else {
-            $slidingStart = $currentPage - $numAdjacents;
-        }
-
-        if ($slidingStart < 2) {
-            $slidingStart = 2;
-        }
-
-        $slidingEnd = $slidingStart + $maxPages - 3;
-        if ($slidingEnd >= $totalPages) {
-            $slidingEnd = $totalPages - 1;
-        }
-
-        $pages[] = $create(1, $currentPage === 1);
-
-        if ($slidingStart > 2) {
-            $pages[] = $create();
-        }
-
-        for ($i = $slidingStart; $i <= $slidingEnd; $i++) {
-            $pages[] = $create($i, $i === $currentPage);
-        }
-
-        if ($slidingEnd < ($totalPages - 1)) {
-            $pages[] = $create();
-        }
-        
-        $pages[] = $create($totalPages, $currentPage === $totalPages);
-    }
-
-    $start = ($currentPage * $perPage) - $perPage;
-    $start = $start < 0 ? 0 : $start;
-    $limit = "$start, $perPage";
-
-    $result = (object) \compact(
-        'currentPage', 'totalPages', 'perPage', 'start', 'limit', 'pages'
-    );
-
-    function data($data = null)
+    /**
+     * Returns pagination data based on the total number of items
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Pagination\paginate(100);
+     * Pagination\paginate(100, 2);
+     * Pagination\paginate(100, Request\input('page'), 25);
+     * ```
+     */
+    function paginate(int $total, int $page = 1, int $limit = 10): array
     {
-        static $pages;
+        global $mikro;
 
-        if ($pages === null) {
-            $pages = $data;
-        }
+        $page = $page < 1 ? 1 : $page;
+        $max = \ceil($total / $limit) * $limit;
+        $offset = ($page - 1) * $limit;
+        $offset = $offset > $max ? $max : $offset;
+        $total_page = \intval($max / $limit);
+        $current_page = $page > $total_page ? $total_page : $page;
+        $next_page = $current_page + 1 > $total_page ? $total_page : $current_page + 1;
+        $previous_page = $current_page - 1 ?: 1;
 
-        return $pages;
+        return $mikro[DATA] = compact('offset', 'limit', 'current_page', 'next_page', 'previous_page', 'total_page');
     }
 
-    data($result);
+    /**
+     * Returns last paginated data
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Pagination\paginate(100); // array
+     * Pagination\data(); // array
+     * ```
+     */
+    function data(): ?array
+    {
+        global $mikro;
 
-    return $result;
-}
+        return $mikro[DATA] ?? null;
+    }
+
+    /**
+     * Pagination data constant
+     *
+     * @internal
+     */
+    const DATA = 'Pagination\DATA';
+};

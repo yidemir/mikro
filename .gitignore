@@ -1,3 +1,6 @@
-composer.phar
-/vendor/
+build
+composer.lock
+vendor
+coverage
 .idea
+.phpdoc

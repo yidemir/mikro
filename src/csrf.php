@@ -1,39 +1,86 @@
 <?php
+
 declare(strict_types=1);
 
-namespace csrf;
-
-use LogicException;
-use function html\input;
-use function crypt\{encrypt, decrypt, secret};
-use function request\input as post_parameter;
-
-/**
- * @throws LogicException
- */
-function token(): string
+namespace Csrf
 {
-    if (empty(\session_id())) {
-        throw new LogicException('Session is not started');
+    use function Html\tag;
+    use function Request\get as input;
+
+    /**
+     * Generate a random string
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Csrf\generate_random();
+     * ```
+     */
+    function generate_random(int $strength): string
+    {
+        if (\extension_loaded('openssl')) {
+            return \hash('sha512', \openssl_random_pseudo_bytes($strength));
+        }
+
+        return \hash('sha512', \random_bytes($strength));
     }
 
-    return encrypt(\session_id() . secret());
-}
+    /**
+     * Validates CSRF token
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * if (! Csrf\validate(Request\get('__CSRF_TOKEN'))) {
+     *     throw new Exception('CSRF token does not match');
+     * }
+     * ```
+     */
+    function validate(?string $value = null): bool
+    {
+        if (! isset($_SESSION['__csrf'])) {
+            return false;
+        }
 
-function field(): string
-{
-    return (string) input('hidden', '_CSRF_TOKEN')->value(token());
-}
+        if ($value === null) {
+            $value = input('__CSRF_TOKEN');
+        }
 
-/**
- * @throws LogicException
- */
-function check(?string $token = null)
-{
-    if (empty(\session_id())) {
-        throw new LogicException('Session is not started');
+        return \hash_equals($value, $_SESSION['__csrf']);
     }
 
-    $token = $token ?? post_parameter('_CSRF_TOKEN');
-    return \session_id() . secret() === decrypt($token);
-}
+    /**
+     * Generate CSRF token
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $token = Csrf\get();
+     * ```
+     */
+    function get(): string
+    {
+        if (\session_status() !== \PHP_SESSION_ACTIVE) {
+            throw new \Exception('Start the PHP Session first');
+        }
+
+        if (isset($_SESSION['__csrf'])) {
+            return $_SESSION['__csrf'];
+        }
+
+        return $_SESSION['__csrf'] = generate_random(32);
+    }
+
+    /**
+     * Generate CSRF input in HTML
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * echo Csrf\field();
+     * ```
+     */
+    function field(): string
+    {
+        return (string) tag('input', '')
+            ->name('__CSRF_TOKEN')
+            ->type('hidden')
+            ->value(get());
+    }
+};

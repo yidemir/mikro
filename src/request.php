@@ -1,142 +1,184 @@
 <?php
+
 declare(strict_types=1);
 
-namespace request;
-
-use Exception;
-
-function method(): string
+namespace Request
 {
-    if (\array_key_exists('_method', $_POST)) {
-        return $_POST['_method'];
+    /**
+     * Gets request method
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\method(); // string 'POST'
+     * Request\method(); // string 'GET'
+     * Request\method(); // string 'DELETE'
+     * ```
+     */
+    function method(): string
+    {
+        return \filter_input(\INPUT_SERVER, 'REQUEST_METHOD', \FILTER_SANITIZE_ENCODED) ?? 'GET';
     }
 
-    if (\array_key_exists('REQUEST_METHOD', $_SERVER)) {
-        return $_SERVER['REQUEST_METHOD'];
+    /**
+     * Gets request path
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * // /posts?id=5
+     * Request\path(); // string '/posts'
+     * // /admin/foo
+     * Request\path(); // string '/admin/foo'
+     * ```
+     */
+    function path(): string
+    {
+        $path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+        $path = ($strpos = \strpos($path, '?')) !== false ? \substr($path, 0, $strpos) : $path;
+
+        return $path;
     }
 
-    return 'GET';
-}
+    /**
+     * Gets query string
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * // /admin/posts?page=5&order=title
+     * Request\query_string(); // string 'page=5&order=title'
+     * ```
+     */
+    function query_string(): string
+    {
+        return $_SERVER['QUERY_STRING'] ?? '';
+    }
 
-function path(): string
-{
-    $path = $_SERVER['REQUEST_URI'] ?? '/';
-    $path = \explode('?', $path, 2);
-    $path = \rtrim($path[0], '/');
-    $path = $path === '' ? '/' : $path;
+    /**
+     * Gets query in array
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * // /admin/posts?page=5&order=title
+     * Request\query(); // array ['page' => 5, 'order' => 'title']
+     * ```
+     */
+    function query(): array
+    {
+        \parse_str(query_string(), $query);
 
-    return $path;
-}
+        return $query;
+    }
 
-function query_string(): string
-{
-    return $_SERVER['QUERY_STRING'] ?? '';
-}
+    /**
+     * Gets all request data
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\all(); // array ['foo' => 5, 'bar' => 'baz']
+     * ```
+     */
+    function all(): array
+    {
+        return \array_merge($_REQUEST, $_FILES, to_array());
+    }
 
-function query(): array
-{
-    \parse_str(query_string(), $query);
+    /**
+     * Gets request data
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\get('foo'); // string 'bar'
+     * Request\get('value', 'default'); // string 'default'
+     * ```
+     */
+    function get(string $key, mixed $default = null): mixed
+    {
+        return $_REQUEST[$key] ?? $_FILES[$key] ?? to_array()[$key] ?? $default;
+    }
 
-    return $query;
-}
+    /**
+     * Gets request data
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\input('foo'); // string 'bar'
+     * Request\input('value', 'default'); // string 'default'
+     * ```
+     */
+    function input(string $key, mixed $default = null): mixed
+    {
+        return get($key, $default);
+    }
 
-function all(): array
-{
-    return \array_merge($_REQUEST, $_FILES, content());
-}
+    /**
+     * Gets request body
+     */
+    function content(): string
+    {
+        return \file_get_contents('php://input');
+    }
 
-/**
- * @param array|string $key
- * @param mixed $default
- *
- * @return mixed
- */
-function input($key, $default = null)
-{
-    if (\is_array($key)) {
-        $collect = [];
-        foreach ($key as $k) {
-            if (input($k) && !\is_array($k)) {
-                $collect[$k] = input($k);
-            }
+    /**
+     * Parse request body to array
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\to_array(); // array
+     * ```
+     */
+    function to_array(): array
+    {
+        $content = content();
+
+        if (header('Content-Type') === 'application/x-www-form-urlencoded') {
+            \parse_str($content, $array);
+        } else {
+            $array = (array) \json_decode($content);
         }
-        return $collect;
+
+        return $array;
     }
 
-    if (\array_key_exists($key, $_GET)) {
-        return $_GET[$key];
+    /**
+     * Gets header
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\header('Content-type'); // string 'text/html'
+     * ```
+     *
+     */
+    function header(string $key, mixed $default = null): mixed
+    {
+        return headers()[$key] ?? $default;
     }
 
-    if (\array_key_exists($key, $_POST)) {
-        return $_POST[$key];
+    /**
+     * Gets all header data
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\headers(); // array ['Content-type' => '..']
+     * ```
+     */
+    function headers(): array
+    {
+        return \function_exists('getallheaders') ? \getallheaders() : [];
     }
 
-    if (\array_key_exists($key, $content = content())) {
-        return $content[$key];
+    /**
+     * Determine if the current request is asking for JSON.
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\wants_json(); // bool
+     * ```
+     */
+    function wants_json(): bool
+    {
+        $header = header('Accept', '');
+        $pieces = \explode(',', $header);
+        $first = $pieces[0] ?? '';
+
+        return \str_contains($first, '/json') || \str_contains($first, '+json');
     }
-
-    if (\array_key_exists($key, $_FILES)) {
-        return $_FILES[$key];
-    }
-
-    return $default;
-}
-
-function content(): array
-{
-    $content = \file_get_contents('php://input');
-    $content = @\json_decode($content, true);
-    return (array) $content;
-}
-
-function headers(): array
-{
-    $serverKeys = \array_keys($_SERVER);
-
-    $httpHeaders = \array_reduce(
-        $serverKeys,
-        function (array $headers, $key): array {
-            if ($key == 'CONTENT_TYPE') $headers[] = $key;
-            if ($key == 'CONTENT_LENGTH') $headers[] = $key;
-            if (\substr($key, 0, 5) == 'HTTP_') $headers[] = $key;
-
-            return $headers;
-        },
-        []
-    );
-
-    $values = \array_map(function (string $header) {
-        return $_SERVER[$header];
-    }, $httpHeaders);
-
-    $headers = \array_map(function (string $header) {
-        if (\substr($header, 0, 5) == 'HTTP_') {
-            $header = \substr($header, 5);
-            if (false === $header) {
-                $header = 'HTTP_';
-            }
-        }
-
-        return \str_replace(
-            ' ', '-', \ucwords(\strtolower(\str_replace('_', ' ', $header)))
-        );
-    }, $httpHeaders);
-
-    return \array_combine($headers, $values);
-}
-
-/**
- * @param mixed $default
- */
-function get_header(string $key, $default = null)
-{
-    $headers = headers();
-    
-    return $headers[$key] ?? $default;
-}
-
-function is_ajax(): bool
-{
-    return isset($_SERVER['X-Requested-With']) &&
-        \strtolower($_SERVER['X-Requested-With']) == 'xmlhttprequest';
-}
+};

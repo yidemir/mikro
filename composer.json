@@ -1,45 +1,72 @@
 {
     "name": "yidemir/mikro",
-    "description": "Fast and useful micro application framework",
-    "type": "library",
+    "description": "Micro approach to traditional",
+    "keywords": [
+        "yidemir",
+        "mikro",
+        "framework",
+        "php",
+        "tool"
+    ],
+    "homepage": "https://github.com/yidemir/mikro",
     "license": "MIT",
+    "type": "library",
     "authors": [
         {
             "name": "Yılmaz Demir",
-            "email": "demiriy@gmail.com"
+            "email": "demiriy@gmail.com",
+            "role": "Developer"
         }
     ],
     "require": {
-        "php": ">=7.1.0",
-        "ext-pdo": "*",
+        "php": "^8.0",
+        "ext-curl": "*",
         "ext-json": "*",
-        "ext-openssl": "*",
         "ext-mbstring": "*",
-        "ext-ctype": "*"
+        "ext-openssl": "*",
+        "ext-pdo": "*"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.2",
+        "phpunit/phpunit": "^9.0"
     },
     "autoload": {
         "files": [
-            "src/cache.php",
-            "src/config.php",
-            "src/console.php",
-            "src/container.php",
-            "src/cookie.php",
-            "src/crypt.php",
-            "src/csrf.php",
-            "src/db.php",
-            "src/event.php",
-            "src/flash.php",
-            "src/html.php",
-            "src/jwt.php",
-            "src/lang.php",
-            "src/log.php",
-            "src/pagination.php",
-            "src/request.php",
-            "src/response.php",
-            "src/route.php",
-            "src/session.php",
-            "src/validator.php",
-            "src/view.php"
+            "src/Auth.php",
+            "src/Cache.php",
+            "src/Config.php",
+            "src/Console.php",
+            "src/Container.php",
+            "src/Crypt.php",
+            "src/Csrf.php",
+            "src/Curl.php",
+            "src/DB.php",
+            "src/Error.php",
+            "src/Event.php",
+            "src/Flash.php",
+            "src/Html.php",
+            "src/Jwt.php",
+            "src/Locale.php",
+            "src/Logger.php",
+            "src/Pagination.php",
+            "src/Request.php",
+            "src/Response.php",
+            "src/Router.php",
+            "src/Validator.php",
+            "src/View.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Mikro\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "analyse": "vendor/bin/phpstan"
+    },
+    "config": {
+        "sort-packages": true
     }
 }

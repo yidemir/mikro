@@ -1,48 +1,137 @@
 <?php
+
 declare(strict_types=1);
 
-namespace flash;
-
-use LogicException;
-
-/**
- * @throws LogicException
- */
-function push(string $message, string $type = 'default')
+namespace Flash
 {
-    if (empty(\session_id())) {
-        throw new LogicException('Session is not started');
+    /**
+     * Creates a flash message
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Flash\set(Flash\TYPE_INFO, 'Info message');
+     * Flash\set(Flash\TYPE_SUCCESS, 'Success message');
+     * Flash\set(Flash\TYPE_ERROR, 'Error message');
+     * ```
+     *
+     * @throws \Exception When PHP Session is not active
+     */
+    function set(string $type, string $message): array
+    {
+        if (\session_status() !== \PHP_SESSION_ACTIVE) {
+            throw new \Exception('Start the PHP Session first');
+        }
+
+        $messages = $_SESSION['__flash_' . $type] ?? [];
+        $messages[] = $message;
+
+        return $_SESSION['__flash_' . $type] = $messages;
     }
 
-    $_SESSION['_FLASH'][$type][] = $message;
-}
+    /**
+     * Gets flash message
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Flash\get(Flash\TYPE_INFO); // Info messages array
+     * Flash\get(Flash\TYPE_ERROR); // Error messages array
+     * ```
+     *
+     * @throws \Exception When PHP Session is not active
+     */
+    function get(string $type): ?array
+    {
+        if (\session_status() !== \PHP_SESSION_ACTIVE) {
+            throw new \Exception('Start the PHP Session first');
+        }
 
-/**
- * @throws LogicException
- */
-function message(string $message)
-{
-    return push($message, 'message');
-}
+        $messages = $_SESSION['__flash_' . $type] ?? null;
+        unset($_SESSION['__flash_' . $type]);
 
-/**
- * @throws LogicException
- */
-function error(string $message)
-{
-    return push($message, 'error');
-}
-
-/**
- * @throws LogicException
- */
-function get(string $type = 'default'): array
-{
-    if (empty(\session_id())) {
-        throw new LogicException('Session is not started');
+        return $messages;
     }
 
-    $messages = $_SESSION['_FLASH'][$type] ?? [];
-    unset($_SESSION['_FLASH'][$type]);
-    return $messages;
-}
+    /**
+     * Creates a error message
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Flash\error('Error message');
+     * Flash\error('Error message 2');
+     * ```
+     *
+     * @throws \Exception When PHP Session is not active
+     */
+    function error(string $message): array
+    {
+        return set(TYPE_ERROR, $message);
+    }
+
+    /**
+     * Creates a info message
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Flash\info('Info message');
+     * Flash\info('Info message 2');
+     * ```
+     *
+     * @throws \Exception When PHP Session is not active
+     */
+    function info(string $message): array
+    {
+        return set(TYPE_INFO, $message);
+    }
+
+    /**
+     * Creates a success message
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Flash\success('Success message');
+     * Flash\success('Success message 2');
+     * ```
+     *
+     * @throws \Exception When PHP Session is not active
+     */
+    function success(string $message): array
+    {
+        return set(TYPE_SUCCESS, $message);
+    }
+
+    /**
+     * Creates a warning message
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Flash\warning('Warning message');
+     * Flash\warning('Warning message 2');
+     * ```
+     *
+     * @throws \Exception When PHP Session is not active
+     */
+    function warning(string $message): array
+    {
+        return set(TYPE_WARNING, $message);
+    }
+
+    /**
+     * Constant of error type
+     */
+    const TYPE_ERROR = 'error';
+
+    /**
+     * Constant of info type
+     */
+    const TYPE_INFO = 'info';
+
+    /**
+     * Constant of success type
+     */
+    const TYPE_SUCCESS = 'success';
+
+    /**
+     * Constant of warning type
+     */
+    const TYPE_WARNING = 'warning';
+};
