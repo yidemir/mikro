@@ -48,6 +48,10 @@ namespace Error
                 return;
             }
 
+            if (\in_array($class, $mikro[DONT_REPORT_COLLECTION])) {
+                return;
+            }
+
             if (\PHP_SAPI === 'cli') {
                 Console\error("{$class} with message '{$exception->getMessage()}'");
                 Console\write("in {$exception->getFile()}:{$exception->getLine()}");
@@ -96,7 +100,7 @@ namespace Error
      * Error\show();
      * ```
      */
-    function show()
+    function show(): void
     {
         \ini_set('display_errors', '1');
         \ini_set('display_startup_errors', '1');
@@ -111,7 +115,7 @@ namespace Error
      * Error\hide();
      * ```
      */
-    function hide()
+    function hide(): void
     {
         \ini_set('display_errors', '0');
         \error_reporting(0);
@@ -129,11 +133,26 @@ namespace Error
      * throw new \InvalidArgumentException('Invalid argument');
      * ```
      */
-    function handle(string $class, callable $callback)
+    function handle(string $class, callable $callback): void
     {
         global $mikro;
 
         $mikro[EXCEPTIONS][$class] = $callback;
+    }
+
+    /**
+     * Do not report spesific exception
+     *
+      * {@inheritDoc} **Example:**
+     * ```php
+     * Error\dont_report(Mikro\Exceptions\MikroException::class);
+     * ```
+     */
+    function dont_report(string $class): void
+    {
+        global $mikro;
+
+        $mikro[DONT_REPORT_COLLECTION][] = $class;
     }
 
     /**
@@ -142,4 +161,11 @@ namespace Error
      * @internal
      */
     const EXCEPTIONS = 'Error\EXCEPTIONS';
+
+    /**
+     * Collection of hidden exceptions
+     *
+     * @internal
+     */
+    const DONT_REPORT_COLLECTION = 'Error\DONT_REPORT_COLLECTION';
 };

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Flash
 {
+    use Mikro\Exceptions\MikroException;
+
     /**
      * Creates a flash message
      *
@@ -13,13 +15,11 @@ namespace Flash
      * Flash\set(Flash\TYPE_SUCCESS, 'Success message');
      * Flash\set(Flash\TYPE_ERROR, 'Error message');
      * ```
-     *
-     * @throws \Exception When PHP Session is not active
      */
     function set(string $type, string $message): array
     {
         if (\session_status() !== \PHP_SESSION_ACTIVE) {
-            throw new \Exception('Start the PHP Session first');
+            throw new MikroException('Start the PHP Session first');
         }
 
         $messages = $_SESSION['__flash_' . $type] ?? [];
@@ -36,13 +36,11 @@ namespace Flash
      * Flash\get(Flash\TYPE_INFO); // Info messages array
      * Flash\get(Flash\TYPE_ERROR); // Error messages array
      * ```
-     *
-     * @throws \Exception When PHP Session is not active
      */
     function get(string $type): ?array
     {
         if (\session_status() !== \PHP_SESSION_ACTIVE) {
-            throw new \Exception('Start the PHP Session first');
+            throw new MikroException('Start the PHP Session first');
         }
 
         $messages = $_SESSION['__flash_' . $type] ?? null;
@@ -59,8 +57,6 @@ namespace Flash
      * Flash\error('Error message');
      * Flash\error('Error message 2');
      * ```
-     *
-     * @throws \Exception When PHP Session is not active
      */
     function error(string $message): array
     {
@@ -75,8 +71,6 @@ namespace Flash
      * Flash\info('Info message');
      * Flash\info('Info message 2');
      * ```
-     *
-     * @throws \Exception When PHP Session is not active
      */
     function info(string $message): array
     {
@@ -91,8 +85,6 @@ namespace Flash
      * Flash\success('Success message');
      * Flash\success('Success message 2');
      * ```
-     *
-     * @throws \Exception When PHP Session is not active
      */
     function success(string $message): array
     {
@@ -107,8 +99,6 @@ namespace Flash
      * Flash\warning('Warning message');
      * Flash\warning('Warning message 2');
      * ```
-     *
-     * @throws \Exception When PHP Session is not active
      */
     function warning(string $message): array
     {

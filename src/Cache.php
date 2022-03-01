@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Cache
 {
+    use Mikro\Exceptions\{PathException, MikroException};
+
     /**
      * Get cache path
      *
@@ -13,14 +15,14 @@ namespace Cache
      * Cache\path(); // 'path/to/app/storage/cache'
      * ```
      *
-     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     * @throws MikroException Throws an exception if 'Cache\PATH' is not defined in the global $micro array
      */
     function path(?string $key = null): string
     {
         global $mikro;
 
         if (! isset($mikro[PATH])) {
-            throw new \Exception('Please set the cache path');
+            throw new MikroException('Please set the cache path');
         }
 
         return $key === null ?
@@ -34,8 +36,6 @@ namespace Cache
      * ```php
      * Cache\get('items');
      * ```
-     *
-     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
      */
     function get(string $key): mixed
     {
@@ -54,12 +54,12 @@ namespace Cache
      * Cache\set('items', DB\table('items')->get());
      * ```
      *
-     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     * @throws PathException if cache path is not writeable
      */
     function set(string $key, mixed $data): void
     {
         if (! \is_writable($dirname = \dirname(path($key)))) {
-            throw new \Exception(\sprintf('Cache path not writable: %s', $dirname));
+            throw new PathException(\sprintf('Cache path not writable: %s', $dirname));
         }
 
         \file_put_contents(path($key), \serialize($data));
@@ -72,8 +72,6 @@ namespace Cache
      * ```php
      * Cache\has('items'); // true or false
      * ```
-     *
-     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
      */
     function has(string $key): bool
     {
@@ -87,8 +85,6 @@ namespace Cache
      * ```php
      * Cache\remove('items');
      * ```
-     *
-     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
      */
     function remove(string $key): void
     {
@@ -107,12 +103,12 @@ namespace Cache
      * Cache\flush();
      * ```
      *
-     * @throws \Exception Throws an exception if 'Cache\PATH' is not defined in the global $micro array
+     * @throws PathException if cache path is not writable
      */
     function flush(): void
     {
         if (! \is_writable(path())) {
-            throw new \Exception(\sprintf('Cache path not writable: %s', path()));
+            throw new PathException(\sprintf('Cache path not writable: %s', path()));
         }
 
         foreach (\glob(path() . '/*.cache') as $file) {

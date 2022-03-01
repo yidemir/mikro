@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace View
 {
+    use Mikro\Exceptions\{ViewException, MikroException};
+
     /**
      * Render view file
      *
@@ -15,21 +17,21 @@ namespace View
      * echo View\render('view_file', ['foo' => 'bar']);
      * ```
      *
-     * @throws \Exception If view path not set on global $mikro array
-     * @throws \Exception If view file not found
+     * @throws MikroException If view path not set on global $mikro array
+     * @throws ViewException If view file not found
      */
     function render(string $file, array $data = []): string
     {
         global $mikro;
 
         if (! isset($mikro[PATH])) {
-            throw new \Exception('Please set the view path');
+            throw new MikroException('Please set the view path');
         }
 
         $path = $mikro[PATH] . \DIRECTORY_SEPARATOR . $file . ($mikro[EXTENSION] ?? '.php');
 
         if (! \is_file($path)) {
-            throw new \Exception('View file not found in: ' . $path);
+            throw new ViewException('View file not found in: ' . $path);
         }
 
         \ob_start();
@@ -86,7 +88,7 @@ namespace View
         global $mikro;
 
         if (! isset($mikro[ACTUAL_BLOCKS]) || empty($mikro[ACTUAL_BLOCKS])) {
-            throw new \Exception('View block not started');
+            throw new ViewException('View block not started');
         }
 
         set(\array_pop($mikro[ACTUAL_BLOCKS]), \ob_get_clean());

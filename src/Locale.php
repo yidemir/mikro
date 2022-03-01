@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Locale
 {
+    use Mikro\Exceptions\MikroException;
+
     /**
      * Gets localization string
      *
@@ -62,7 +64,7 @@ namespace Locale
      * Locale\data(); // array
      * ```
      *
-     * @throw \Exception If not have mikro locale path
+     * @throw MikroException If not have mikro locale path
      */
     function data(): array
     {
@@ -70,7 +72,7 @@ namespace Locale
 
         if (! isset($mikro[DATA][get()])) {
             if (! isset($mikro[PATH])) {
-                throw new \Exception('Please specify the locale path');
+                throw new MikroException('Please specify the locale path');
             }
 
             $path = $mikro[PATH] . \DIRECTORY_SEPARATOR . get() . '.php';

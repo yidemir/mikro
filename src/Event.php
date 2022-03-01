@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Event
 {
+    use Mikro\Exceptions\EventException;
+
     /**
      * Executes events to be triggered
      *
@@ -37,7 +39,7 @@ namespace Event
         global $mikro;
 
         if (! \array_key_exists($name, $mikro[COLLECTION] ?? [])) {
-            return;
+            throw new EventException("'{$name}' named event not exists");
         }
 
         foreach ($mikro[COLLECTION][$name] as $event) {

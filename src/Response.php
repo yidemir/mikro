@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Response
 {
-    use function View\render;
+    use View;
 
     /**
      * Output response with headers
@@ -133,8 +133,6 @@ namespace Response
      * Response\view('errors/404', ['data' => 'foo'], STATUS['HTTP_NOT_FOUND']);
      * Response\view('errors/500', [], STATUS['HTTP_INTERNAL_SERVER_ERROR'], [...$headers]);
      * ```
-     *
-     * @throws \Exception
      */
     function view(
         string $file,
@@ -142,7 +140,7 @@ namespace Response
         int $code = STATUS['HTTP_OK'],
         array $headers = []
     ): int {
-        return html(render($file, $data), $code, $headers);
+        return html(View\render($file, $data), $code, $headers);
     }
 
     /**

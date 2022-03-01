@@ -18,16 +18,16 @@ namespace Pagination
     {
         global $mikro;
 
-        $page = $page < 1 ? 1 : $page;
-        $max = \ceil($total / $limit) * $limit;
-        $offset = ($page - 1) * $limit;
-        $offset = $offset > $max ? $max : $offset;
-        $total_page = \intval($max / $limit);
-        $current_page = $page > $total_page ? $total_page : $page;
-        $next_page = $current_page + 1 > $total_page ? $total_page : $current_page + 1;
-        $previous_page = $current_page - 1 ?: 1;
-
-        return $mikro[DATA] = compact('offset', 'limit', 'current_page', 'next_page', 'previous_page', 'total_page');
+        return $mikro[DATA] = [
+            'page' => $page = $page < 1 ? 1 : $page,
+            'max' => $max = \ceil($total / $limit) * $limit,
+            'limit' => $limit,
+            'offset' => ($offset = ($page - 1) * $limit) > $max ? $max : $offset,
+            'total_page' => $totalPage = \intval($max / $limit),
+            'current_page' => $currentPage = $page > $totalPage ? $totalPage : $page,
+            'next_page' => $currentPage + 1 > $totalPage ? $totalPage : $currentPage + 1,
+            'previous_page' => $currentPage - 1 ?: 1,
+        ];
     }
 
     /**

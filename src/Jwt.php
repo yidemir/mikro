@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jwt
 {
+    use Mikro\Exceptions\{JwtException, MikroException};
+
     use const Crypt\SECRET as CRYPT_SECRET;
 
     /**
@@ -15,7 +17,7 @@ namespace Jwt
      * Jwt\secret(); // 'foo'
      * ```
      *
-     * @throws \Exception If secret key not defined on global $mikro array
+     * @throws MikroException If secret key not defined on global $mikro array
      */
     function secret(): string
     {
@@ -24,7 +26,7 @@ namespace Jwt
         $secret = $mikro[SECRET] ?? $mikro[CRYPT_SECRET] ?? null;
 
         if ($secret === null) {
-            throw new \Exception('Secret key not defined');
+            throw new MikroException('Secret key not defined');
         }
 
         return $secret;
@@ -63,17 +65,17 @@ namespace Jwt
      * $object = Jwt\decode('Jwt token', false);
      * ```
      *
-     * @throws \Exception If invalid Jwt token string
-     * @throws \Exception If invalid segments encoding
-     * @throws \Exception If empty algorithm
-     * @throws \Exception If signature verification fail
+     * @throws JwtException If invalid Jwt token string
+     * @throws JwtException If invalid segments encoding
+     * @throws JwtException If empty algorithm
+     * @throws JwtException If signature verification fail
      */
     function decode(string $jwt, bool $verify = true): object
     {
         $pieces = \explode('.', $jwt);
 
         if (\count($pieces) !== 3) {
-            throw new \Exception('Wrong number of segments');
+            throw new JwtException('Wrong number of segments');
         }
 
         [$headerB64, $payloadB64, $cryptoB64] = $pieces;
@@ -82,22 +84,22 @@ namespace Jwt
         $payload = \json_decode(url_safe_base64_decode($payloadB64), false, 512, \JSON_THROW_ON_ERROR);
 
         if (empty(\get_object_vars($header))) {
-            throw new \Exception('Invalid segment encoding');
+            throw new JwtException('Invalid segment encoding');
         }
 
         if (empty(\get_object_vars($payload))) {
-            throw new \Exception('Invalid segment encoding');
+            throw new JwtException('Invalid segment encoding');
         }
 
         $sign = url_safe_base64_decode($cryptoB64);
 
         if ($verify) {
             if (! isset($header->alg) || empty($header->alg)) {
-                throw new \Exception('Empty algorithm');
+                throw new JwtException('Empty algorithm');
             }
 
             if ($sign != sign("$headerB64.$payloadB64", $header->alg)) {
-                throw new \Exception('Signature verification failed');
+                throw new JwtException('Signature verification failed');
             }
         }
 
@@ -129,7 +131,7 @@ namespace Jwt
      * Signs Jwt payload
      *
      * @internal
-     * @throws \Exception If algorithm not supported
+     * @throws JwtException If algorithm not supported
      */
     function sign(string $message, string $method = 'HS256'): string
     {
@@ -140,7 +142,7 @@ namespace Jwt
         ];
 
         if (! isset($methods[$method])) {
-            throw new \Exception('Algorithm not supported');
+            throw new JwtException('Algorithm not supported');
         }
 
         return \hash_hmac($methods[$method], $message, secret(), true);
@@ -178,8 +180,6 @@ namespace Jwt
      *     echo 'It\'s ok!';
      * }
      * ```
-     *
-     * @throws \Exception If signature verification fail or invalid token
      */
     function validate(string $token): bool
     {
@@ -187,7 +187,7 @@ namespace Jwt
             decode($token);
 
             return true;
-        } catch (\Exception $e) {
+        } catch (JwtException $e) {
             return false;
         }
     }
@@ -201,8 +201,6 @@ namespace Jwt
      *     echo 'It\'s ok!';
      * }
      * ```
-     *
-     * @throws \Exception If signature verification fail or invalid token
      */
     function expired(string $token): bool
     {

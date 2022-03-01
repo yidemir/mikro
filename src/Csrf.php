@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Csrf
 {
-    use function Html\tag;
-    use function Request\get as input;
+    use Html;
+    use Request;
+    use Mikro\Exceptions\MikroException;
 
     /**
      * Generate a random string
@@ -41,7 +42,7 @@ namespace Csrf
         }
 
         if ($value === null) {
-            $value = input('__CSRF_TOKEN');
+            $value = Request\get('__CSRF_TOKEN');
         }
 
         return \hash_equals($value, $_SESSION['__csrf']);
@@ -58,7 +59,7 @@ namespace Csrf
     function get(): string
     {
         if (\session_status() !== \PHP_SESSION_ACTIVE) {
-            throw new \Exception('Start the PHP Session first');
+            throw new MikroException('Start the PHP Session first');
         }
 
         if (isset($_SESSION['__csrf'])) {
@@ -78,7 +79,7 @@ namespace Csrf
      */
     function field(): string
     {
-        return (string) tag('input', '')
+        return (string) Html\tag('input', '')
             ->name('__CSRF_TOKEN')
             ->type('hidden')
             ->value(get());

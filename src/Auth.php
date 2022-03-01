@@ -8,6 +8,7 @@ namespace Auth
     use Jwt;
     use Crypt;
     use Validator;
+    use Mikro\Exceptions\ValidatorException;
 
     /**
      * Gets logged in user data
@@ -48,7 +49,7 @@ namespace Auth
         }
 
         if (\is_string($abilities)) {
-            if (\strpos($abilities, '&') !== false) {
+            if (\str_contains($abilities, '&')) {
                 $abilities = \explode('&', $abilities);
 
                 foreach ($abilities as $ability) {
@@ -248,6 +249,8 @@ namespace Auth
      *     'name' => 'foo',
      * ]); // bool true if ok
      * ```
+     *
+     * @throws ValidatorException
      */
     function register(array $data = []): bool
     {
@@ -263,7 +266,9 @@ namespace Auth
         ]);
 
         if (! $valid) {
-            return false;
+            throw new ValidatorException(
+                'Register failed. Name, e-mail and password fields are required'
+            );
         }
 
         $data['password'] = Crypt\bcrypt($data['password']);

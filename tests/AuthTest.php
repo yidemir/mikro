@@ -35,6 +35,8 @@ class AuthTest extends TestCase
 
     public function testAuthRegisterMethod()
     {
+        $this->expectException(\Mikro\Exceptions\ValidatorException::class);
+
         $this->assertFalse(\Auth\register([
             'email' => 'text'
         ]));

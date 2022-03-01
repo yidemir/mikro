@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace DB
 {
-    use function Pagination\paginate;
-    use function Request\get as input;
+    use Request;
+    use Pagination;
+    use Mikro\Exceptions\MikroException;
 
     /**
      * Get PDO connection
@@ -15,14 +16,14 @@ namespace DB
      * DB\connection(); // Returns PDO instance
      * ```
      *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
+     * @throws MikroException When the PDO connection is not defined in the global $mikro array
      */
     function connection(): \PDO
     {
         global $mikro;
 
         if (! isset($mikro[CONNECTION]) || ! ($mikro[CONNECTION] instanceof \PDO)) {
-            throw new \Exception('Create PDO instance first');
+            throw new MikroException('Create PDO instance first');
         }
 
         return $mikro[CONNECTION];
@@ -67,7 +68,7 @@ namespace DB
      * Pagination\data(); // Gets pagination data
      * ```
      *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
+     * @throws MikroException When the PDO connection is not defined in the global $mikro array
      */
     function table(string $table, string $primaryKey = 'id'): object
     {
@@ -148,9 +149,9 @@ namespace DB
                     "SELECT COUNT(*) FROM {$this->table} {$query}",
                     $params
                 )->fetchColumn();
-                $pagination = paginate(
+                $pagination = Pagination\paginate(
                     $total,
-                    (int) ($options['page'] ?? input('page', 1)),
+                    (int) ($options['page'] ?? Request\get('page', 1)),
                     (int) ($options['per_page'] ?? 10)
                 );
 
@@ -171,8 +172,6 @@ namespace DB
      * DB\query('select * from items where id=?', [$id])->fetch();
      * DB\query('insert into items (name, value) values (?, ?)', [$name, $value]);
      * ```
-     *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
      */
     function query(string $query, array $params = []): \PDOStatement
     {
@@ -189,8 +188,6 @@ namespace DB
      * ```php
      * DB\exec('create table if not exists items ...');
      * ```
-     *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
      */
     function exec(string $query): int|bool
     {
@@ -204,8 +201,6 @@ namespace DB
      * ```php
      * DB\insert('items', ['name' => 'foo', 'value' => 'bar']);
      * ```
-     *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
      */
     function insert(string $table, array $data, string $queryPart = ''): \PDOStatement
     {
@@ -224,8 +219,6 @@ namespace DB
      * DB\update('items', ['name' => 'foo', 'value' => 'bar']);
      * DB\update('items', ['name' => 'foo', 'value' => 'bar'], 'where id=?', [$id]);
      * ```
-     *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
      */
     function update(
         string $table,
@@ -251,8 +244,6 @@ namespace DB
      * DB\delete('items');
      * DB\delete('items', 'where id=?', [$id]);
      * ```
-     *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
      */
     function delete(
         string $table,
@@ -271,8 +262,6 @@ namespace DB
      * ```php
      * DB\last_insert_id();
      * ```
-     *
-     * @throws \Exception When the PDO connection is not defined in the global $mikro array
      */
     function last_insert_id(): string|bool
     {

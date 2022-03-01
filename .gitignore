@@ -4,3 +4,4 @@ vendor
 coverage
 .idea
 .phpdoc
+node_modules

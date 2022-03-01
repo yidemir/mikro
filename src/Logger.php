@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Logger
 {
+    use Mikro\Exceptions\{PathException, MikroException};
+
     /**
      * Get logger path
      *
@@ -13,14 +15,14 @@ namespace Logger
      * Logger\path(); // 'path/to/app/storage/logs'
      * ```
      *
-     * @throws \Exception Throws an exception if 'Logger\PATH' is not defined in the global $micro array
+     * @throws MikroException Throws an exception if 'Logger\PATH' is not defined in the global $mikro array
      */
     function path(): string
     {
         global $mikro;
 
         if (! isset($mikro[PATH])) {
-            throw new \Exception('Please set the logger path');
+            throw new MikroException('Please set the logger path');
         }
 
         return $mikro[PATH];
@@ -30,7 +32,7 @@ namespace Logger
      * Create log file
      *
      * @internal
-     * @throws \Exception If log path not writable
+     * @throws PathException If log path not writable
      */
     function create_file(): string
     {
@@ -49,12 +51,12 @@ namespace Logger
 
         if (! \is_file($path)) {
             if (! \touch($path)) {
-                throw new \Exception('The log file could not be created');
+                throw new PathException('The log file could not be created');
             }
         }
 
         if (! \is_writable($path)) {
-            throw new \Exception('The log file could not writable');
+            throw new PathException('The log file could not writable');
         }
 
         return $path;
@@ -67,8 +69,6 @@ namespace Logger
      * ```php
      * Logger\log(Logger\LEVEL_DEBUG, 'debug message', ['debug data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function log(string $level, string $message, array|object|null $context = null): void
     {
@@ -92,8 +92,6 @@ namespace Logger
      * ```php
      * Logger\emergency('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function emergency(string $message, array|object|null $context = null): void
     {
@@ -107,8 +105,6 @@ namespace Logger
      * ```php
      * Logger\alert('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function alert(string $message, array|object|null $context = null): void
     {
@@ -122,8 +118,6 @@ namespace Logger
      * ```php
      * Logger\critical('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function critical(string $message, array|object|null $context = null): void
     {
@@ -137,8 +131,6 @@ namespace Logger
      * ```php
      * Logger\error('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function error(string $message, array|object|null $context = null): void
     {
@@ -152,8 +144,6 @@ namespace Logger
      * ```php
      * Logger\warning('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function warning(string $message, array|object|null $context = null): void
     {
@@ -167,8 +157,6 @@ namespace Logger
      * ```php
      * Logger\notice('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function notice(string $message, array|object|null $context = null): void
     {
@@ -182,8 +170,6 @@ namespace Logger
      * ```php
      * Logger\info('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function info(string $message, array|object|null $context = null): void
     {
@@ -197,8 +183,6 @@ namespace Logger
      * ```php
      * Logger\debug('log message', ['log' => 'data']);
      * ```
-     *
-     * @throws \Exception If log path not writable
      */
     function debug(string $message, array|object|null $context = null): void
     {

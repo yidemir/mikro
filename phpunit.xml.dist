@@ -9,7 +9,8 @@
          convertWarningsToExceptions="true"
          processIsolation="false"
          stopOnFailure="false"
-         stderr="true">
+         stderr="true"
+         cacheResult ="false">
     <testsuites>
         <testsuite name="Test Suite">
             <directory>tests</directory>

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Crypt
 {
+    use Mikro\Exceptions\MikroException;
+
     /**
      * Get defined secret key
      *
@@ -13,14 +15,14 @@ namespace Crypt
      * Crypt\secret(); // 'foo'
      * ```
      *
-     * @throws \Exception If secret key not defined on global $mikro array
+     * @throws MikroException If secret key not defined on global $mikro array
      */
     function secret(): string
     {
         global $mikro;
 
         if (! isset($mikro[SECRET])) {
-            throw new \Exception('Please define secret key');
+            throw new MikroException('Please define secret key');
         }
 
         return $mikro[SECRET];
@@ -33,8 +35,6 @@ namespace Crypt
      * ```php
      * Crypt\encrypt('secret data'); // 'secretstring'
      * ```
-     *
-     * @throws \Exception If secret key not defined on global $mikro array
      */
     function encrypt(string $data, ?string $secret = null): string
     {
@@ -54,8 +54,6 @@ namespace Crypt
      * ```php
      * Crypt\decrypt('secretstring'); // 'secret data'
      * ```
-     *
-     * @throws \Exception If secret key not defined on global $mikro array
      */
     function decrypt(string $data, ?string $secret = null): bool|string|null
     {
@@ -80,8 +78,6 @@ namespace Crypt
      * ```php
      * Crypt\bcrypt('password');
      * ```
-     *
-     * @throws \Exception If secret key not defined on global $mikro array
      */
     function bcrypt(string $data): string
     {

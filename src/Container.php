@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Container
 {
+    use Mikro\Exceptions\ContainerException;
+
     /**
      * Defines a new container item
      *
@@ -32,7 +34,7 @@ namespace Container
     function get(string $name): mixed
     {
         if (! has($name)) {
-            throw new \Exception('Container item not exists');
+            throw new ContainerException('Container item not exists');
         }
 
         global $mikro;
@@ -48,12 +50,12 @@ namespace Container
      * Container\value('closure'); // stdClass
      * ```
      *
-     * @throws \Exception If the value is not callable
+     * @throws ContainerException If the value is not callable
      */
     function value(string $name, array $args = []): mixed
     {
         if (! \is_callable($value = get($name))) {
-            throw new \Exception('Value is not callable');
+            throw new ContainerException('Value is not callable');
         }
 
         return \call_user_func_array($value, $args);

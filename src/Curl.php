@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Curl
 {
+    use Mikro\Exceptions\CurlException;
+
     /**
      * Creates a Curl request
      *
@@ -54,15 +56,16 @@ namespace Curl
     function make(string $url, string $method = 'GET', array $options = []): object
     {
         return new class ($url, $method, $options) {
-            private string $method;
-            private string $url;
-            private array $options;
-            private ?string $response = null;
-            private bool $asForm = false;
-            private mixed $curl;
+            public mixed $curl;
+            public bool $asForm = false;
+            public bool $errors = false;
+            public ?string $response = null;
 
-            public function __construct(string $url, string $method, array $options)
-            {
+            public function __construct(
+                public string $url,
+                public string $method,
+                public array $options
+            ) {
                 $this->url = $url;
                 $this->method($method);
                 $this->options($options);
@@ -90,6 +93,32 @@ namespace Curl
                 \curl_setopt_array($this->curl, $options + $this->options);
 
                 $this->response = (string) \curl_exec($this->curl);
+
+                if ($this->errors) {
+                    if (! empty($this->getError())) {
+                        throw CurlException::curlError($this->getError(), [
+                            'method' => $this->method,
+                            'options' => $options + $this->options,
+                            'info' => $this->getInfo(),
+                        ]);
+                    }
+
+                    if ($this->isClientError()) {
+                        throw CurlException::clientError($this->text(), $this->getStatus(), [
+                            'method' => $this->method,
+                            'options' => $options + $this->options,
+                            'info' => $this->getInfo(),
+                        ]);
+                    }
+
+                    if ($this->isServerError()) {
+                        throw CurlException::clientError($this->text(), $this->getStatus(), [
+                            'method' => $this->method,
+                            'options' => $options + $this->options,
+                            'info' => $this->getInfo(),
+                        ]);
+                    }
+                }
 
                 return $this;
             }
@@ -124,7 +153,7 @@ namespace Curl
             public function getInfo(?string $key = null): mixed
             {
                 if (\curl_errno($this->curl)) {
-                    return [];
+                    return null;
                 }
 
                 $info = \curl_getinfo($this->curl);
@@ -195,6 +224,11 @@ namespace Curl
                 return $this;
             }
 
+            public function getStatus(): ?int
+            {
+                return $this->getInfo('http_code');
+            }
+
             public function getError(): string
             {
                 return \curl_error($this->curl);
@@ -202,30 +236,34 @@ namespace Curl
 
             public function isOk(): bool
             {
-                return $this->getInfo('http_code') >= 200 &&
-                    $this->getInfo('http_code') < 300;
+                return $this->getStatus() >= 200 && $this->getStatus() < 300;
             }
 
             public function isRedirect(): bool
             {
-                return $this->getInfo('http_code') >= 300 &&
-                    $this->getInfo('http_code') < 400;
+                return $this->getStatus() >= 300 && $this->getStatus() < 400;
             }
 
-            public function isFailed()
+            public function isFailed(): bool
             {
                 return $this->isServerError() || $this->isClientError();
             }
 
             public function isServerError(): bool
             {
-                return $this->getInfo('http_code') >= 500;
+                return $this->getStatus() >= 500;
             }
 
             public function isClientError(): bool
             {
-                return $this->getInfo('http_code') >= 400 &&
-                    $this->getInfo('http_code') < 500;
+                return $this->getStatus() >= 400 && $this->getStatus() < 500;
+            }
+
+            public function errorOnFail(bool $errors = true): self
+            {
+                $this->errors = $errors;
+
+                return $this;
             }
         };
     }
