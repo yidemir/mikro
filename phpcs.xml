@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset  name="PHP_CodeSniffer">
-    <description>PHPCS configuration file</description>
+    <description>Mikro PHPCS configuration file</description>
     <file>src</file>
     <arg  value="np"/>
     <rule  ref="PSR12"/>

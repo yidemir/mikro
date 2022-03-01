@@ -54,7 +54,10 @@
             "src/Router.php",
             "src/Validator.php",
             "src/View.php"
-        ]
+        ],
+        "psr-4": {
+            "Mikro\\Exceptions\\": "src/Exceptions"
+        }
     },
     "autoload-dev": {
         "psr-4": {
