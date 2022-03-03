@@ -10,6 +10,18 @@ namespace Console
      * {@inheritDoc} **Example:**
      * ```php
      * Console\command('cache:clear', fn() => Cache\flush());
+     * // php console.php cache:clear
+     *
+     * Console\command('say:hello', function (array $args) {
+     *     if (isset($args[0])) {
+     *         return Console\write("Hello {$args[0]}!");
+     *     }
+     *
+     *      Console\write('Hello world!');
+     * });
+     *
+     * // php console.php say:hello // prints "Hello world!"
+     * // php console.php say:hello Foo // prints "Hello Foo!"
      * ```
      */
     function command(string $name, callable $callback): void
@@ -73,11 +85,14 @@ namespace Console
      * });
      * ```
      */
-    function ask(string $question, callable $callback): mixed
+    function ask(string $question, ?callable $callback = null): mixed
     {
         write($question);
         $line = \readline();
-        $callback($line);
+
+        if ($callback) {
+            $callback($line);
+        }
 
         return $line;
     }
