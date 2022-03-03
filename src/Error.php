@@ -48,48 +48,65 @@ namespace Error
                 return;
             }
 
-            if (\in_array($class, $mikro[DONT_REPORT_COLLECTION])) {
+            if (\in_array($class, $mikro[DONT_REPORT_COLLECTION] ?? [])) {
                 return;
             }
 
-            if (\PHP_SAPI === 'cli') {
-                Console\error("{$class} with message '{$exception->getMessage()}'");
-                Console\write("in {$exception->getFile()}:{$exception->getLine()}");
-                Console\write(\str_repeat('-', \strlen($class)));
-                Console\write($exception->getTraceAsString());
-
-                return;
-            }
-
-            if (! \error_reporting()) {
-                return;
-            }
-
-            if (Request\wants_json()) {
-                return Response\json([
-                    'message' => $exception->getMessage(),
-                    'data' => [
-                        'exception' => $class,
-                        'message' => $exception->getMessage(),
-                        'file' => $exception->getFile(),
-                        'line' => $exception->getLine(),
-                        'trace' => $exception->getTrace()
-                    ]
-                ], 500);
-            }
-
-            return Response\html('<!doctype html>' . Html\tag('html', [
-                Html\tag('head', [
-                    Html\tag('title', $class),
-                    Html\tag('style', 'html { font: .9em/1.5 sans-serif }')
-                ]),
-                Html\tag('body', Html\tag('div', [
-                    Html\tag('h1', $class),
-                    Html\tag('h2', \htmlentities($exception->getMessage())),
-                    Html\tag('pre', $exception->getTraceAsString())
-                ]))
-            ]), 500);
+            return response($exception);
         });
+    }
+
+    /**
+     * Prepare exception response
+     *
+      * {@inheritDoc} **Example:**
+     * ```php
+     * Error\handler(function (\Throwable $e) {
+     *     // handler
+     *
+     *     Error\response($e);
+     * });
+     * ```
+     */
+    function response(\Throwable $exception): ?int
+    {
+        if (\PHP_SAPI === 'cli') {
+            Console\error("{$class} with message '{$exception->getMessage()}'");
+            Console\write("in {$exception->getFile()}:{$exception->getLine()}");
+            Console\write(\str_repeat('-', \strlen($class)));
+            Console\write($exception->getTraceAsString());
+
+            return null;
+        }
+
+        if (! \error_reporting()) {
+            return null;
+        }
+
+        if (Request\wants_json()) {
+            return Response\json([
+                'message' => $exception->getMessage(),
+                'data' => [
+                    'exception' => $class,
+                    'message' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                    'trace' => $exception->getTrace()
+                ]
+            ], 500);
+        }
+
+        return Response\html('<!doctype html>' . Html\tag('html', [
+            Html\tag('head', [
+                Html\tag('title', $class),
+                Html\tag('style', 'html { font: .9em/1.5 sans-serif }')
+            ]),
+            Html\tag('body', Html\tag('div', [
+                Html\tag('h1', $class),
+                Html\tag('h2', \htmlentities($exception->getMessage())),
+                Html\tag('pre', $exception->getTraceAsString())
+            ]))
+        ]), 500);
     }
 
     /**

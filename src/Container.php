@@ -70,7 +70,7 @@ namespace Container
      * Container\value('closure') === Container\value('closure'); // true
      * ```
      */
-    function singleton(string $name, \Closure $callback): void
+    function singleton(string $name, callable $callback): void
     {
         set($name, function () use ($callback) {
             static $object;
