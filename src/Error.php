@@ -70,6 +70,8 @@ namespace Error
      */
     function response(\Throwable $exception): ?int
     {
+        $class = \get_class($exception);
+
         if (\PHP_SAPI === 'cli') {
             Console\error("{$class} with message '{$exception->getMessage()}'");
             Console\write("in {$exception->getFile()}:{$exception->getLine()}");
