@@ -23,12 +23,12 @@ namespace Html
      * ]); // same result
      * ```
      */
-    function tag(string $name, \Stringable|string|array $content = '', array $attributes = []): object
+    function tag(string $name, mixed $content = '', array $attributes = []): object
     {
         return new class ($name, $content, $attributes) implements \Stringable {
             public function __construct(
                 protected string $name,
-                protected \Stringable|string|array $content,
+                protected mixed $content,
                 protected array $attributes = []
             ) {
                 if (\is_array($content)) {
