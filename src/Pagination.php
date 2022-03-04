@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pagination
 {
+    use Html;
+
     /**
      * Returns pagination data based on the total number of items
      *
@@ -44,6 +46,45 @@ namespace Pagination
         global $mikro;
 
         return $mikro[DATA] ?? null;
+    }
+
+    function links(array $paginationData, array $options = []): string
+    {
+        if (! $paginationData) {
+            return '';
+        }
+
+        $styles = $options['styles'] ?? [];
+        $containerTag = $options['container-tag'] ?? 'nav';
+        $itemTag = $options['item-tag'] ?? 'span';
+        $linkTag = $options['link-tag'] ?? 'a';
+
+        $link = fn($item) => Html\tag($linkTag, (string) $item, [
+            ...! empty($styles['link'] ?? []) ? ['style' => [
+                ...$item === $paginationData['current_page'] ?
+                    $styles['link-current'] ?? [] : [],
+                ...$styles['link'] ?? [],
+            ]] : []
+        ])->href(($options['url'] ?? '') . '?page=' . $item);
+
+        $item = fn($item) => Html\tag($itemTag, $link($item), [
+            ...! empty($styles['item'] ?? []) ? ['style' => [
+                ...$item === $paginationData['current_page'] ?
+                    $styles['item-current'] ?? [] : [],
+                ...$styles['item'] ?? [],
+            ]] : []
+        ]);
+
+        $links = Html\tag(
+            $containerTag,
+            \array_map($item, \range(1, $paginationData['total_page']))
+        );
+
+        if (isset($styles['container']) && \is_array($styles['container'])) {
+            $links->style([...$styles['container'] ?? []]);
+        }
+
+        return (string) $links;
     }
 
     /**
