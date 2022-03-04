@@ -143,10 +143,56 @@ class DBTest extends TestCase
         $this->assertEquals($count, count(range(1, 10)));
     }
 
+    public function testCollection()
+    {
+        $collection = \DB\collection($array = range(1, 10));
+
+        $this->assertArrayHasKey(0, $collection);
+        $this->assertArrayHasKey(9, $collection);
+        $this->assertInstanceOf(\Iterator::class, $collection);
+        $this->assertInstanceOf(\ArrayAccess::class, $collection);
+        $this->assertInstanceOf(\Countable::class, $collection);
+        $this->assertIsArray($collection->toArray());
+        $this->assertTrue($collection->valid());
+        $this->assertEquals($collection->current(), 1);
+        $collection->next();
+        $this->assertTrue($collection->valid());
+        $this->assertEquals($collection->current(), 2);
+        $this->assertEquals($collection->count(), count($array));
+        $collection[] = 11;
+        $this->assertCount(11, $collection);
+        $this->assertArrayHasKey(10, $collection);
+        $mapped = $collection->map(fn($item) => $item === 1 ? null : $item);
+        $instance = $collection->each(fn($item) => $item === 1 ? null : $item);
+        $this->assertTrue($mapped[0] === null);
+        unset($mapped[0]);
+        $this->assertCount(10, $mapped);
+        $this->assertNotCount(10, $instance);
+        $this->assertTrue($instance[0] === null);
+        $paginated = $collection->paginate($perPage = 2, $currentPage = 1);
+        $this->assertCount($perPage, $collection);
+        $this->assertEquals($collection[0], null);
+        $this->assertEquals($collection[1], 2);
+        $this->assertCount(6, $collection->pages());
+        $this->assertIsString($collection->links());
+        $this->assertFalse($collection->isEmpty());
+        $this->assertNull($collection->first());
+        $this->assertTrue(2 === $collection->last());
+        $this->assertNull($collection->find(0));
+        $this->assertNull($collection->find(100));
+    }
+
     public function testPaginateMethodFromTable()
     {
         $paginatedItems = \DB\table('items')->paginate();
         $this->assertEquals(count($paginatedItems), 10);
+        $this->assertInstanceOf(\Iterator::class, $paginatedItems);
+        $this->assertInstanceOf(\ArrayAccess::class, $paginatedItems);
+        $this->assertInstanceOf(\Countable::class, $paginatedItems);
+        $this->assertFalse($paginatedItems->isEmpty());
+        $this->assertIsString($paginatedItems->links());
+        $this->assertIsNotArray($paginatedItems);
+        $this->assertIsArray($paginatedItems->toArray());
 
         $paginatedItems = \DB\table('items')->paginate('', [], ['per_page' => 3]);
         $this->assertEquals(count($paginatedItems), 3);

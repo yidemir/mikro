@@ -143,7 +143,7 @@ namespace DB
                 return delete($this->table, $query, $params);
             }
 
-            public function paginate(string $query = '', array $params = [], array $options = []): array
+            public function paginate(string $query = '', array $params = [], array $options = []): \Iterator
             {
                 $total = (int) query(
                     "SELECT COUNT(*) FROM {$this->table} {$query}",
@@ -154,11 +154,13 @@ namespace DB
                     (int) ($options['page'] ?? Request\get('page', 1)),
                     (int) ($options['per_page'] ?? 10)
                 );
-
-                return query(
-                    "SELECT {$this->select} FROM {$this->table} {$query} LIMIT {$pagination['offset']},{$pagination['limit']}",
+                $limit = "{$pagination['offset']},{$pagination['limit']}";
+                $items = query(
+                    "SELECT {$this->select} FROM {$this->table} {$query} LIMIT $limit",
                     $params
                 )->fetchAll(\PDO::FETCH_OBJ);
+
+                return collection($items, $pagination);
             }
         };
     }
@@ -266,6 +268,166 @@ namespace DB
     function last_insert_id(): string|bool
     {
         return connection()->lastInsertId();
+    }
+
+    /**
+     * Smart data collection
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $collection = DB\collection([1, 2, 3, 4, 5, 6]);
+     * $collection->paginate($currentPage = 1, $perPage = 2);
+     * $collection->pages(); // [1, 2, 3]
+     * $collection->page(1); [1, 2]
+     * $collection->page(2); [3, 4]
+     * $newCollection = $collection->map(function ($item) {
+     *     return $item < 3 ? null : $item;
+     * });
+     * $collection->each(fn($item) => $item < 3 ? null : $item);
+     * // [null, null, 3, 4, 5, 6]
+     * $collection->isEmpty(); // false
+     * ```
+     */
+    function collection(array $items, array $pagination = []): \Iterator
+    {
+        return new class ($items, 0, $pagination) implements \Iterator, \ArrayAccess, \Countable {
+            public function __construct(
+                private array $collection,
+                private int $position = 0,
+                public array $pagination = []
+            ) {
+                //
+            }
+
+            public function rewind(): void
+            {
+                $this->position = 0;
+            }
+
+            public function current(): mixed
+            {
+                return $this->collection[$this->position];
+            }
+
+            public function key(): mixed
+            {
+                return $this->position;
+            }
+
+            public function next(): void
+            {
+                ++$this->position;
+            }
+
+            public function valid(): bool
+            {
+                return isset($this->collection[$this->position]);
+            }
+
+            public function count(): int
+            {
+                return \count($this->collection);
+            }
+
+            public function offsetSet(mixed $offset, mixed $value): void
+            {
+                if ($offset === null) {
+                    $this->collection[] = $value;
+                } else {
+                    $this->collection[$offset] = $value;
+                }
+            }
+
+            public function offsetExists(mixed $offset): bool
+            {
+                return isset($this->collection[$offset]);
+            }
+
+            public function offsetUnset(mixed $offset): void
+            {
+                unset($this->collection[$offset]);
+            }
+
+            public function offsetGet(mixed $offset): mixed
+            {
+                return isset($this->collection[$offset]) ? $this->collection[$offset] : null;
+            }
+
+            public function map(callable $callback): self
+            {
+                $new = \array_map($callback, $this->collection);
+
+                return new self($new);
+            }
+
+            public function each(callable $callback): self
+            {
+                foreach ($this->collection as $key => $item) {
+                    $this->collection[$key] = $callback($item);
+                }
+
+                return $this;
+            }
+
+            public function chunk(int $size)
+            {
+                $this->collection = \array_chunk($this->collection, $size);
+
+                return $this;
+            }
+
+            public function paginate(int $perPage = 10, int $currentPage = 1)
+            {
+                if (empty($this->pagination)) {
+                    $this->pagination = Pagination\paginate(
+                        $this->count(),
+                        $currentPage,
+                        $perPage
+                    );
+                }
+
+                $this->collection = $this->chunk($perPage)->find($currentPage - 1) ?? [];
+
+                return $this;
+            }
+
+            public function pages(): array
+            {
+                return ! empty($this->pagination) ?
+                    \range(1, $this->pagination['total_page']) : [];
+            }
+
+            public function links(array $options = []): string
+            {
+                return ! empty($this->pagination) ?
+                    Pagination\links($this->pagination, $options) : '';
+            }
+
+            public function isEmpty(): bool
+            {
+                return empty($this->collection);
+            }
+
+            public function first(): mixed
+            {
+                return $this->collection[\array_key_first($this->collection)];
+            }
+
+            public function last(): mixed
+            {
+                return $this->collection[\array_key_last($this->collection)];
+            }
+
+            public function find(mixed $key, mixed $default = null): mixed
+            {
+                return $this->collection[$key] ?? $default;
+            }
+
+            public function toArray(): array
+            {
+                return $this->collection;
+            }
+        };
     }
 
     /**
