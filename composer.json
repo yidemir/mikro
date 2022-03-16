@@ -44,6 +44,7 @@
             "src/Error.php",
             "src/Event.php",
             "src/Flash.php",
+            "src/Helper.php",
             "src/Html.php",
             "src/Jwt.php",
             "src/Locale.php",
