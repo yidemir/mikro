@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Helper
 {
     function arr(array $arr)
@@ -15,9 +17,9 @@ namespace Helper
                 return $this->toArray();
             }
 
-            public function chunk(int $size): self
+            public function chunk(int $size, bool $preverseKeys = false): self
             {
-                $this->arr = \array_chunk($this->arr, $size);
+                $this->arr = \array_chunk($this->arr, $size, $preverseKeys);
 
                 return $this;
             }
