@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Helper
 {
+    use Pagination;
+    use Mikro\Exceptions\ValidatorException;
+
     function arr(array $arr = []): object
     {
         return new class ($arr) implements \ArrayAccess, \Iterator, \Countable {
-            public function __construct(public array $arr)
+            protected ?object $pagination = null;
+
+            public function __construct(public array $arr = [])
             {
                 //
             }
@@ -377,6 +382,78 @@ namespace Helper
 
                 return $this->toArray();
             }
+
+            public function setPagination(array $data): self
+            {
+                $required = [
+                    'page', 'max', 'limit', 'offset', 'total_page', 'current_page', 'next_page', 'previous_page'
+                ];
+
+                foreach ($required as $field) {
+                    if (! isset($data[$field])) {
+                        throw new ValidatorException("'{$field}' parameter is required in pagianation data");
+                    }
+                }
+
+                $this->pagination = new class ($data) {
+                    public function __construct(public array $data)
+                    {
+                        //
+                    }
+
+                    public function getData(): array
+                    {
+                        return $this->data;
+                    }
+
+                    public function getPages(): array
+                    {
+                        return \range(1, $this->getTotalPage());
+                    }
+
+                    public function getLinks(array $options = []): string
+                    {
+                        return Pagination\links($this->getData(), $options);
+                    }
+
+                    public function getLimit(): int
+                    {
+                        return $this->data['limit'];
+                    }
+
+                    public function getOffset(): int
+                    {
+                        return $this->data['offset'];
+                    }
+
+                    public function getTotalPage(): int
+                    {
+                        return $this->data['total_page'];
+                    }
+
+                    public function getCurrentPage(): int
+                    {
+                        return $this->data['current_page'];
+                    }
+
+                    public function getNextPage(): int
+                    {
+                        return $this->data['next_page'];
+                    }
+
+                    public function getPreviousPage(): int
+                    {
+                        return $this->data['previous_page'];
+                    }
+                };
+
+                return $this;
+            }
+
+            public function getPagination(): object
+            {
+                return $this->pagination;
+            }
         };
     }
 
@@ -589,7 +666,7 @@ namespace Helper
 
             public function __toString(): string
             {
-                return $this->get();
+                return $this->string;
             }
 
             public function __invoke(?callable $callback = null): string

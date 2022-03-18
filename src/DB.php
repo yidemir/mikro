@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace DB
 {
+    use Helper;
     use Request;
     use Pagination;
-    use Mikro\Exceptions\MikroException;
+    use Mikro\Exceptions\{MikroException, DataNotFoundException};
 
     /**
      * Get PDO connection
@@ -89,14 +90,17 @@ namespace DB
                 return $this;
             }
 
-            public function get(string $query = '', array $params = []): array
+            public function get(string $query = '', array $params = []): \Iterator
             {
                 $query = "SELECT {$this->select} FROM {$this->table} {$query}";
 
-                return query($query, $params)->fetchAll(\PDO::FETCH_OBJ);
+                return Helper\arr(query($query, $params)->fetchAll(
+                    \PDO::FETCH_PROPS_LATE | \PDO::FETCH_CLASS,
+                    Helper\arr()::class
+                ));
             }
 
-            public function find(int|string $query = '', array $params = []): mixed
+            public function find(int|string $query = '', array $params = []): ?\Iterator
             {
                 if (\is_numeric($query)) {
                     $params[$this->primaryKey] = (int) $query;
@@ -104,8 +108,20 @@ namespace DB
                 }
 
                 $query = "SELECT {$this->select} FROM {$this->table} {$query}";
+                $result = query($query, $params)->fetch(\PDO::FETCH_NAMED);
 
-                return query($query, $params)->fetch(\PDO::FETCH_OBJ);
+                return $result ? Helper\arr($result) : null;
+            }
+
+            public function findOrFail(int|string $query = '', array $params = []): \Iterator
+            {
+                $result = $this->find($query, $params);
+
+                if ($result === null) {
+                    throw new DataNotFoundException();
+                }
+
+                return $result;
             }
 
             public function column(string $query = '', array $params = []): mixed
@@ -149,18 +165,24 @@ namespace DB
                     "SELECT COUNT(*) FROM {$this->table} {$query}",
                     $params
                 )->fetchColumn();
+
                 $pagination = Pagination\paginate(
                     $total,
                     (int) ($options['page'] ?? Request\get('page', 1)),
                     (int) ($options['per_page'] ?? 10)
                 );
+
                 $limit = "{$pagination['offset']},{$pagination['limit']}";
+
                 $items = query(
                     "SELECT {$this->select} FROM {$this->table} {$query} LIMIT $limit",
                     $params
-                )->fetchAll(\PDO::FETCH_OBJ);
+                )->fetchAll(
+                    \PDO::FETCH_PROPS_LATE | \PDO::FETCH_CLASS,
+                    Helper\arr()::class
+                );
 
-                return collection($items, $pagination);
+                return Helper\arr($items)->setPagination($pagination);
             }
         };
     }
