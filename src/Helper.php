@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Helper
 {
-    function arr(array $arr = [])
+    function arr(array $arr = []): object
     {
         return new class ($arr) implements \ArrayAccess, \Iterator, \Countable {
             public function __construct(public array $arr)
@@ -43,7 +43,7 @@ namespace Helper
                 return $this;
             }
 
-            public function except(array $keys)
+            public function except(array $keys): self
             {
                 foreach ($keys as $key) {
                     unset($this->arr[$key]);
@@ -143,7 +143,7 @@ namespace Helper
                 return new self(\array_map($callback, $this->arr, \array_keys($this->arr)));
             }
 
-            public function mapWithKeys(callable $callback)
+            public function mapWithKeys(callable $callback): self
             {
                 $new = [];
                 $array = \array_map($callback, $this->arr, \array_keys($this->arr));
@@ -175,7 +175,7 @@ namespace Helper
                 return $this;
             }
 
-            public function pluck(mixed $itemKey, mixed $keyKey = null)
+            public function pluck(mixed $itemKey, mixed $keyKey = null): self
             {
                 $new = [];
 
@@ -205,7 +205,7 @@ namespace Helper
                 return $item;
             }
 
-            public function push(mixed $value)
+            public function push(mixed $value): self
             {
                 $this->arr[] = $value;
 
@@ -380,7 +380,7 @@ namespace Helper
         };
     }
 
-    function str(mixed $string)
+    function str(mixed $string): object
     {
         return new class ((string) $string) implements \Stringable, \Countable {
             public function __construct(public string $string)
@@ -592,7 +592,7 @@ namespace Helper
                 return $this->get();
             }
 
-            public function __invoke(?callable $callback = null)
+            public function __invoke(?callable $callback = null): string
             {
                 if ($callback) {
                     $callback($this);
@@ -603,7 +603,7 @@ namespace Helper
         };
     }
 
-    function optional(mixed $value)
+    function optional(mixed $value): object
     {
         return new class ($value) implements \ArrayAccess {
             public function __construct(public mixed $value)
