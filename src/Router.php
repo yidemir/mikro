@@ -39,9 +39,43 @@ namespace Router
         }
 
         $middleware = \array_merge($mikro[MIDDLEWARE] ?? [], $middleware);
+        $requestPath = \rawurldecode(\rtrim(Request\path(), '/') ?: '/');
 
-        if (\in_array(Request\method(), $methods) && Request\path() === $path) {
+        if (\in_array(Request\method(), $methods) && $requestPath === $path) {
             goto found;
+        }
+
+        $path = parse_path($path);
+
+        if (
+            \in_array(Request\method(), $methods) &&
+            (\preg_match(\sprintf('@^%s$@i', $path), $requestPath, $params) >= 1) &&
+            ($mikro[FOUND] ?? null) !== true
+        ) {
+            found:
+            $mikro[FOUND] = true;
+
+            if (isset($params)) {
+                \array_shift($params);
+                $mikro[PARAMETERS] = $params;
+            }
+
+            $result = \array_reduce(\array_reverse($middleware), function ($stack, $item) {
+                return function () use ($stack, $item) {
+                    return $item($stack);
+                };
+            }, $callback);
+
+            $result();
+        }
+    }
+
+    function parse_path(string $path): string
+    {
+        if (\preg_match('/(\/{.*}\?)/i', $path, $matches)) {
+            foreach (range(1, count($matches)) as $match) {
+                $path = \preg_replace('/\/({.*}\?)/', '/?$1', $path);
+            }
         }
 
         \preg_replace_callback('/[\[{\(].*[\]}\)]/U', function ($match) use (&$path): string {
@@ -67,27 +101,7 @@ namespace Router
             return $path;
         }, $path);
 
-        if (
-            \in_array(Request\method(), $methods) &&
-            (\preg_match(\sprintf('@^%s$@i', $path), Request\path(), $params) >= 1) &&
-            ($mikro[FOUND] ?? null) !== true
-        ) {
-            found:
-            $mikro[FOUND] = true;
-
-            if (isset($params)) {
-                \array_shift($params);
-                $mikro[PARAMETERS] = $params;
-            }
-
-            $result = \array_reduce(\array_reverse($middleware), function ($stack, $item) {
-                return function () use ($stack, $item) {
-                    return $item($stack);
-                };
-            }, $callback);
-
-            $result();
-        }
+        return $path;
     }
 
     /**
@@ -289,13 +303,13 @@ namespace Router
      * /posts/{post:all} => /posts/any-char/any-slash
      * /posts/{post} => if no option, equals any option
      */
-    function parameters(?string $name = null): string|array
+    function parameters(?string $name = null, mixed $default = null): mixed
     {
         global $mikro;
 
         return $name === null ?
             $mikro[PARAMETERS] ?? [] :
-            ($mikro[PARAMETERS][$name] ?? null);
+            ($mikro[PARAMETERS][$name] ?? $default);
     }
 
     /**
