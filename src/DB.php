@@ -369,14 +369,14 @@ namespace DB
                 return $this;
             }
 
-            public function chunk(int $size)
+            public function chunk(int $size): self
             {
                 $this->collection = \array_chunk($this->collection, $size);
 
                 return $this;
             }
 
-            public function paginate(int $perPage = 10, int $currentPage = 1)
+            public function paginate(int $perPage = 10, int $currentPage = 1): self
             {
                 if (empty($this->pagination)) {
                     $this->pagination = Pagination\paginate(

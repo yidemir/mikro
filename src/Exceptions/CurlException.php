@@ -8,14 +8,14 @@ class CurlException extends \Exception
     public static ?int $status = null;
     public static array $details = [];
 
-    public static function curlError(string $message, array $details)
+    public static function curlError(string $message, array $details): self
     {
         self::$details = $details;
 
         return new self('Curl Error: ' . $message);
     }
 
-    public static function clientError(string $response, int $status, array $details)
+    public static function clientError(string $response, int $status, array $details): self
     {
         self::$response = $response;
         self::$status = $status;
@@ -24,7 +24,7 @@ class CurlException extends \Exception
         return new self('4xx Client Error');
     }
 
-    public static function serverError(?string $response, int $status, array $details)
+    public static function serverError(?string $response, int $status, array $details): self
     {
         self::$response = $response;
         self::$status = $status;
