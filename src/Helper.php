@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Helper
 {
-    function arr(array $arr)
+    function arr(array $arr = [])
     {
         return new class ($arr) implements \ArrayAccess, \Iterator, \Countable {
             public function __construct(public array $arr)
@@ -368,6 +368,15 @@ namespace Helper
             {
                 unset($this->arr[$key]);
             }
+
+            public function __invoke(?callable $callback = null): array
+            {
+                if ($callback) {
+                    $callback($this);
+                }
+
+                return $this->toArray();
+            }
         };
     }
 
@@ -410,13 +419,13 @@ namespace Helper
                 return \str_ends_with($this->string, $string);
             }
 
-            public function explode(string $string): array
+            public function explode(string $string, int $limit = \PHP_INT_MAX): array
             {
                 if (empty($string)) {
                     return [];
                 }
 
-                return \explode($string, $this->string);
+                return \explode($string, $this->string, $limit);
             }
 
             public function finish(string $string): self
@@ -573,14 +582,23 @@ namespace Helper
                 return $this->string;
             }
 
+            public function count(): int
+            {
+                return $this->length();
+            }
+
             public function __toString(): string
             {
                 return $this->get();
             }
 
-            public function count(): int
+            public function __invoke(?callable $callback = null)
             {
-                return $this->length();
+                if ($callback) {
+                    $callback($this);
+                }
+
+                return $this->__toString();
             }
         };
     }
@@ -595,12 +613,12 @@ namespace Helper
 
             public function __get(string $key): mixed
             {
-                if (\is_object($this->value)) {
-                    return $this->value->{$key} ?? null;
+                if (\is_array($this->value) || $this->value instanceof \ArrayAccess) {
+                    return $this->value[$key] ?? null;
                 }
 
-                if (\is_array($this->value)) {
-                    return $this->value[$key] ?? null;
+                if (\is_object($this->value)) {
+                    return $this->value->{$key} ?? null;
                 }
 
                 return null;
@@ -608,12 +626,12 @@ namespace Helper
 
             public function __isset(string $key): bool
             {
-                if (\is_object($this->value)) {
-                    return isset($this->value->{$key});
+                if (\is_array($this->value) || $this->value instanceof \ArrayAccess) {
+                    return isset($this->value[$key]);
                 }
 
-                if (\is_array($this->value)) {
-                    return isset($this->value[$key]);
+                if (\is_object($this->value)) {
+                    return isset($this->value->{$key});
                 }
 
                 return false;
@@ -621,15 +639,15 @@ namespace Helper
 
             public function __call(string $method, array $args): mixed
             {
-                if (\is_object($this->value)) {
-                    return $this->value->{$method}(...$args);
-                }
-
                 if (
-                    (\is_array($this->value)) &&
+                    (\is_array($this->value) || $this->value instanceof \ArrayAccess) &&
                     \is_callable($this->value[$method])
                 ) {
                     return $this->value[$method](...$args);
+                }
+
+                if (\is_object($this->value)) {
+                    return $this->value->{$method}(...$args);
                 }
 
                 return null;
@@ -646,6 +664,10 @@ namespace Helper
                     return $this->value[$key] ?? null;
                 }
 
+                if (\is_object($this->value)) {
+                    return $this->value->{$key} ?? null;
+                }
+
                 return null;
             }
 
@@ -654,12 +676,20 @@ namespace Helper
                 if (\is_array($this->value) || $this->value instanceof \ArrayAccess) {
                     $this->value[$key] = $value;
                 }
+
+                if (\is_object($this->value)) {
+                    $this->value->{$key} = $value;
+                }
             }
 
             public function offsetUnset(mixed $key): void
             {
                 if (\is_array($this->value) || $this->value instanceof \ArrayAccess) {
                     unset($this->value[$key]);
+                }
+
+                if (\is_object($this->value)) {
+                    unset($this->value->{$key});
                 }
             }
         };

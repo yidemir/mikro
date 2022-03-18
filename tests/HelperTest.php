@@ -12,7 +12,7 @@ class HelperTest extends TestCase
 {
     public function testArrHelperInstances()
     {
-        $arr = arr([]);
+        $arr = arr();
         $this->assertInstanceOf(\ArrayAccess::class, $arr);
         $this->assertInstanceOf(\Iterator::class, $arr);
         $this->assertInstanceOf(\Countable::class, $arr);
@@ -165,5 +165,81 @@ class HelperTest extends TestCase
         }
 
         $this->assertCount(4, $data);
+    }
+
+    public function testStringHelperMethods()
+    {
+        $originalStr = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit';
+        $str = fn() => str($originalStr);
+        $originalPath = '/var/www/public/index.php';
+        $path = fn() => str($originalPath);
+
+        $this->assertIsObject($str());
+        $this->assertInstanceOf(\Stringable::class, $str());
+        $this->assertInstanceOf(\Countable::class, $str());
+        $this->assertCount(strlen($originalStr), $str());
+        $this->assertStringStartsWith('Lorem', (string) $str());
+        $this->assertStringEndsWith('elit', (string) $str());
+        $this->assertStringStartsWith('Lorem', $str()());
+        $this->assertStringEndsWith('elit', $str()());
+        $this->assertStringStartsWith('Lorem', $str()->get());
+        $this->assertStringEndsWith('elit', $str()->get());
+
+        $this->assertSame((string) $path()->basename(), basename($originalPath));
+        $this->assertSame((string) $path()->basename('php'), basename($originalPath, 'php'));
+        $this->assertSame((string) $path()->dirname(), dirname($originalPath));
+        $this->assertTrue($str()->contains('Lorem'));
+        $this->assertFalse($str()->contains('foo'));
+        $this->assertTrue($str()->endsWith('elit'));
+        $this->assertTrue($str()->contains('Lorem'));
+        $this->assertCount(count(explode(' ', $originalStr)), $str()->explode(' '));
+        $this->assertCount(count(explode(' ', $originalStr, 2)), $str()->explode(' ', 2));
+        $this->assertSame((string) $str()->lcfirst(), lcfirst($originalStr));
+        $this->assertStringEndsWith('/', (string) $str()->finish('/'));
+        $this->assertSame($str()->length(), strlen($originalStr));
+        $this->assertSame((string) $str()->limit(10), substr($originalStr, 0, 10) . '...');
+        $this->assertSame((string) $str()->lower(), strtolower($originalStr));
+        $this->assertSame((string) $str()->ltrim('Lorem '), ltrim($originalStr, 'Lorem '));
+        $this->assertStringStartsWith('Title: ', (string) $str()->prepend('Title: '));
+        $this->assertStringNotContainsString('ipsum ', (string) $str()->remove('ipsum '));
+        $this->assertStringContainsString('foo', (string) $str()->replace('sit', 'foo'));
+        $this->assertSame((string) $str()->rtrim(' elit'), rtrim($originalStr, ' elit'));
+        $this->assertSame((string) $str()->reverse(), strrev($originalStr));
+        $this->assertStringStartsWith('/', (string) $str()->start('/'));
+        $this->assertSame((string) $str()->translate($arr = ['Lorem', 'Lorem!']), strtr($originalStr, $arr));
+        $this->assertStringNotContainsString('Lorem', (string) $str()->trim('Lorem'));
+        $this->assertStringContainsString('Elit', (string) $str()->title());
+        $this->assertSame((string) $str()->ucfirst(), ucfirst($originalStr));
+        $this->assertSame((string) $str()->upper(), strtoupper($originalStr));
+        $this->assertSame((string) $str()->when(true, fn(object $str) => $str->upper()), strtoupper($originalStr));
+        $this->assertSame($str()->wordCount(), str_word_count($originalStr));
+    }
+
+    public function testOptionalHelperMethods()
+    {
+        $array = optional(['name' => 'value']);
+        $arrayAccess = optional(arr(['name' => 'value']));
+        $stdClass = new \stdClass();
+        $stdClass->name = 'value';
+        $class = optional($stdClass);
+
+        $this->assertIsObject($array);
+        $this->assertIsObject($arrayAccess);
+        $this->assertIsObject($class);
+        $this->assertInstanceOf(\ArrayAccess::class, $array);
+        $this->assertInstanceOf(\ArrayAccess::class, $arrayAccess);
+        $this->assertInstanceOf(\ArrayAccess::class, $class);
+        $this->assertIsString($array->name);
+        $this->assertIsString($array['name']);
+        $this->assertNull($array->foo);
+        $this->assertNull($array['foo']);
+        $this->assertIsString($arrayAccess->name);
+        $this->assertIsString($arrayAccess['name']);
+        $this->assertNull($arrayAccess->foo);
+        $this->assertNull($arrayAccess['foo']);
+        $this->assertIsString($class->name);
+        $this->assertIsString($class['name']);
+        $this->assertNull($class->foo);
+        $this->assertNull($class['foo']);
     }
 }
