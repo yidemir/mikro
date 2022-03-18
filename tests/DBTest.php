@@ -88,12 +88,13 @@ class DBTest extends TestCase
         $this->assertInstanceOf(\PDOStatement::class, $insert);
         $this->assertTrue(is_numeric($id));
 
-        $find = (array) \DB\table('items')->find($id);
+        $find = \DB\table('items')->find($id);
 
-        $this->assertIsArray($find);
-        $this->assertArrayHasKey('id', $find);
-        $this->assertArrayHasKey('name', $find);
-        $this->assertArrayHasKey('value', $find);
+        $this->assertIsIterable($find);
+        $this->assertIsArray($find->toArray());
+        $this->assertArrayHasKey('id', $find->toArray());
+        $this->assertArrayHasKey('name', $find->toArray());
+        $this->assertArrayHasKey('value', $find->toArray());
         $this->assertEquals($find['id'], $id);
         $this->assertEquals($find['name'], 'bar');
         $this->assertEquals($find['value'], '100');
@@ -121,7 +122,7 @@ class DBTest extends TestCase
         $deleteWithId = \DB\table('items')->delete($id);
         $this->assertInstanceOf(\PDOStatement::class, $deleteWithId);
         $find = \DB\table('items')->find($id);
-        $this->assertFalse($find);
+        $this->assertNull($find);
 
         \DB\table('items')->insert(['name' => 'bar', 'value' => '100']);
         $id = \DB\connection()->lastInsertId();
@@ -129,7 +130,7 @@ class DBTest extends TestCase
         $deleteWithWhereClause = \DB\table('items')->delete('where id=?', [$id]);
         $this->assertInstanceOf(\PDOStatement::class, $deleteWithWhereClause);
         $find = \DB\table('items')->find($id);
-        $this->assertFalse($find);
+        $this->assertNull($find);
     }
 
     public function testColumnMethodFromTable()
@@ -190,7 +191,7 @@ class DBTest extends TestCase
         $this->assertInstanceOf(\ArrayAccess::class, $paginatedItems);
         $this->assertInstanceOf(\Countable::class, $paginatedItems);
         $this->assertFalse($paginatedItems->isEmpty());
-        $this->assertIsString($paginatedItems->links());
+        $this->assertIsString($paginatedItems->getPagination()->getLinks());
         $this->assertIsNotArray($paginatedItems);
         $this->assertIsArray($paginatedItems->toArray());
 

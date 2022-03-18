@@ -308,7 +308,7 @@ namespace Router
      * Router\resource('/foo', FooController::class, ['middleware_one']);
      * ```
      */
-    function resource(string $path, string $class, array|string $middleware = [])
+    function resource(string $path, string $class, array|string $middleware = []): void
     {
         $only = null;
 
