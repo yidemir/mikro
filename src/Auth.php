@@ -132,10 +132,10 @@ namespace Auth
         }
 
         $user = DB\table($mikro[TABLE] ?? 'users')
-            ->find('where email=:email and type=:type', [
-                'email' => $email,
-                'type' => type()
-            ]);
+            ->where('email=:email AND type=:type')
+            ->bindStr(':email', $email)
+            ->bindStr(':type', type())
+            ->find();
 
         if (! $user) {
             return false;
@@ -275,15 +275,16 @@ namespace Auth
         $data['type'] = $data['type'] ?? type();
 
         if (
-            DB\table($table)->find(
-                'where email=? and type=?',
-                [$data['email'], $data['type'] ?? type()]
-            )
+            DB\table($table)
+                ->where('email=:email AND type=:type')
+                ->bindStr(':email', $data['email'])
+                ->bindStr(':type', $data['type'] ?? type())
+                ->find()
         ) {
             return false;
         }
 
-        DB\table($table)->insert($data);
+        DB\table($table)->fill($data)->insert();
 
         return true;
     }

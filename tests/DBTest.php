@@ -81,14 +81,14 @@ class DBTest extends TestCase
 
     public function testInsertRowToTable()
     {
-        $insert = \DB\table('items')->insert(['name' => 'bar', 'value' => '100']);
+        $insert = \DB\table('items')->fill(['name' => 'bar', 'value' => '100'])->insert();
 
         $id = \DB\connection()->lastInsertId();
 
         $this->assertInstanceOf(\PDOStatement::class, $insert);
         $this->assertTrue(is_numeric($id));
 
-        $find = \DB\table('items')->find($id);
+        $find = \DB\table('items')->find((int) $id);
 
         $this->assertIsIterable($find);
         $this->assertIsArray($find->toArray());
@@ -104,14 +104,22 @@ class DBTest extends TestCase
     {
         $id = \DB\connection()->lastInsertId();
 
-        $updateWithId = \DB\table('items')->update(['value' => '101'], $id);
+        $updateWithId = \DB\table('items')
+            ->fill(['value' => '101'])
+            ->where('id=:id')
+            ->bindInt(':id', $id)
+            ->update();
         $this->assertInstanceOf(\PDOStatement::class, $updateWithId);
-        $find = \DB\table('items')->find($id);
+        $find = \DB\table('items')->find((int) $id);
         $this->assertEquals($find->value, '101');
 
-        $updateWithWhereClause = \DB\table('items')->update(['value' => '102'], 'where id=?', [$id]);
+        $updateWithWhereClause = \DB\table('items')
+            ->fill(['value' => '102'])
+            ->where('id=:id')
+            ->bindInt(':id', $id)
+            ->update();
         $this->assertInstanceOf(\PDOStatement::class, $updateWithWhereClause);
-        $find = \DB\table('items')->find($id);
+        $find = \DB\table('items')->find((int) $id);
         $this->assertEquals($find->value, '102');
     }
 
@@ -121,66 +129,27 @@ class DBTest extends TestCase
 
         $deleteWithId = \DB\table('items')->delete($id);
         $this->assertInstanceOf(\PDOStatement::class, $deleteWithId);
-        $find = \DB\table('items')->find($id);
+        $find = \DB\table('items')->find((int) $id);
         $this->assertNull($find);
 
-        \DB\table('items')->insert(['name' => 'bar', 'value' => '100']);
+        \DB\table('items')->fill(['name' => 'bar', 'value' => '100'])->insert();
         $id = \DB\connection()->lastInsertId();
 
         $deleteWithWhereClause = \DB\table('items')->delete('where id=?', [$id]);
         $this->assertInstanceOf(\PDOStatement::class, $deleteWithWhereClause);
-        $find = \DB\table('items')->find($id);
+        $find = \DB\table('items')->find((int) $id);
         $this->assertNull($find);
     }
 
     public function testColumnMethodFromTable()
     {
         foreach (range(1, 10) as $i) {
-            \DB\table('items')->insert(['name' => 'foo', 'value' => $i]);
+            \DB\table('items')->fill(['name' => 'foo', 'value' => $i])->insert();
         }
 
         $count = \DB\table('items')->select('count(*)')->column();
 
         $this->assertEquals($count, count(range(1, 10)));
-    }
-
-    public function testCollection()
-    {
-        $collection = \DB\collection($array = range(1, 10));
-
-        $this->assertArrayHasKey(0, $collection);
-        $this->assertArrayHasKey(9, $collection);
-        $this->assertInstanceOf(\Iterator::class, $collection);
-        $this->assertInstanceOf(\ArrayAccess::class, $collection);
-        $this->assertInstanceOf(\Countable::class, $collection);
-        $this->assertIsArray($collection->toArray());
-        $this->assertTrue($collection->valid());
-        $this->assertEquals($collection->current(), 1);
-        $collection->next();
-        $this->assertTrue($collection->valid());
-        $this->assertEquals($collection->current(), 2);
-        $this->assertEquals($collection->count(), count($array));
-        $collection[] = 11;
-        $this->assertCount(11, $collection);
-        $this->assertArrayHasKey(10, $collection);
-        $mapped = $collection->map(fn($item) => $item === 1 ? null : $item);
-        $instance = $collection->each(fn($item) => $item === 1 ? null : $item);
-        $this->assertTrue($mapped[0] === null);
-        unset($mapped[0]);
-        $this->assertCount(10, $mapped);
-        $this->assertNotCount(10, $instance);
-        $this->assertTrue($instance[0] === null);
-        $paginated = $collection->paginate($perPage = 2, $currentPage = 1);
-        $this->assertCount($perPage, $collection);
-        $this->assertEquals($collection[0], null);
-        $this->assertEquals($collection[1], 2);
-        $this->assertCount(6, $collection->pages());
-        $this->assertIsString($collection->links());
-        $this->assertFalse($collection->isEmpty());
-        $this->assertNull($collection->first());
-        $this->assertTrue(2 === $collection->last());
-        $this->assertNull($collection->find(0));
-        $this->assertNull($collection->find(100));
     }
 
     public function testPaginateMethodFromTable()
@@ -195,7 +164,7 @@ class DBTest extends TestCase
         $this->assertIsNotArray($paginatedItems);
         $this->assertIsArray($paginatedItems->toArray());
 
-        $paginatedItems = \DB\table('items')->paginate('', [], ['per_page' => 3]);
+        $paginatedItems = \DB\table('items')->paginate(perPage: 3);
         $this->assertEquals(count($paginatedItems), 3);
     }
 }

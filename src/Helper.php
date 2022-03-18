@@ -66,7 +66,7 @@ namespace Helper
 
             public function first(): mixed
             {
-                return $this->arr[array_key_first($this->arr)];
+                return $this->arr[\array_key_first($this->arr)];
             }
 
             public function flip(): self
@@ -140,12 +140,14 @@ namespace Helper
 
             public function last(): mixed
             {
-                return $this->arr[array_key_last($this->arr)];
+                return $this->arr[\array_key_last($this->arr)];
             }
 
             public function map(callable $callback): self
             {
-                return new self(\array_map($callback, $this->arr, \array_keys($this->arr)));
+                return new self(
+                    \array_map($callback, $this->arr, \array_keys($this->arr))
+                );
             }
 
             public function mapWithKeys(callable $callback): self
@@ -386,12 +388,15 @@ namespace Helper
             public function setPagination(array $data): self
             {
                 $required = [
-                    'page', 'max', 'limit', 'offset', 'total_page', 'current_page', 'next_page', 'previous_page'
+                    'page', 'max', 'limit', 'offset', 'total_page',
+                    'current_page', 'next_page', 'previous_page'
                 ];
 
                 foreach ($required as $field) {
                     if (! isset($data[$field])) {
-                        throw new ValidatorException("'{$field}' parameter is required in pagianation data");
+                        throw new ValidatorException(
+                            "'{$field}' parameter is required in pagianation data"
+                        );
                     }
                 }
 
