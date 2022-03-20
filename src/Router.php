@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Router
 {
     use Request;
+    use Mikro\Exceptions\ValidatorException;
 
     /**
      * Map route and check match. If route matches run callback
@@ -70,6 +71,11 @@ namespace Router
         }
     }
 
+    /**
+     * Parse route parameters
+     *
+     * @internal
+     */
     function parse_path(string $path): string
     {
         if (\preg_match('/(\/{.*}\?)/i', $path, $matches)) {
@@ -221,13 +227,43 @@ namespace Router
      * Router\error(function () {
      *     Response\html('404 not found!', Response\STATUS['HTTP_NOT_FOUND']);
      * });
+     * Router\error([
+     *     fn() => Response\html('Default 404 error handler'),
+     *     '/posts' => fn() => Response\html('/posts 404 error handler'),
+     *     '/products' => fn() => 'ProductController::notFoundHandler',
+     * ])
      * ```
      */
-    function error(mixed $callback): void
+    function error(mixed $callback = []): void
     {
+        if (! \is_array($callback)) {
+            $callback = [$callback];
+        }
+
         if (! is_found()) {
             \http_response_code(404);
-            $callback();
+            $path = Request\path();
+
+            foreach ($callback as $key => $callback) {
+                $starts = \str_starts_with($path, (string) $key);
+                $match = \preg_match('@' . (string) $key . '@', $path);
+
+                // var_dump(compact('key', 'path', 'starts', 'match'));
+
+                if (! empty($key) && ($starts || $match)) {
+                    if (! \is_callable($callback)) {
+                        throw new ValidatorException("Error callback `$key` is not valid");
+                    }
+
+                    $callback();
+
+                    return;
+                }
+            }
+
+            if (isset($callback[0]) && \is_callable($callback[0])) {
+                $callback[0]();
+            }
         }
     }
 
