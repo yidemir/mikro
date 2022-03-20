@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Router
 {
     use Request;
+    use Response;
     use Mikro\Exceptions\ValidatorException;
 
     /**
@@ -46,7 +47,7 @@ namespace Router
             goto found;
         }
 
-        $path = parse_path($path);
+        $path = rtrim(parse_path($path), '/');
 
         if (
             \in_array(Request\method(), $methods) &&
@@ -202,6 +203,20 @@ namespace Router
     }
 
     /**
+     * Maps the view route
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\view('/page', 'templates/page');
+     * Router\view('/page', 'templates/page', ['with' => 'data']);
+     * ```
+     */
+    function view(string $path, string $file, array $data = [], array|string $middleware = []): void
+    {
+        any($path, fn() => Response\view($file, $data), $middleware);
+    }
+
+    /**
      * Checks route is match. It must be located at the end of all route definitions.
      *
      * {@inheritDoc} **Example:**
@@ -244,18 +259,16 @@ namespace Router
             \http_response_code(404);
             $path = Request\path();
 
-            foreach ($callback as $key => $callback) {
+            foreach ($callback as $key => $_callback) {
                 $starts = \str_starts_with($path, (string) $key);
                 $match = \preg_match('@' . (string) $key . '@', $path);
 
-                // var_dump(compact('key', 'path', 'starts', 'match'));
-
                 if (! empty($key) && ($starts || $match)) {
-                    if (! \is_callable($callback)) {
+                    if (! \is_callable($_callback)) {
                         throw new ValidatorException("Error callback `$key` is not valid");
                     }
 
-                    $callback();
+                    $_callback();
 
                     return;
                 }
@@ -367,7 +380,8 @@ namespace Router
         }
 
         $call = fn(string $method) =>
-            (is_callable("{$class}::{$method}") ? "{$class}::{$method}" : [new $class(), $method])();
+            (is_callable("{$class}::{$method}") ?
+                "{$class}::{$method}" : fn() => [new $class(), $method]());
 
         $methods = [
             'index' => fn() => get($path, $call('index'), $middleware),
