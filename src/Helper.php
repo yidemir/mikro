@@ -126,6 +126,11 @@ namespace Helper
                 return empty($this->arr);
             }
 
+            public function implode(string $seperator): string
+            {
+                return \implode($seperator, $this->arr);
+            }
+
             public function isNotEmpty(): bool
             {
                 return ! $this->isEmpty();
@@ -176,6 +181,13 @@ namespace Helper
                 }
 
                 $this->arr = $new;
+
+                return $this;
+            }
+
+            public function parseJson(string $json): self
+            {
+                $this->arr = (array) \json_decode($json);
 
                 return $this;
             }
@@ -374,10 +386,10 @@ namespace Helper
                 unset($this->arr[$key]);
             }
 
-            public function __invoke(?callable $callback = null): array
+            public function __invoke(?callable $callback = null): mixed
             {
                 if ($callback) {
-                    $callback($this);
+                    return $callback($this);
                 }
 
                 return $this->toArray();
@@ -457,58 +469,58 @@ namespace Helper
         };
     }
 
-    function str(mixed $string): object
+    function str(mixed $str = ''): object
     {
-        return new class ((string) $string) implements \Stringable, \Countable {
-            public function __construct(public string $string)
+        return new class ((string) $str) implements \Stringable, \Countable {
+            public function __construct(public string $str)
             {
                 //
             }
 
-            public function append(string $string): self
+            public function append(string $str): self
             {
-                $this->string .= $string;
+                $this->str .= $str;
 
                 return $this;
             }
 
             public function basename(string $extension = ''): self
             {
-                $this->string = \basename($this->string, $extension);
+                $this->str = \basename($this->str, $extension);
 
                 return $this;
             }
 
-            public function contains(string $string): bool
+            public function contains(string $str): bool
             {
-                return \str_contains($this->string, $string);
+                return \str_contains($this->str, $str);
             }
 
             public function dirname(int $level = 1): self
             {
-                $this->string = \dirname($this->string, $level);
+                $this->str = \dirname($this->str, $level);
 
                 return $this;
             }
 
-            public function endsWith(string $string): bool
+            public function endsWith(string $str): bool
             {
-                return \str_ends_with($this->string, $string);
+                return \str_ends_with($this->str, $str);
             }
 
-            public function explode(string $string, int $limit = \PHP_INT_MAX): array
+            public function explode(string $str, int $limit = \PHP_INT_MAX): array
             {
-                if (empty($string)) {
+                if (empty($str)) {
                     return [];
                 }
 
-                return \explode($string, $this->string, $limit);
+                return \explode($str, $this->str, $limit);
             }
 
-            public function finish(string $string): self
+            public function finish(string $str): self
             {
-                if (! \str_ends_with($this->string, $string)) {
-                    $this->string = $this->string . $string;
+                if (! \str_ends_with($this->str, $str)) {
+                    $this->str = $this->str . $str;
                 }
 
                 return $this;
@@ -516,126 +528,126 @@ namespace Helper
 
             public function lcfirst(): self
             {
-                $firstChar = \mb_substr($this->string, 0, 1);
-                $this->string = \mb_strtolower($firstChar) . \mb_substr($this->string, 1, null);
+                $firstChar = \mb_substr($this->str, 0, 1);
+                $this->str = \mb_strtolower($firstChar) . \mb_substr($this->str, 1, null);
 
                 return $this;
             }
 
             public function length(): int
             {
-                return \mb_strlen($this->string);
+                return \mb_strlen($this->str);
             }
 
             public function limit(int $limit, string $last = '...'): self
             {
-                $this->string = \mb_substr($this->string, 0, $limit) . $last;
+                $this->str = \mb_substr($this->str, 0, $limit) . $last;
 
                 return $this;
             }
 
             public function lower(): self
             {
-                $this->string = \mb_convert_case($this->string, \MB_CASE_LOWER);
+                $this->str = \mb_convert_case($this->str, \MB_CASE_LOWER);
 
                 return $this;
             }
 
-            public function ltrim(?string $string = " \n\r\t\v\x00"): self
+            public function ltrim(?string $trim = " \n\r\t\v\x00"): self
             {
-                $this->string = \ltrim($this->string, $string);
+                $this->str = \ltrim($this->str, $trim);
 
                 return $this;
             }
 
-            public function prepend(string $string): self
+            public function prepend(string $str): self
             {
-                $this->string = $string . $this->string;
+                $this->str = $str . $this->str;
 
                 return $this;
             }
 
-            public function remove(string $string): self
+            public function remove(string $str): self
             {
-                $this->string = \str_replace($string, '', $this->string);
+                $this->str = \str_replace($str, '', $this->str);
 
                 return $this;
             }
 
             public function replace(string $search, string $replace): self
             {
-                $this->string = \str_replace($search, $replace, $this->string);
+                $this->str = \str_replace($search, $replace, $this->str);
 
                 return $this;
             }
 
-            public function rtrim(?string $string = " \n\r\t\v\x00"): self
+            public function rtrim(?string $trim = " \n\r\t\v\x00"): self
             {
-                $this->string = \rtrim($this->string, $string);
+                $this->str = \rtrim($this->str, $trim);
 
                 return $this;
             }
 
             public function reverse(): self
             {
-                $this->string = \strrev($this->string);
+                $this->str = \strrev($this->str);
 
                 return $this;
             }
 
-            public function start(string $string): self
+            public function start(string $str): self
             {
-                if (! \str_starts_with($this->string, $string)) {
-                    $this->string = $string . $this->string;
+                if (! \str_starts_with($this->str, $str)) {
+                    $this->str = $str . $this->str;
                 }
 
                 return $this;
             }
 
-            public function startsWith(string $string): bool
+            public function startsWith(string $str): bool
             {
-                return \str_starts_with($this->string, $string);
+                return \str_starts_with($this->str, $str);
             }
 
             public function substr(int $start, ?int $length = null): self
             {
-                $this->string = \mb_substr($this->string, $start, $length);
+                $this->str = \mb_substr($this->str, $start, $length);
 
                 return $this;
             }
 
             public function translate(array $values): self
             {
-                $this->string = \strtr($this->string, $values);
+                $this->str = \strtr($this->str, $values);
 
                 return $this;
             }
 
-            public function trim(?string $string = " \n\r\t\v\x00"): self
+            public function trim(?string $trim = " \n\r\t\v\x00"): self
             {
-                $this->string = \trim($this->string, $string);
+                $this->str = \trim($this->str, $trim);
 
                 return $this;
             }
 
             public function title(): self
             {
-                $this->string = \mb_convert_case($this->string, \MB_CASE_TITLE);
+                $this->str = \mb_convert_case($this->str, \MB_CASE_TITLE);
 
                 return $this;
             }
 
             public function ucfirst(): self
             {
-                $firstChar = \mb_substr($this->string, 0, 1);
-                $this->string = \mb_strtoupper($firstChar) . \mb_substr($this->string, 1, null);
+                $firstChar = \mb_substr($this->str, 0, 1);
+                $this->str = \mb_strtoupper($firstChar) . \mb_substr($this->str, 1, null);
 
                 return $this;
             }
 
             public function upper(): self
             {
-                $this->string = \mb_convert_case($this->string, \MB_CASE_UPPER);
+                $this->str = \mb_convert_case($this->str, \MB_CASE_UPPER);
 
                 return $this;
             }
@@ -651,12 +663,23 @@ namespace Helper
 
             public function wordCount(): int
             {
-                return \str_word_count($this->string);
+                return \str_word_count($this->str);
+            }
+
+            public function wrap(string $start, ?string $end = null): self
+            {
+                if ($end === null) {
+                    $end = $start;
+                }
+
+                $this->str = $start . $this->str . $end;
+
+                return $this;
             }
 
             public function get(): string
             {
-                return $this->string;
+                return $this->str;
             }
 
             public function count(): int
@@ -666,13 +689,13 @@ namespace Helper
 
             public function __toString(): string
             {
-                return $this->string;
+                return $this->str;
             }
 
-            public function __invoke(?callable $callback = null): string
+            public function __invoke(?callable $callback = null): mixed
             {
                 if ($callback) {
-                    $callback($this);
+                    return $callback($this);
                 }
 
                 return $this->__toString();

@@ -165,6 +165,12 @@ class HelperTest extends TestCase
         }
 
         $this->assertCount(4, $data);
+        $this->assertSame(arr(['name', 'value'])->implode('|'), 'name|value');
+        $this->assertArrayHasKey('name', arr()->parseJson('{"name":"value"}')->all());
+        $this->assertCount(5, arr()->parseJson('[1,2,3,4,5]'));
+        $this->assertEquals(arr()->parseJson($str = '[1,2,3,4,5]')->toJson(), $str);
+        $this->assertSame(arr([1, 2, 3, 4])(fn($arr) => $arr->first()), 1);
+        $this->assertArrayHasKey('name', arr(['name' => 'value'])());
     }
 
     public function testStringHelperMethods()
@@ -213,6 +219,12 @@ class HelperTest extends TestCase
         $this->assertSame((string) $str()->upper(), strtoupper($originalStr));
         $this->assertSame((string) $str()->when(true, fn(object $str) => $str->upper()), strtoupper($originalStr));
         $this->assertSame($str()->wordCount(), str_word_count($originalStr));
+        $this->assertSame(
+            str('Lorem lipsum')(
+                fn($str) => $str->startsWith('Lorem') ? $str->append(' dolor sit amet') : $str->upper()
+            )(),
+            'Lorem lipsum dolor sit amet'
+        );
     }
 
     public function testOptionalHelperMethods()
