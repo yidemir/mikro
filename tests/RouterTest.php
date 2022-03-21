@@ -223,5 +223,53 @@ class RouterTest extends TestCase
         $this->assertTrue(\Router\is_found());
 
         unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts/category-name/16';
+
+        ob_start();
+        \Router\map(
+            'GET',
+            '/posts/{category:str}?/{post:num}?',
+            fn() => print(
+                \Router\parameters('category') . \Router\parameters('post')
+            )
+        );
+        $this->assertEquals(ob_get_clean(), 'category-name16');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts';
+
+        ob_start();
+        \Router\map(
+            'GET',
+            '/posts/{category:str}?/{post:num}?',
+            fn() => print(
+                \Router\parameters('category', 'foo') . \Router\parameters('post', 'bar')
+            )
+        );
+        $this->assertEquals(ob_get_clean(), 'foobar');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts/';
+
+        ob_start();
+        \Router\map(
+            'GET',
+            '/posts/{category:str}?/{post:num}?',
+            fn() => print(
+                \Router\parameters('category', 'foo') . \Router\parameters('post', 'bar')
+            )
+        );
+        $this->assertEquals(ob_get_clean(), 'foobar');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
     }
 }

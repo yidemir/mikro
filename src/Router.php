@@ -47,7 +47,7 @@ namespace Router
             goto found;
         }
 
-        $path = rtrim(parse_path($path), '/');
+        $path = \rtrim(parse_path($path), '/');
 
         if (
             \in_array(Request\method(), $methods) &&
@@ -80,7 +80,7 @@ namespace Router
     function parse_path(string $path): string
     {
         if (\preg_match('/(\/{.*}\?)/i', $path, $matches)) {
-            foreach (range(1, count($matches)) as $match) {
+            foreach (\range(1, \count($matches)) as $match) {
                 $path = \preg_replace('/\/({.*}\?)/', '/?$1', $path);
             }
         }
@@ -189,6 +189,20 @@ namespace Router
     }
 
     /**
+     * Maps the OPTIONS route
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\options('/', 'callback');
+     * Router\options('/', 'callback', $middlewareArray);
+     * ```
+     */
+    function options(string $path, mixed $callback, array|string $middleware = []): void
+    {
+        map('OPTIONS', $path, $callback, $middleware);
+    }
+
+    /**
      * Maps the any route
      *
      * {@inheritDoc} **Example:**
@@ -214,6 +228,20 @@ namespace Router
     function view(string $path, string $file, array $data = [], array|string $middleware = []): void
     {
         any($path, fn() => Response\view($file, $data), $middleware);
+    }
+
+    /**
+     * Maps the redirect route
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\redirect('/page', '/new/page/url');
+     * Router\redirect('/other-page', 'https://url');
+     * ```
+     */
+    function redirect(string $path, string $to, array|string $middleware = []): void
+    {
+        any($path, fn() => Response\redirect($to), $middleware);
     }
 
     /**
