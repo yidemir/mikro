@@ -11,10 +11,16 @@ namespace Helper
     {
         return new class ($arr) implements \ArrayAccess, \Iterator, \Countable {
             protected ?object $pagination = null;
+            protected static array $methods = [];
 
             public function __construct(public array $arr = [])
             {
                 //
+            }
+
+            public static function make(array $arr)
+            {
+                return new self($arr);
             }
 
             public function all(): array
@@ -397,6 +403,20 @@ namespace Helper
                 return $this->toArray();
             }
 
+            public function __call(string $method, array $args): mixed
+            {
+                if (isset(self::$methods[$method])) {
+                    return self::$methods[$method]->call($this, ...$args);
+                }
+
+                throw new \Error("Call to undefined method {$method}()");
+            }
+
+            public static function register(string $method, \Closure $closure): void
+            {
+                self::$methods[$method] = $closure;
+            }
+
             public function setPagination(array $data): self
             {
                 $required = [
@@ -474,9 +494,16 @@ namespace Helper
     function str(mixed $str = ''): object
     {
         return new class ((string) $str) implements \Stringable, \Countable {
+            protected static array $methods = [];
+
             public function __construct(public string $str)
             {
                 //
+            }
+
+            public static function make(string $str)
+            {
+                return new self($str);
             }
 
             public function append(string $str): self
@@ -701,6 +728,20 @@ namespace Helper
                 }
 
                 return $this->__toString();
+            }
+
+            public function __call(string $method, array $args): mixed
+            {
+                if (isset(self::$methods[$method])) {
+                    return self::$methods[$method]->call($this, ...$args);
+                }
+
+                throw new \Error("Call to undefined method {$method}()");
+            }
+
+            public static function register(string $method, \Closure $closure): void
+            {
+                self::$methods[$method] = $closure;
             }
         };
     }
