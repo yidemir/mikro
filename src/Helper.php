@@ -177,7 +177,9 @@ namespace Helper
                 $new = [];
 
                 foreach ($keys as $key) {
-                    $new[$key] = $this->arr[$key];
+                    if (\array_key_exists($key, $this->arr)) {
+                        $new[$key] = $this->arr[$key];
+                    }
                 }
 
                 $this->arr = $new;
