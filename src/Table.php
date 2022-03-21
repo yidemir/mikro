@@ -75,9 +75,10 @@ namespace DB
 
             public function getStatement(): \PDOStatement
             {
-                $statement = connection()->prepare((string) $this->builder);
+                $query = $this->builder->build();
+                $statement = connection()->prepare($query['sql']);
 
-                foreach ($this->builder->getParameters() as $parameter) {
+                foreach ($query['parameters'] as $parameter) {
                     $statement->bindParam(...$parameter);
                 }
 
@@ -400,7 +401,9 @@ namespace DB
                 'LIMIT' => '',
             ];
 
+            protected array $binds = [];
             protected array $parameters = [];
+            protected int $sequence = 1;
 
             public static function make(): self
             {
@@ -418,7 +421,7 @@ namespace DB
 
             public function from(string $from): self
             {
-                $this->select['FROM'] .= $from . ' ';
+                $this->select['FROM'] = $from . ' ';
 
                 return $this;
             }
@@ -436,74 +439,82 @@ namespace DB
                 return $this;
             }
 
-            public function join(string $join): self
+            public function join(string $join, array $binds = []): self
             {
                 $this->select['JOIN'] .= $join . ' ';
+                $this->mergeBinds('JOIN', $binds);
 
                 return $this;
             }
 
-            public function where(string $where): self
+            public function where(string $where, array $binds = []): self
             {
                 $this->checkType();
                 $this->checkAvailability('WHERE');
 
                 $this->{$this->type}['WHERE'] .= $where . ' ';
+                $this->mergeBinds('WHERE', $binds);
 
                 return $this;
             }
 
-            public function groupBy(string $groupBy): self
+            public function groupBy(string $groupBy, array $binds = []): self
             {
                 $this->select['GROUP BY'] .= $groupBy . ' ';
+                $this->mergeBinds('GROUP BY', $binds);
 
                 return $this;
             }
 
-            public function having(string $having): self
+            public function having(string $having, array $binds = []): self
             {
                 $this->select['HAVING'] .= $having . ' ';
+                $this->mergeBinds('HAVING', $binds);
 
                 return $this;
             }
 
-            public function orderBy(string $orderBy): self
+            public function orderBy(string $orderBy, array $binds = []): self
             {
                 $this->checkType();
                 $this->checkAvailability('ORDER BY');
 
                 $this->{$this->type}['ORDER BY'] .= $orderBy . ' ';
+                $this->mergeBinds('ORDER BY', $binds);
 
                 return $this;
             }
 
-            public function limit(string $limit): self
+            public function limit(string $limit, array $binds = []): self
             {
                 $this->checkType();
                 $this->checkAvailability('LIMIT');
 
                 $this->{$this->type}['LIMIT'] .= $limit . ' ';
+                $this->mergeBinds('LIMIT', $binds);
 
                 return $this;
             }
 
-            public function insertInto(string $insert): self
+            public function insertInto(string $insert, array $binds = []): self
             {
                 $this->setType('insert');
 
                 $this->insert['INSERT INTO'] .= $insert . ' ';
+                $this->mergeBinds('INSERT INTO', $binds);
 
                 return $this;
             }
 
-            public function values(string $values): self
+            public function values(string $values, array $binds = []): self
             {
                 $this->insert['VALUES'] .= $values . ' ';
+                $this->mergeBinds('VALUES', $binds);
 
                 return $this;
             }
 
-            public function valuesArray(array $values): self
+            public function valuesArray(array $values, array $binds = []): self
             {
                 $string = '';
 
@@ -515,36 +526,39 @@ namespace DB
                     }
                 }
 
-                return $this->values('(' . \trim($string, ', ') . ')');
+                return $this->values('(' . \trim($string, ', ') . ')', $binds);
             }
 
-            public function onDuplicateKeyUpdate(string $onDuplicateKeyUpdate): self
+            public function onDuplicateKeyUpdate(string $onDuplicateKeyUpdate, array $binds = []): self
             {
                 $this->insert['ON DUPLICATE KEY UPDATE'] .= $onDuplicateKeyUpdate . ' ';
+                $this->mergeBinds('ON DUPLICATE KEY UPDATE', $binds);
 
                 return $this;
             }
 
-            public function update(string $update): self
+            public function update(string $update, array $binds = []): self
             {
                 $this->setType('update');
 
                 $this->update['UPDATE'] .= $update . ' ';
+                $this->mergeBinds('UPDATE', $binds);
 
                 return $this;
             }
 
-            public function set(string $set): self
+            public function set(string $set, array $binds = []): self
             {
                 $this->checkType();
                 $this->checkAvailability('SET');
 
                 $this->{$this->type}['SET'] .= $set . ' ';
+                $this->mergeBinds('SET', $binds);
 
                 return $this;
             }
 
-            public function setArray(array $values): self
+            public function setArray(array $values, array $binds = []): self
             {
                 $string = '';
 
@@ -556,14 +570,15 @@ namespace DB
                     }
                 }
 
-                return $this->set(\trim($string, ', '));
+                return $this->set(\trim($string, ', '), $binds);
             }
 
-            public function deleteFrom(string $deleteFrom): self
+            public function deleteFrom(string $deleteFrom, array $binds = []): self
             {
                 $this->setType('delete');
 
                 $this->delete['DELETE FROM'] .= $deleteFrom . ' ';
+                $this->mergeBinds('DELETE FROM', $binds);
 
                 return $this;
             }
@@ -598,11 +613,23 @@ namespace DB
                 }
             }
 
-            public function bind(string|int $parameter, mixed $variable, int $type = \PDO::PARAM_STR): self
+            public function bind(string|int|array $param, mixed $var = null, int $type = \PDO::PARAM_STR): self
             {
-                $this->parameters[$parameter] = [
-                    'param' => $parameter, 'var' => $variable, 'type' => $type
-                ];
+                if (\is_array($param) && $var === null) {
+                    return $this->bindSequence($param, $type);
+                }
+
+                $this->parameters[$param] = \compact('param', 'var', 'type');
+
+                return $this;
+            }
+
+            public function bindSequence(array $binds, int $type = \PDO::PARAM_STR): self
+            {
+                foreach ($binds as $bind) {
+                    $this->bind($this->sequence, $bind, $type);
+                    $this->sequence++;
+                }
 
                 return $this;
             }
@@ -610,10 +637,29 @@ namespace DB
             public function binds(array $binds): self
             {
                 foreach ($binds as $key => $value) {
-                    $this->bind($key, $value);
+                    if (\is_int($key) && \is_array($value)) {
+                        $this->bind(...$value);
+                    } else {
+                        $this->bind($key, $value);
+                    }
                 }
 
                 return $this;
+            }
+
+            protected function mergeBinds(string $query, array $binds = []): void
+            {
+                if (! \array_is_list($binds)) {
+                    $this->binds($binds);
+                } elseif (
+                    isset($this->binds[$this->type][$query]) &&
+                    ! empty($this->binds[$this->type][$query])
+                ) {
+                    $this->binds[$this->type][$query] =
+                        \array_merge($this->binds[$this->type][$query], $binds);
+                } else {
+                    $this->binds[$this->type][$query] = $binds;
+                }
             }
 
             public function getParameters(): array
@@ -631,9 +677,26 @@ namespace DB
                     if (! empty(\trim($value))) {
                         $result .= \sprintf('%s %s ', $key, \trim($value));
                     }
+
+                    if (isset($this->binds[$this->type][$key])) {
+                        $this->bind($this->binds[$this->type][$key]);
+                    }
                 }
 
                 return \trim($result);
+            }
+
+            public function toSql(): string
+            {
+                return $this->__toString();
+            }
+
+            public function build(): array
+            {
+                return [
+                    'sql' => $this->toSql(),
+                    'parameters' => $this->parameters
+                ];
             }
 
             public function __call(string $method, array $args): self
@@ -651,6 +714,10 @@ namespace DB
                         }
 
                         $this->select[$type . ' JOIN'] .= $args[0];
+
+                        if (isset($args[1]) && \is_array($args[1]) && ! empty($args[1])) {
+                            $this->mergeBinds($type . ' JOIN', $args[1]);
+                        }
 
                         return $this;
                     }

@@ -167,4 +167,258 @@ class DBTest extends TestCase
         $paginatedItems = \DB\table('items')->paginate(perPage: 3);
         $this->assertEquals(count($paginatedItems), 3);
     }
+
+    public function testQueryBuilderMethods()
+    {
+        $this->assertIsObject(\DB\builder());
+        $this->assertInstanceOf(\Stringable::class, \DB\builder());
+        $this->assertEquals(\DB\builder()->select('*')->from('items')->toSql(), 'SELECT * FROM items');
+        $this->assertEquals(\DB\builder()->table('items', '*')->toSql(), $sql = 'SELECT * FROM items');
+        $table = fn() => \DB\builder()->table('items', '*');
+        $this->assertEquals(
+            $table()->join('posts ON items.post_id = posts.id')->toSql(),
+            $sql . ' JOIN posts ON items.post_id = posts.id'
+        );
+        $this->assertEquals(
+            $table()->join('foo')->join('bar')->toSql(),
+            $sql . ' JOIN foo bar'
+        );
+        $this->assertEquals(
+            $table()
+                ->join('default')
+                ->innerJoin('inner')
+                ->crossJoin('cross')
+                ->leftJoin('left')
+                ->rightJoin('right')
+                ->outerJoin('outer')
+                ->toSql(),
+            $sql . ' JOIN default INNER JOIN inner CROSS JOIN cross LEFT JOIN left RIGHT JOIN right OUTER JOIN outer'
+        );
+        $this->assertEquals(
+            $table()->innerJoin('inner1')->innerJoin('inner2')->leftJoin('left')->toSql(),
+            $sql . ' INNER JOIN inner1inner2 LEFT JOIN left'
+        );
+        $this->assertEquals(
+            $table()->where('id=:id')->toSql(),
+            $sql . ' WHERE id=:id'
+        );
+        $this->assertEquals(
+            $table()->where('id=:id')->join('foo ON bar=baz')->toSql(),
+            $sql . ' JOIN foo ON bar=baz WHERE id=:id'
+        );
+        $this->assertEquals(
+            $table()->groupBy('field')->toSql(),
+            $sql . ' GROUP BY field'
+        );
+        $this->assertEquals(
+            $table()->where('where')->innerJoin('inner')->groupBy('field'),
+            $sql . ' INNER JOIN inner WHERE where GROUP BY field'
+        );
+        $this->assertEquals(
+            $table()->having('having')->toSql(),
+            $sql . ' HAVING having'
+        );
+        $this->assertEquals(
+            $table()->orderBy('field DESC')->toSql(),
+            $sql . ' ORDER BY field DESC'
+        );
+        $this->assertEquals(
+            $table()->limit('100')->toSql(),
+            $sql . ' LIMIT 100'
+        );
+        $this->assertEquals(
+            $table()
+                ->orderBy('field')
+                ->having('having')
+                ->where('id=5')
+                ->limit('5')
+                ->select('id, name')
+                ->from('table')
+                ->leftJoin('join')
+                ->groupBy('f')
+                ->toSql(),
+            'SELECT id, name FROM table LEFT JOIN join WHERE id=5 GROUP BY f HAVING having ORDER BY field LIMIT 5'
+        );
+
+        $insert = fn() => \DB\builder();
+        $this->assertEquals($insert()->insertInto('table'), 'INSERT INTO table');
+        $this->assertEquals(
+            $insert()->insertInto('table (id, name)')->values('(:id, :name)')->toSql(),
+            'INSERT INTO table (id, name) VALUES (:id, :name)'
+        );
+        $this->assertEquals(
+            $insert()->insertInto('table (id, name)')->valuesArray([':id', ':name'])->toSql(),
+            'INSERT INTO table (id, name) VALUES (:id, :name)'
+        );
+        $this->assertEquals(
+            $insert()->insertInto('table (name)')->values('(:name)')->onDuplicateKeyUpdate('update')->toSql(),
+            'INSERT INTO table (name) VALUES (:name) ON DUPLICATE KEY UPDATE update'
+        );
+        $this->assertEquals(
+            $insert()->onDuplicateKeyUpdate('update')->values('(:name)')->insertInto('table (name)')->toSql(),
+            'INSERT INTO table (name) VALUES (:name) ON DUPLICATE KEY UPDATE update'
+        );
+        $this->assertEquals(
+            $insert()->insertInto('table')->set('name=:name, key=:key')->toSql(),
+            'INSERT INTO table SET name=:name, key=:key'
+        );
+        $this->assertEquals(
+            $insert()->insertInto('table')->setArray(['name' => ':name', 'key' => ':key'])->toSql(),
+            'INSERT INTO table SET name=:name, key=:key'
+        );
+        $this->assertEquals(
+            $insert()->onDuplicateKeyUpdate('update')->insertInto('table')->setArray(['name' => ':name', 'key' => ':key'])->toSql(),
+            'INSERT INTO table SET name=:name, key=:key ON DUPLICATE KEY UPDATE update'
+        );
+
+        $update = fn() => \DB\builder()->update('table');
+        $this->assertEquals($update()->toSql(), 'UPDATE table');
+        $this->assertEquals(
+            $update()->set('name=:name')->toSql(),
+            'UPDATE table SET name=:name'
+        );
+        $this->assertEquals(
+            $update()->setArray(['name' => ':name'])->toSql(),
+            'UPDATE table SET name=:name'
+        );
+        $this->assertEquals(
+            $update()->where('id=:id')->set('name=:name')->toSql(),
+            'UPDATE table SET name=:name WHERE id=:id'
+        );
+        $this->assertEquals(
+            $update()->limit(':limit')->set('name=:name')->toSql(),
+            'UPDATE table SET name=:name LIMIT :limit'
+        );
+        $this->assertEquals(
+            $update()->orderBy('field')->set('name=:name')->toSql(),
+            'UPDATE table SET name=:name ORDER BY field'
+        );
+        $this->assertEquals(
+            $update()->orderBy('order')->set('set')->where('where')->limit('limit')->set('set')->toSql(),
+            'UPDATE table SET set set WHERE where ORDER BY order LIMIT limit'
+        );
+
+        $delete = fn() => \DB\builder()->deleteFrom('table');
+        $this->assertEquals($delete(), 'DELETE FROM table');
+        $this->assertEquals($delete()->where('where')->toSql(), 'DELETE FROM table WHERE where');
+        $this->assertEquals($delete()->orderBy('order')->toSql(), 'DELETE FROM table ORDER BY order');
+        $this->assertEquals($delete()->limit('limit')->toSql(), 'DELETE FROM table LIMIT limit');
+        $this->assertEquals(
+            $delete()->orderBy('id DESC')->where('id=:id')->limit(':limit')->toSql(),
+            'DELETE FROM table WHERE id=:id ORDER BY id DESC LIMIT :limit'
+        );
+
+        $binds = [
+            ['param' => ':status', 'var' => true, 'type' => \PDO::PARAM_BOOL],
+            ['param' => ':shipped_at', 'var' => null, 'type' => \PDO::PARAM_NULL],
+            ['param' => ':age', 'var' => 10, 'type' => \PDO::PARAM_INT],
+            ['param' => ':name', 'var' => 'Ali', 'type' => \PDO::PARAM_STR],
+            ['param' => ':shipped_at', 'var' => null, 'type' => \PDO::PARAM_NULL],
+        ];
+
+        $params = \DB\builder()->bind(':name', 'name')->getParameters();
+        $this->assertTrue(isset($params[':name']));
+        $this->assertCount(1, $params);
+        $this->assertTrue($params[':name']['param'] === ':name');
+        $this->assertTrue($params[':name']['var'] === 'name');
+        $this->assertTrue($params[':name']['type'] === \PDO::PARAM_STR);
+
+        $builder = \DB\builder()->binds($binds);
+        $this->assertArrayHasKey(':status', $builder->getParameters());
+        $this->assertArrayHasKey(':shipped_at', $builder->getParameters());
+
+        $builder = \DB\builder()->table('items', '*');
+        $builder->bindSequence([5, 6], \PDO::PARAM_INT)->bind([7, 8])->bind([9, 10]);
+        $this->assertCount(6, $builder->getParameters());
+        $this->assertArrayHasKey(1, $builder->getParameters());
+        $this->assertSame($builder->getParameters()[1]['var'], 5);
+        $this->assertSame($builder->getParameters()[1]['param'], 1);
+        $this->assertSame($builder->getParameters()[1]['type'], \PDO::PARAM_INT);
+        $this->assertArrayHasKey(3, $builder->getParameters());
+        $this->assertSame($builder->getParameters()[3]['var'], 7);
+        $this->assertSame($builder->getParameters()[3]['param'], 3);
+        $this->assertSame($builder->getParameters()[3]['type'], \PDO::PARAM_STR);
+
+        $builder = \DB\builder()
+            ->table('items', '*')
+            ->where('id=?', [5])
+            ->limit('?', [100])
+            ->where('AND status=?', ['active']);
+
+        $builder->build();
+
+        $this->assertArrayHasKey(1, $builder->getParameters());
+        $this->assertSame($builder->getParameters()[1]['var'], 5);
+        $this->assertSame($builder->getParameters()[1]['param'], 1);
+        $this->assertSame($builder->getParameters()[1]['type'], \PDO::PARAM_STR);
+
+        $this->assertArrayHasKey(2, $builder->getParameters());
+        $this->assertSame($builder->getParameters()[2]['var'], 'active');
+        $this->assertSame($builder->getParameters()[2]['param'], 2);
+        $this->assertSame($builder->getParameters()[2]['type'], \PDO::PARAM_STR);
+
+        $this->assertArrayHasKey(3, $builder->getParameters());
+        $this->assertSame($builder->getParameters()[3]['var'], 100);
+        $this->assertSame($builder->getParameters()[3]['param'], 3);
+        $this->assertSame($builder->getParameters()[3]['type'], \PDO::PARAM_STR);
+
+        $builder = \DB\builder()
+            ->insertInto('items (name, quantity)')
+            ->valuesArray(['?', '?'], ['name', 'quantity'])
+            ->build();
+
+        $this->assertSame($builder['sql'], 'INSERT INTO items (name, quantity) VALUES (?, ?)');
+
+        $this->assertArrayHasKey(1, $builder['parameters']);
+        $this->assertSame($builder['parameters'][1]['var'], 'name');
+        $this->assertSame($builder['parameters'][1]['param'], 1);
+        $this->assertSame($builder['parameters'][1]['type'], \PDO::PARAM_STR);
+
+        $this->assertArrayHasKey(2, $builder['parameters']);
+        $this->assertSame($builder['parameters'][2]['var'], 'quantity');
+        $this->assertSame($builder['parameters'][2]['param'], 2);
+        $this->assertSame($builder['parameters'][2]['type'], \PDO::PARAM_STR);
+
+        $builder = \DB\builder()
+            ->update('items')
+            ->where('id=?', [1])
+            ->setArray(['name' => '?'], ['new name'])
+            ->where('AND status=?', ['active'])
+            ->build();
+
+        $this->assertSame($builder['sql'], 'UPDATE items SET name=? WHERE id=? AND status=?');
+
+        $this->assertArrayHasKey(1, $builder['parameters']);
+        $this->assertSame($builder['parameters'][1]['var'], 'new name');
+        $this->assertSame($builder['parameters'][1]['param'], 1);
+        $this->assertSame($builder['parameters'][1]['type'], \PDO::PARAM_STR);
+
+        $this->assertArrayHasKey(2, $builder['parameters']);
+        $this->assertSame($builder['parameters'][2]['var'], 1);
+        $this->assertSame($builder['parameters'][2]['param'], 2);
+        $this->assertSame($builder['parameters'][2]['type'], \PDO::PARAM_STR);
+
+        $this->assertArrayHasKey(3, $builder['parameters']);
+        $this->assertSame($builder['parameters'][3]['var'], 'active');
+        $this->assertSame($builder['parameters'][3]['param'], 3);
+        $this->assertSame($builder['parameters'][3]['type'], \PDO::PARAM_STR);
+
+        $builder = \DB\builder()
+            ->deleteFrom('items')
+            ->limit('?', [100])
+            ->where('id=?', [3])
+            ->build();
+
+        $this->assertSame($builder['sql'], 'DELETE FROM items WHERE id=? LIMIT ?');
+
+        $this->assertArrayHasKey(1, $builder['parameters']);
+        $this->assertSame($builder['parameters'][1]['var'], 3);
+        $this->assertSame($builder['parameters'][1]['param'], 1);
+        $this->assertSame($builder['parameters'][1]['type'], \PDO::PARAM_STR);
+
+        $this->assertArrayHasKey(2, $builder['parameters']);
+        $this->assertSame($builder['parameters'][2]['var'], 100);
+        $this->assertSame($builder['parameters'][2]['param'], 2);
+        $this->assertSame($builder['parameters'][2]['type'], \PDO::PARAM_STR);
+    }
 }
