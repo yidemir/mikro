@@ -18,16 +18,41 @@ namespace Helper
                 //
             }
 
+            /**
+             * Create new arr object
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()->when(true, fn() => $this->make(['new arr']));
+             * ```
+             */
             public static function make(array $arr)
             {
                 return new self($arr);
             }
 
+            /**
+             * Convert arr object to array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->all(); // [1, 2, 3]
+             * ```
+             */
             public function all(): array
             {
                 return $this->toArray();
             }
 
+            /**
+             * Chunk array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4, 5, 6])->chunk(2);
+             * // [[1, 2], [3, 4], [5, 6]]
+             * ```
+             */
             public function chunk(int $size, bool $preverseKeys = false): self
             {
                 $this->arr = \array_chunk($this->arr, $size, $preverseKeys);
@@ -35,16 +60,43 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Determine if a array contains a given item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->contains(2); // true
+             * arr([1, 2, 3])->contains(4); // false
+             * arr([1, 2, 3])->contains('2'); // true
+             * arr([1, 2, 3])->contains('2', true); // false
+             * ```
+             */
             public function contains(mixed $value, bool $strict = false): bool
             {
                 return \in_array($value, $this->arr, $strict);
             }
 
+            /**
+             * Count array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->count(); // 3
+             * ```
+             */
             public function count(): int
             {
                 return \count($this->arr);
             }
 
+            /**
+             * Apply callback each array item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->each(fn($item) => things($item));
+             * ```
+             */
             public function each(callable $callback): self
             {
                 foreach ($this->arr as $key => $value) {
@@ -54,15 +106,31 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Removes the specified keys from array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['key' => 1, 'val' => 2])->except(['key'])->all();
+             * // ['val' => 2]
+             * ```
+             */
             public function except(array $keys): self
             {
-                foreach ($keys as $key) {
-                    unset($this->arr[$key]);
-                }
+                $this->arr = \array_diff_key($this->arr, \array_flip($keys));
 
                 return $this;
             }
 
+            /**
+             * Filter array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->except(fn($i) => $i > 2)->all();
+             * // [3, 4]
+             * ```
+             */
             public function filter(callable $callback, int $mode = 0): self
             {
                 $this->arr = \array_filter($this->arr, $callback, $mode);
@@ -70,11 +138,29 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Gets first array item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->first();
+             * // 1
+             * ```
+             */
             public function first(): mixed
             {
                 return $this->arr[array_key_first($this->arr)];
             }
 
+            /**
+             * Flip array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2])->flip()->all();
+             * // [1 => 0, 2 => 1]
+             * ```
+             */
             public function flip(): self
             {
                 $this->arr = \array_flip($this->arr);
@@ -82,6 +168,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Delete array item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->forget(1);
+             * // [2, 3, 4]
+             * ```
+             */
             public function forget(mixed $key): self
             {
                 unset($this->arr[$key]);
@@ -89,6 +184,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Paginate array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4, 5, 6])->forPage(2, 2)->all();
+             * // [3, 4]
+             * ```
+             */
             public function forPage(int $page, int $length = 10): array
             {
                 $this->chunk($length);
@@ -96,6 +200,16 @@ namespace Helper
                 return $this->arr[$page - 1] ?? [];
             }
 
+            /**
+             * Get array item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $arr = arr(['name' => 'value', ['key' => ['name' => 'foo']]]);
+             * $arr->get('name'); // value
+             * $arr->get('key.name'); // foo
+             * ```
+             */
             public function get(mixed $key, mixed $default = null): mixed
             {
                 if (\array_key_exists($key, $this->arr)) {
@@ -109,6 +223,27 @@ namespace Helper
                 ) ?? $default;
             }
 
+            /**
+             * Group by array item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([
+             *     ['name' => 'foo', 'cid' => 1],
+             *     ['name' => 'bar', 'cid' => 1],
+             *     ['name' => 'baz', 'cid' => 2],
+             * ])->groupBy('cid')->all();
+             * // [
+             * //     1 => [
+             * //         ['name' => 'foo', 'cid' => 1],
+             * //         ['name' => 'bar', 'cid' => 1]
+             * //     ],
+             * //     2 => [
+             * //         ['name' => 'baz', 'cid' => 2]
+             * //     ]
+             * // ]
+             * ```
+             */
             public function groupBy(mixed $key): self
             {
                 $new = [];
@@ -122,11 +257,32 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Check item exists
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $arr = arr([1 => [], 2 => [], 3 => [], 4 => []]);
+             * $arr->has(1); // true
+             * $arr->has(7); // false
+             * $arr->has('key'); // false
+             * ```
+             */
             public function has(mixed $key): bool
             {
                 return isset($this->arr[$key]);
             }
 
+            /**
+             * Checks array is empty
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->isEmpty(); // false
+             * arr([])->isEmpty(); // true
+             * arr()->isEmpty(); // true
+             * ```
+             */
             public function isEmpty(): bool
             {
                 return empty($this->arr);
@@ -420,12 +576,15 @@ namespace Helper
             public function setPagination(array $data): self
             {
                 $required = [
-                    'page', 'max', 'limit', 'offset', 'total_page', 'current_page', 'next_page', 'previous_page'
+                    'page', 'max', 'limit', 'offset', 'total_page',
+                    'current_page', 'next_page', 'previous_page'
                 ];
 
                 foreach ($required as $field) {
                     if (! isset($data[$field])) {
-                        throw new ValidatorException("'{$field}' parameter is required in pagianation data");
+                        throw new ValidatorException(
+                            "'{$field}' parameter is required in pagianation data"
+                        );
                     }
                 }
 
@@ -435,49 +594,19 @@ namespace Helper
                         //
                     }
 
-                    public function getData(): array
+                    public function getData(?string $key = null): mixed
                     {
-                        return $this->data;
+                        return $key ? ($this->data[$key] ?? null) : $this->data;
                     }
 
                     public function getPages(): array
                     {
-                        return \range(1, $this->getTotalPage());
+                        return \range(1, $this->getData('total_page'));
                     }
 
                     public function getLinks(array $options = []): string
                     {
                         return Pagination\links($this->getData(), $options);
-                    }
-
-                    public function getLimit(): int
-                    {
-                        return $this->data['limit'];
-                    }
-
-                    public function getOffset(): int
-                    {
-                        return $this->data['offset'];
-                    }
-
-                    public function getTotalPage(): int
-                    {
-                        return $this->data['total_page'];
-                    }
-
-                    public function getCurrentPage(): int
-                    {
-                        return $this->data['current_page'];
-                    }
-
-                    public function getNextPage(): int
-                    {
-                        return $this->data['next_page'];
-                    }
-
-                    public function getPreviousPage(): int
-                    {
-                        return $this->data['previous_page'];
                     }
                 };
 
