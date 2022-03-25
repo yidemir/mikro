@@ -409,7 +409,7 @@ namespace Router
 
         $call = fn(string $method) =>
             (is_callable("{$class}::{$method}") ?
-                "{$class}::{$method}" : fn() => [new $class(), $method]());
+                "{$class}::{$method}" : fn() => \call_user_func([new $class(),  $method]));
 
         $methods = [
             'index' => fn() => get($path, $call('index'), $middleware),
