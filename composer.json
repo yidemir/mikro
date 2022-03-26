@@ -68,7 +68,7 @@
     "scripts": {
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-        "analyse": "vendor/bin/phpstan"
+        "analyze": "vendor/bin/phpstan"
     },
     "config": {
         "sort-packages": true

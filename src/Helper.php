@@ -26,7 +26,7 @@ namespace Helper
              * arr()->when(true, fn() => $this->make(['new arr']));
              * ```
              */
-            public static function make(array $arr)
+            public static function make(array $arr): self
             {
                 return new self($arr);
             }
@@ -87,6 +87,21 @@ namespace Helper
             public function count(): int
             {
                 return \count($this->arr);
+            }
+
+            /**
+             * Dump array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->count(); // 3
+             * ```
+             */
+            public function dump(): void
+            {
+                \var_dump($this->arr);
+
+                return;
             }
 
             /**
@@ -288,16 +303,40 @@ namespace Helper
                 return empty($this->arr);
             }
 
+            /**
+             * Join array elements with a string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->implode('|'); // 1|2|3|4
+             * ```
+             */
             public function implode(string $seperator): string
             {
                 return \implode($seperator, $this->arr);
             }
 
+            /**
+             * Check array is not empty
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->isNotEmpty(); // true
+             * ```
+             */
             public function isNotEmpty(): bool
             {
                 return ! $this->isEmpty();
             }
 
+            /**
+             * Set array keys
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->keys()->all(); // ['a', 'b']
+             * ```
+             */
             public function keys(): self
             {
                 $this->arr = \array_keys($this->arr);
@@ -305,28 +344,59 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get array last item
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3, 4])->last(); // 4
+             * ```
+             */
             public function last(): mixed
             {
                 return $this->arr[array_key_last($this->arr)];
             }
 
+            /**
+             * Map array items and creates new array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->map(fn($item) => $item * 3)->all(); // [3, 6]
+             * arr(['a' => 1, 'b' => 2])->map(fn($item, $key) => $key . $item * 3)->all(); // ['a3', 'b6']
+             * ```
+             */
             public function map(callable $callback): self
             {
                 return new self(\array_map($callback, $this->arr, \array_keys($this->arr)));
             }
 
+            /**
+             * Map array items and creates new array with keys
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->map(fn($item) => [$item => $item * 3])->all(); // [1 => 3, 2 => 6]
+             * arr(['a' => 1, 'b' => 2])->map(fn($item, $key) => [$key => $item * 3])->all(); // ['a' => 3, 'b' => 6]
+             * ```
+             */
             public function mapWithKeys(callable $callback): self
             {
-                $new = [];
-                $array = \array_map($callback, $this->arr, \array_keys($this->arr));
-
-                foreach ($array as $data) {
-                    $new += $data;
-                }
-
-                return new self($new);
+                return new self(\array_reduce(
+                    \array_map($callback, $this->arr, \array_keys($this->arr)),
+                    fn(array $carry, array $item) => $carry + $item,
+                    []
+                ));
             }
 
+            /**
+             * Merge arrays
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->merge(['c' => 3])->all(); // ['a' => 1, 'b' => 2, 'c' => 3]
+             * ```
+             */
             public function merge(array $arr): self
             {
                 $this->arr = \array_merge($this->arr, $arr);
@@ -334,21 +404,30 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get the specified keys from array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['key' => 1, 'val' => 2])->only(['key'])->all();
+             * // ['key' => 1]
+             * ```
+             */
             public function only(array $keys): self
             {
-                $new = [];
-
-                foreach ($keys as $key) {
-                    if (\array_key_exists($key, $this->arr)) {
-                        $new[$key] = $this->arr[$key];
-                    }
-                }
-
-                $this->arr = $new;
+                $this->arr = \array_intersect_key($this->arr, \array_flip($keys));
 
                 return $this;
             }
 
+            /**
+             * Parse json string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()->parseJson('{"name":"value"}')->all(); // ['name' => 'value]
+             * ```
+             */
             public function parseJson(string $json): self
             {
                 $this->arr = (array) \json_decode($json);
@@ -356,36 +435,77 @@ namespace Helper
                 return $this;
             }
 
-            public function pluck(mixed $itemKey, mixed $keyKey = null): self
+            /**
+             * Pluck array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $arr = arr([['data' => 'data1', 'id' => 15], ['data' => 'data2', 'id' => 23]]);
+             * $arr->pluck('data')->all(); // ['data1', 'data2']
+             * // or
+             * $arr->pluck('data', 'id')->all(); // [15 => 'data1, 23 => 'data2']
+             * ```
+             */
+            public function pluck(mixed $item, mixed $key = null): self
             {
-                $new = [];
-
-                foreach ($this->arr as $key => $item) {
-                    if ($keyKey === null) {
-                        $new[] = $item[$itemKey];
-                    } else {
-                        $new[$item[$keyKey]] = $item[$itemKey];
-                    }
-                }
-
-                $this->arr = $new;
+                $this->arr = \array_column($this->arr, $item, $key);
 
                 return $this;
             }
 
+            /**
+             * Same as `pluck`
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $arr = arr([['data' => 'data1', 'id' => 15], ['data' => 'data2', 'id' => 23]]);
+             * $arr->column('data')->all(); // ['data1', 'data2']
+             * // or
+             * $arr->column('data', 'id')->all(); // [15 => 'data1, 23 => 'data2']
+             * ```
+             */
+            public function column(mixed $item, mixed $key = null): self
+            {
+                return $this->pluck($item, $key);
+            }
+
+            /**
+             * Pop the element off the end of array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->pop(); // 3
+             * ```
+             */
             public function pop(): mixed
             {
                 return \array_pop($this->arr);
             }
 
-            public function pull(mixed $key): mixed
+            /**
+             * Pop the element off the end of array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['key' => 'value', 'name' => 'foo'])->pull('key'); // value
+             * ```
+             */
+            public function pull(mixed $key, mixed $default = null): mixed
             {
-                $item = $this->arr[$key];
+                $item = $this->arr[$key] ?? $default;;
                 unset($this->arr[$key]);
 
                 return $item;
             }
 
+            /**
+             * Push element to array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()->push('foo'); // ['foo']
+             * ```
+             */
             public function push(mixed $value): self
             {
                 $this->arr[] = $value;
@@ -393,6 +513,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Put element to array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()->put('foo', 'bar'); // ['foo' => 'bar']
+             * arr()->put('foo.bar', 'baz'); ['foo' => ['bar' => 'baz']]
+             * ```
+             */
             public function put(mixed $key, mixed $item): self
             {
                 if (! \str_contains($key, '.')) {
@@ -410,6 +539,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Replace array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->replace(['a' => 2, 'c' => 3]);
+             * // ['a' => 2, 'b' => 2, 'c' => 3]
+             * ```
+             */
             public function replace(array $arr): self
             {
                 $this->arr = \array_replace($this->arr, $arr);
@@ -417,6 +555,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Reverse array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->reverse()->all();
+             * // [1 => 'a', 2 => 'b']
+             * ```
+             */
             public function reverse(): self
             {
                 $this->arr = \array_reverse($this->arr);
@@ -424,16 +571,42 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Search array and get key
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['a' => 1, 'b' => 2])->search(1); // a
+             * arr(['a' => 1, 'b' => 2])->search('1'); // a
+             * arr(['a' => 1, 'b' => 2])->search('1', true); // false
+             * ```
+             */
             public function search(mixed $value, bool $strict = false): int|string|bool
             {
                 return \array_search($value, $this->arr, $strict);
             }
 
+            /**
+             * Shift an element off the beginning of array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->shift(); // 1
+             * ```
+             */
             public function shift(): mixed
             {
                 return \array_shift($this->arr);
             }
 
+            /**
+             * Sort an array in ascending order
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([3, 2, 1])->sort(); // [1, 2, 3]
+             * ```
+             */
             public function sort(int $flags = SORT_REGULAR): self
             {
                 \sort($this->arr, $flags);
@@ -441,16 +614,43 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get array, same as `all`
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()->toArray(); // []
+             * arr([1, 2, 3])->toArray(); // [1, 2, 3]
+             * ```
+             */
             public function toArray(): array
             {
                 return $this->arr;
             }
 
+            /**
+             * Convert array to json string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()->toJson(); // '[]'
+             * arr([1, 2, 3])->toJson(); // '[1,2,3]'
+             * arr(['foo' => 'bar', 1])->toJson(); // {"foo":"bar","0":1}
+             * ```
+             */
             public function toJson(int $flags = 0, int $depth = 512): string|false
             {
                 return \json_encode($this->arr, $flags, $depth);
             }
 
+            /**
+             * Transform array items
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->transform(fn($i) => $i * 10)->all(); // [10, 20, 30]
+             * ```
+             */
             public function transform(callable $callback): self
             {
                 foreach ($this->arr as $key => $item) {
@@ -460,11 +660,27 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Apply the callback if the value is false
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->unless(false, fn($arr) => $arr->transform(...));
+             * ```
+             */
             public function unless(bool $boolean, callable $callback): self
             {
                 return $this->when(! $boolean, $callback);
             }
 
+            /**
+             * Get array values
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr(['k1' => 'v1', 'k2' => 'v2'])->values()->all(); // ['v1', 'v2']
+             * ```
+             */
             public function values(): self
             {
                 $this->arr = \array_values($this->arr);
@@ -472,6 +688,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Apply the callback if the value is true
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])->when(true, fn($arr) => $arr->transform(...));
+             * ```
+             */
             public function when(bool $boolean, callable $callback): self
             {
                 if ($boolean) {
@@ -550,6 +774,15 @@ namespace Helper
                 unset($this->arr[$key]);
             }
 
+            /**
+             * Get array or apply callback and get result
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr([1, 2, 3])(); // [1, 2, 3]
+             * arr([1, 2, 3])(fn($arr) => $arr->keys()); // [0, 1, 2]
+             * ```
+             */
             public function __invoke(?callable $callback = null): mixed
             {
                 if ($callback) {
@@ -568,11 +801,31 @@ namespace Helper
                 throw new \Error("Call to undefined method {$method}()");
             }
 
+            /**
+             * Register spesific method for arr
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr()::register('getAll', function(): array {
+             *     return $this->sort()->values()->all();
+             * });
+             *
+             * arr()->getAll();
+             * ```
+             */
             public static function register(string $method, \Closure $closure): void
             {
                 self::$methods[$method] = $closure;
             }
 
+            /**
+             * Set pagination component data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr($data)->setPagination(Pagination\data());
+             * ```
+             */
             public function setPagination(array $data): self
             {
                 $required = [
@@ -613,6 +866,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get pagination component data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * arr($data)->getPagination();
+             * arr($data)->getPagination()->getLinks();
+             * ```
+             */
             public function getPagination(): object
             {
                 return $this->pagination;
@@ -630,7 +892,7 @@ namespace Helper
                 //
             }
 
-            public static function make(string $str)
+            public static function make(string $str): self
             {
                 return new self($str);
             }
