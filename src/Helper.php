@@ -7,12 +7,42 @@ namespace Helper
     use Pagination;
     use Mikro\Exceptions\ValidatorException;
 
+    /**
+     * The arr method is a wrapper for arrays.
+     *
+     * {@inheritDoc} **Examples:**
+     * ```php
+     * $numbers = [1, 2, 3, 4, 5];
+     * Helper\arr($numbers)->first(); // 1
+     * Helper\arr($numbers)->contains(5); // true
+     * Helper\arr($numbers)->map(fn($number) => $number * 5)->all(); // [5, 10, 15, 20, 25]
+     * Helper\arr($numbers)->push(6)->push(7)->get(); // [1, 2, 3, 4, 5, 6, 7]
+     *
+     * // much more on documentation
+     * ```
+     */
     function arr(array $arr = []): object
     {
         return new class ($arr) implements \ArrayAccess, \Iterator, \Countable {
+            /**
+             * Pagination component object
+             *
+             * @var null|object
+             */
             protected ?object $pagination = null;
+
+            /**
+             * Registered methods
+             *
+             * @var array<string, \Closure>
+             */
             protected static array $methods = [];
 
+            /**
+             * Constructor
+             *
+             * @param array<mixed, mixed> $arr
+             */
             public function __construct(public array $arr = [])
             {
                 //
@@ -23,6 +53,7 @@ namespace Helper
              *
              * {@inheritDoc} **Example:**
              * ```php
+             * arr()->make(['new array']);
              * arr()->when(true, fn() => $this->make(['new arr']));
              * ```
              */
@@ -882,21 +913,61 @@ namespace Helper
         };
     }
 
+    /**
+     * The str method is a wrapper for strings.
+     *
+     * {@inheritDoc} **Examples:**
+     * ```php
+     * $data = 'Hello world!';
+     * Helper\str($data)->endsWith('!'); // true
+     * Helper\str($data)->contains('world'); // true
+     * Helper\str($data)->append('Message: ')->get(); // Message: Hello world!
+     * Helper\str($data)->replace('Hello ', '')->upper()->get(); // WORLD!
+     *
+     * // much more on documentation
+     * ```
+     */
     function str(mixed $str = ''): object
     {
         return new class ((string) $str) implements \Stringable, \Countable {
+            /**
+             * Registered methods
+             *
+             * @var array<string, \Closure>
+             */
             protected static array $methods = [];
 
+            /**
+             * Constructor
+             *
+             * @param string $str
+             */
             public function __construct(public string $str)
             {
                 //
             }
 
+            /**
+             * Make and return new instance
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str()->make();
+             * ```
+             */
             public static function make(string $str): self
             {
                 return new self($str);
             }
 
+            /**
+             * Append string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello')->append(' world!'); // Hello world!
+             * ```
+             */
             public function append(string $str): self
             {
                 $this->str .= $str;
@@ -904,6 +975,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get path basename
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('/var/www/index.php')->basename(); // index.php
+             * str('/var/www/index.php')->basename('.php'); // index
+             * ```
+             */
             public function basename(string $extension = ''): self
             {
                 $this->str = \basename($this->str, $extension);
@@ -911,11 +991,29 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Check string contains string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('/var/www/index.php')->contains('www'); // true
+             * str('/var/www/index.php')->contains('foo'); // false
+             * ```
+             */
             public function contains(string $str): bool
             {
                 return \str_contains($this->str, $str);
             }
 
+            /**
+             * Get directory name
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('/var/www/index.php')->dirname(); // /var/www
+             * str('/var/www/index.php')->dirname(2); // /var
+             * ```
+             */
             public function dirname(int $level = 1): self
             {
                 $this->str = \dirname($this->str, $level);
@@ -923,11 +1021,29 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Check string ends with string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('/var/www/index.php')->endsWith('.php'); // true
+             * str('/var/www/index.php')->endsWith('foo'); // false
+             * ```
+             */
             public function endsWith(string $str): bool
             {
                 return \str_ends_with($this->str, $str);
             }
 
+            /**
+             * Explode string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('a|b|c|d')->explode('/'); // ['a', 'b', 'c', 'd']
+             * str('a|b|c|d', 3)->explode('/'); // ['a', 'b', 'c|d']
+             * ```
+             */
             public function explode(string $str, int $limit = \PHP_INT_MAX): array
             {
                 if (empty($str)) {
@@ -937,6 +1053,15 @@ namespace Helper
                 return \explode($str, $this->str, $limit);
             }
 
+            /**
+             * Finish string with string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('file')->finish('.php'); // file.php
+             * str('file.php')->finish('.php'); // file.php
+             * ```
+             */
             public function finish(string $str): self
             {
                 if (! \str_ends_with($this->str, $str)) {
@@ -946,6 +1071,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Lowercase first character of string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello')->lcfirst(); // hello
+             * ```
+             */
             public function lcfirst(): self
             {
                 $firstChar = \mb_substr($this->str, 0, 1);
@@ -954,11 +1087,28 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get string length
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello')->length(); // 5
+             * ```
+             */
             public function length(): int
             {
                 return \mb_strlen($this->str);
             }
 
+            /**
+             * Limit string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello world!')->limit(5); // Hello...
+             * str('Hello world!')->limit(5, '..'); // Hello..
+             * ```
+             */
             public function limit(int $limit, string $last = '...'): self
             {
                 $this->str = \mb_substr($this->str, 0, $limit) . $last;
@@ -966,6 +1116,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Lowercase string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('FooBaR')->lower(); // foobar
+             * ```
+             */
             public function lower(): self
             {
                 $this->str = \mb_convert_case($this->str, \MB_CASE_LOWER);
@@ -973,6 +1131,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Trim left side of string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str(' foo')->ltrim(); // 'foo'
+             * str('foo')->ltrim('f') // 'oo'
+             * ```
+             */
             public function ltrim(?string $trim = " \n\r\t\v\x00"): self
             {
                 $this->str = \ltrim($this->str, $trim);
@@ -980,6 +1147,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Prepend string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('bar')->prepend('foo'); // foobar
+             * ```
+             */
             public function prepend(string $str): self
             {
                 $this->str = $str . $this->str;
@@ -987,6 +1162,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Remove string or character
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('foobarbaz')->remove('a'); // foobrbz
+             * ```
+             */
             public function remove(string $str): self
             {
                 $this->str = \str_replace($str, '', $this->str);
@@ -994,6 +1177,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Replace string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('foobarbaz')->replace('foo', 'Hello '); // Hello barbaz
+             * ```
+             */
             public function replace(string $search, string $replace): self
             {
                 $this->str = \str_replace($search, $replace, $this->str);
@@ -1001,6 +1192,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Trim right side of string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('foo ')->ltrim(); // 'foo'
+             * str('foo')->ltrim('o') // 'f'
+             * ```
+             */
             public function rtrim(?string $trim = " \n\r\t\v\x00"): self
             {
                 $this->str = \rtrim($this->str, $trim);
@@ -1008,6 +1208,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Reverse string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('reverse')->reverse(); // esrever
+             * ```
+             */
             public function reverse(): self
             {
                 $this->str = \strrev($this->str);
@@ -1015,6 +1223,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Start string with string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('path')->start('/'); // /path
+             * str('/path')->start('/'); // /path
+             * ```
+             */
             public function start(string $str): self
             {
                 if (! \str_starts_with($this->str, $str)) {
@@ -1024,11 +1241,30 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Check string starts with string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('path')->startsWith('/'); // false
+             * str('/path')->startsWith('/'); // true
+             * ```
+             */
             public function startsWith(string $str): bool
             {
                 return \str_starts_with($this->str, $str);
             }
 
+            /**
+             * Return part of a string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('path')->substr(1); // ath
+             * str('path')->substr(-1); // h
+             * str('path')->substr(1, 2); // at
+             * ```
+             */
             public function substr(int $start, ?int $length = null): self
             {
                 $this->str = \mb_substr($this->str, $start, $length);
@@ -1036,6 +1272,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Translate string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello world!')->translate(['world' => 'earth']); // Hello earth!
+             * ```
+             */
             public function translate(array $values): self
             {
                 $this->str = \strtr($this->str, $values);
@@ -1043,6 +1287,15 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Trim string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str(' Hello world! ')->trim(); // 'Hello world!'
+             * str('!Hello world!')->trim('!'); // 'Hello world'
+             * ```
+             */
             public function trim(?string $trim = " \n\r\t\v\x00"): self
             {
                 $this->str = \trim($this->str, $trim);
@@ -1050,6 +1303,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Convert string to Title case
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello world and earth!')->title(); // Hello World And Earth!
+             * ```
+             */
             public function title(): self
             {
                 $this->str = \mb_convert_case($this->str, \MB_CASE_TITLE);
@@ -1057,6 +1318,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Upper case first character of string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('hey yo!')->title(); // Hey yo!
+             * ```
+             */
             public function ucfirst(): self
             {
                 $firstChar = \mb_substr($this->str, 0, 1);
@@ -1065,6 +1334,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Uppercase string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('hey!')->upper(); // HEY!
+             * ```
+             */
             public function upper(): self
             {
                 $this->str = \mb_convert_case($this->str, \MB_CASE_UPPER);
@@ -1072,6 +1349,14 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Apply the callback if the value is true
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello world!')->when(true, fn($str) => $str->upper()); // HELLO WORLD!
+             * ```
+             */
             public function when(bool $when, callable $callback): self
             {
                 if ($when) {
@@ -1081,11 +1366,28 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get word count
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello world!')->wordCount(); // 2
+             * ```
+             */
             public function wordCount(): int
             {
                 return \str_word_count($this->str);
             }
 
+            /**
+             * Wrap string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('foo')->wrap('#'); // #foo#
+             * str('foo')->wrap('#', '@'); // #foo@
+             * ```
+             */
             public function wrap(string $start, ?string $end = null): self
             {
                 if ($end === null) {
@@ -1097,11 +1399,27 @@ namespace Helper
                 return $this;
             }
 
+            /**
+             * Get string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello')->get(); // Hello
+             * ```
+             */
             public function get(): string
             {
                 return $this->str;
             }
 
+            /**
+             * Get string length
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str('Hello')->count(); // 5
+             * ```
+             */
             public function count(): int
             {
                 return $this->length();
@@ -1130,6 +1448,15 @@ namespace Helper
                 throw new \Error("Call to undefined method {$method}()");
             }
 
+            /**
+             * Register new method
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * str()::register('newMethod', fn($str) => $str->upper()->finish('#'));
+             * str('foobar')->newMethod(); // FOOBAR#
+             * ```
+             */
             public static function register(string $method, \Closure $closure): void
             {
                 self::$methods[$method] = $closure;
