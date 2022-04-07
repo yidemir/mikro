@@ -11,7 +11,8 @@ class HtmlTest extends TestCase
     public function testHtmlObject()
     {
         $div = \Html\tag('div');
-        $this->assertTrue(is_object($div));
+        $this->assertIsObject($div);
+        $this->assertInstanceOf(\Stringable::class, $div);
     }
 
     public function testHtmlString()
@@ -36,5 +37,14 @@ class HtmlTest extends TestCase
 
         $div = \Html\tag('div', attributes: ['PascalCase' => 'false'])->snakeCase('true')->ABC('def');
         $this->assertSame((string) $div, '<div PascalCase="false" snake-case="true" a-b-c="def"></div>');
+    }
+
+    public function testHtmlInvoke()
+    {
+        $div = \Html\tag('div');
+        $this->assertIsString($div());
+        $this->assertIsString($div->class('foo')('Content', ['id' => 'foo-5']));
+        $this->assertStringContainsString('Content', $div('Content'));
+        $this->assertStringContainsString('class="foo"', $div('Content', ['class' => 'foo']));
     }
 }

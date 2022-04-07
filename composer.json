@@ -44,6 +44,7 @@
             "src/Error.php",
             "src/Event.php",
             "src/Flash.php",
+            "src/Helper.php",
             "src/Html.php",
             "src/Jwt.php",
             "src/Locale.php",
@@ -52,6 +53,7 @@
             "src/Request.php",
             "src/Response.php",
             "src/Router.php",
+            "src/Table.php",
             "src/Validator.php",
             "src/View.php"
         ],
@@ -67,7 +69,7 @@
     "scripts": {
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-        "analyse": "vendor/bin/phpstan"
+        "analyze": "vendor/bin/phpstan"
     },
     "config": {
         "sort-packages": true

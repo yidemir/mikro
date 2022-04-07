@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Router
 {
     use Request;
+    use Response;
+    use Mikro\Exceptions\ValidatorException;
 
     /**
      * Map route and check match. If route matches run callback
@@ -39,9 +41,48 @@ namespace Router
         }
 
         $middleware = \array_merge($mikro[MIDDLEWARE] ?? [], $middleware);
+        $requestPath = \rawurldecode(\rtrim(Request\path(), '/') ?: '/');
 
-        if (\in_array(Request\method(), $methods) && Request\path() === $path) {
+        if (\in_array(Request\method(), $methods) && $requestPath === $path) {
             goto found;
+        }
+
+        $path = \rtrim(parse_path($path), '/');
+
+        if (
+            \in_array(Request\method(), $methods) &&
+            (\preg_match(\sprintf('@^%s$@i', $path), $requestPath, $params) >= 1) &&
+            ($mikro[FOUND] ?? null) !== true
+        ) {
+            found:
+            $mikro[FOUND] = true;
+
+            if (isset($params)) {
+                \array_shift($params);
+                $mikro[PARAMETERS] = $params;
+            }
+
+            $result = \array_reduce(\array_reverse($middleware), function ($stack, $item) {
+                return function () use ($stack, $item) {
+                    return $item($stack);
+                };
+            }, $callback);
+
+            $result();
+        }
+    }
+
+    /**
+     * Parse route parameters
+     *
+     * @internal
+     */
+    function parse_path(string $path): string
+    {
+        if (\preg_match('/(\/{.*}\?)/i', $path, $matches)) {
+            foreach (\range(1, \count($matches)) as $match) {
+                $path = \preg_replace('/\/({.*}\?)/', '/?$1', $path);
+            }
         }
 
         \preg_replace_callback('/[\[{\(].*[\]}\)]/U', function ($match) use (&$path): string {
@@ -67,27 +108,7 @@ namespace Router
             return $path;
         }, $path);
 
-        if (
-            \in_array(Request\method(), $methods) &&
-            (\preg_match(\sprintf('@^%s$@i', $path), Request\path(), $params) >= 1) &&
-            ($mikro[FOUND] ?? null) !== true
-        ) {
-            found:
-            $mikro[FOUND] = true;
-
-            if (isset($params)) {
-                \array_shift($params);
-                $mikro[PARAMETERS] = $params;
-            }
-
-            $result = \array_reduce(\array_reverse($middleware), function ($stack, $item) {
-                return function () use ($stack, $item) {
-                    return $item($stack);
-                };
-            }, $callback);
-
-            $result();
-        }
+        return $path;
     }
 
     /**
@@ -168,6 +189,20 @@ namespace Router
     }
 
     /**
+     * Maps the OPTIONS route
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\options('/', 'callback');
+     * Router\options('/', 'callback', $middlewareArray);
+     * ```
+     */
+    function options(string $path, mixed $callback, array|string $middleware = []): void
+    {
+        map('OPTIONS', $path, $callback, $middleware);
+    }
+
+    /**
      * Maps the any route
      *
      * {@inheritDoc} **Example:**
@@ -179,6 +214,34 @@ namespace Router
     function any(string $path, mixed $callback, array|string $middleware = []): void
     {
         map('GET|POST|PATCH|PUT|DELETE', $path, $callback, $middleware);
+    }
+
+    /**
+     * Maps the view route
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\view('/page', 'templates/page');
+     * Router\view('/page', 'templates/page', ['with' => 'data']);
+     * ```
+     */
+    function view(string $path, string $file, array $data = [], array|string $middleware = []): void
+    {
+        any($path, fn() => Response\view($file, $data), $middleware);
+    }
+
+    /**
+     * Maps the redirect route
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\redirect('/page', '/new/page/url');
+     * Router\redirect('/other-page', 'https://url');
+     * ```
+     */
+    function redirect(string $path, string $to, array|string $middleware = []): void
+    {
+        any($path, fn() => Response\redirect($to), $middleware);
     }
 
     /**
@@ -207,13 +270,41 @@ namespace Router
      * Router\error(function () {
      *     Response\html('404 not found!', Response\STATUS['HTTP_NOT_FOUND']);
      * });
+     * Router\error([
+     *     fn() => Response\html('Default 404 error handler'),
+     *     '/posts' => fn() => Response\html('/posts 404 error handler'),
+     *     '/products' => fn() => 'ProductController::notFoundHandler',
+     * ])
      * ```
      */
-    function error(mixed $callback): void
+    function error(mixed $callback = []): void
     {
+        if (! \is_array($callback)) {
+            $callback = [$callback];
+        }
+
         if (! is_found()) {
             \http_response_code(404);
-            $callback();
+            $path = Request\path();
+
+            foreach ($callback as $key => $_callback) {
+                $starts = \str_starts_with($path, (string) $key);
+                $match = \preg_match('@' . (string) $key . '@', $path);
+
+                if (! empty($key) && ($starts || $match)) {
+                    if (! \is_callable($_callback)) {
+                        throw new ValidatorException("Error callback `$key` is not valid");
+                    }
+
+                    $_callback();
+
+                    return;
+                }
+            }
+
+            if (isset($callback[0]) && \is_callable($callback[0])) {
+                $callback[0]();
+            }
         }
     }
 
@@ -289,13 +380,13 @@ namespace Router
      * /posts/{post:all} => /posts/any-char/any-slash
      * /posts/{post} => if no option, equals any option
      */
-    function parameters(?string $name = null): string|array
+    function parameters(?string $name = null, mixed $default = null): mixed
     {
         global $mikro;
 
         return $name === null ?
             $mikro[PARAMETERS] ?? [] :
-            ($mikro[PARAMETERS][$name] ?? null);
+            ($mikro[PARAMETERS][$name] ?? $default);
     }
 
     /**
@@ -317,7 +408,8 @@ namespace Router
         }
 
         $call = fn(string $method) =>
-            (is_callable("{$class}::{$method}") ? "{$class}::{$method}" : [new $class(), $method])();
+            (is_callable("{$class}::{$method}") ?
+                "{$class}::{$method}" : fn() => \call_user_func([new $class(),  $method]));
 
         $methods = [
             'index' => fn() => get($path, $call('index'), $middleware),

@@ -22,6 +22,14 @@ namespace Html
      *     Html'tag('a', 'Link')->href('http://url.com')->style(['text-decoration' => 'none'])
      * ]); // same result
      * ```
+     *
+     * New feature: Invokable tag
+     * Always returns string, instead of \Stringable
+     * ```php
+     * Html\tag('div')->class('foo')('Content'); // <div class="foo">content</div>
+     * Html\tag('span')('Text', ['class' => 'bg-light']); // <span class="bg-light">Text</span>
+     * Html\tag('ul', Html\tag('li')('Item'))(); // <ul><li>Item</li></ul>
+     * ```
      */
     function tag(string $name, mixed $content = '', array $attributes = []): object
     {
@@ -41,7 +49,14 @@ namespace Html
             public function __call(string $name, array $args): self
             {
                 $name = \strtolower(\preg_replace('/(?<!^)[A-Z]/', '-$0', $name));
-                $this->attributes[$name] = $args[0] ?? null;
+                $attribute = $args[0] ?? null;
+                $append = $args[1] ?? null;
+
+                if (isset($this->attributes[$name]) && $append === true) {
+                    $this->attributes[$name] .= $attribute;
+                } else {
+                    $this->attributes[$name] = $attribute;
+                }
 
                 return $this;
             }
@@ -110,6 +125,18 @@ namespace Html
             public function __isset(string $attribute): bool
             {
                 return \array_key_exists($attribute, $this->attributes);
+            }
+
+            public function __invoke(mixed $content = '', array $attributes = []): string
+            {
+                if (\is_array($content)) {
+                    $content = \implode('', \array_map(fn($tag) => (string) $tag, $content));
+                }
+
+                $this->content = (string) $content;
+                $this->attributes = \array_replace($this->attributes, $attributes);
+
+                return $this->__toString();
             }
         };
     }
