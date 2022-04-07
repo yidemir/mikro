@@ -4,34 +4,33 @@ Project in development. **Do not use** (yet)
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/yidemir/mikro.svg?style=flat-square)](https://packagist.org/packages/yidemir/mikro) [![Total Downloads](https://img.shields.io/packagist/dt/yidemir/mikro.svg?style=flat-square)](https://packagist.org/packages/yidemir/mikro) [![License](https://img.shields.io/packagist/l/yidemir/mikro)](https://packagist.org/packages/yidemir/mikro)
 
-
 This project is a tool developed to solve some tasks and requests with simple methods, rather than a framework.
 
 I tried to take this project, which I started as a hobby, one step further. There have been fundamental changes compared to the previous version.
 
-Available packages/components:
-* **Router** - An ultra-simple router with grouping and middleware support.
-* **Request** - An easy way to access PHP global request variables.
-* **Response** - Sends data/response to the client.
-* **DB** - It simplifies your CRUD operations with a PDO instance.
-* **Error** - Handle error and exceptions in easy way.
-* **Validator** - An ultra-simple validation library that allows you to verify data.
-* **View** - A view renderer (PHP files) with simple block support.
-* **Auth** - A simple authorization library with JWT.
-* **Cache** - It is a simple file-based caching (or key-value) structure. It does not have a expire/timeout feature.
+Available packages:
+* **Auth** - It is an authorization structure developed with JWT that can keep a simple authorization of users with abilities and can be separated by user type.
+* **Cache** - It is a simple file-based caching structure. It does not have a expire/timeout feature. It is stored only as key-value.
 * **Config**  - It is a simple config structure with setter and getter. It supports multi-dimensional arrays with dot notation.
 * **Console** - Executes a callback according to the parameter from the command line.
 * **Container** - A simple service container.
 * **Crypt** - It encrypts and decrypts strings with OpenSSL.
 * **Csrf** - It helps you to prevent CSRF deficit for forms.
 * **Curl** - It allows you to use the Curl library in a simple way.
+* **DB** - It simplifies your CRUD operations with a PDO instance.
 * **Event** - A simple event listener and emitter.
 * **Flash** - It is a structure that works with PHP session, allows you to move errors and messages between requests.
+* **Helper** - String and array helpers and more
 * **Html** - It provides a class that allows you to generate HTML code.
 * **Jwt** - A simple JSON web token authentication structure.
-* **Locale** - Multi-language/localization structure based on PHP arrays.
-* **Logger** - Basic file logging.
-* **Pagination** - Paginate any array data with total item count.
+* **Locale** - Multi-language/localization structure
+* **Logger** - Basic logging
+* **Pagination** - Paginate any array data with total count
+* **Request** - An easy way to access PHP global request variables.
+* **Response** - Sends data/response to the client.
+* **Router** - An ultra-simple router with grouping and middleware support.
+* **Validator** - A validation library that allows you to verify data and in doing so you can only use functions in the PHP library or callbacks that you have prepared yourself.
+* **View** - A view renderer with block and template support.
 
 ## Installation
 
@@ -43,85 +42,82 @@ composer require yidemir/mikro
 
 ## Usage
 
-```php
-require __DIR__ . '/vendor/autoload.php'; // all packages are loaded
-
-// set package settings
-$mikro = [
-    View\PATH => __DIR__ . '/views',
-    DB\CONNECTION => new PDO('sqlite::memory:'),
-    Crypt\SECRET => 'your-secret-key',
-];
-
-Router\get('/', 'Controllers\HomeController::index');
-Router\get('/items/{item:num}', fn() => [new Controllers\HomeController(), 'getItem']());
-Router\any('/admin', 'Controllers\Admin\DashboardController::index', [new Middleware\CheckAuth()]);
+**Routing**
+``` php
+Router\get('/', fn() => Response\view('home'));
 ```
 
 ```php
-namespace Controllers;
-
-use DB;
-use Router;
-use Response;
-
-class HomeController
-{
-    public static function index()
-    {
-        $data = ['name' => 'Mikro'];
-
-        return Response\view('home', compact('data'));
-    }
-
-    public function getItem()
-    {
-        $itemId = Router\parameters('item');
-        $item = DB\table('items')->find($itemId);
-
-        return Response\json(['message' => 'OK', 'data' => $item]);
-    }
-}
+Router\group('/admin', fn() => [
+    Router\get(''. 'DashboardController::index',
+    Router\resource('/posts', PostController::class),
+    Router\get('/service/status', fn() => Response\json(['status' => true], 200)
+], ['AdminMiddleware::handle']);
 ```
 
 ```php
-namespace Controllers;
-
-use DB;
-use Response;
-
-class DashboardController
-{
-    public static function index()
-    {
-        $stats = DB\table('stats')->get('order by created_at desc');
-
-        return Response\view('admin/index', compact('stats'));
-    }
-}
+Router\error([
+    fn() => Response\html('Default 404 error', 404),
+    '/posts' => Response\html('if request path is `/posts*`, returns this error', 404)
+]);
 ```
 
+**Database**
 ```php
-namespace Middleware;
+DB\model('products', [
+    // definitions
+    'table' => 'products',
+    'fillable' => ['title', 'description', 'price'],
 
-use Auth;
-use Request;
-use Response;
-use Closure;
+    // getters and setters
+    'get_title' => fn($title) => strtoupper($title),
+    'get_price' => fn($price) => Html\tag('span', $price)->class('price'),
+    'set_description' => fn($description) => Helper\str($description)->upper(),
 
-class CheckAuth
-{
-    public function __invoke(Closure $next)
-    {
-        if (! Auth\check() && Request\get('key') !== 'secret') {
-            return Response\redirect('/to/home');
-            // or
-            return Response\json(['message' => 'Unauthorized'], 403);
-        }
+    // events
+    'event_created' => fn(array $attributes) => Event\emit('product.created', [$attributes]),
+    'updating_event' => fn(array $attributes) => isset($attributes['key']),
 
-        return $next();
-    }
-}
+    // custom methods
+    'getActiveCount' => fn() => $this->where('status=?', [true])->count()
+]);
+
+DB\table('products')->fill(['title' => 'Product title'])->insert();
+DB\table('products')->fill(['title' => 'New product title'])->where('id=5')->update();
+$products = DB\table('products')->where('status=?', [true])->paginate();
+$count = DB\table('products')->getActiveCount();
+```
+
+**View and Templates**
+```html
+@View\set('title', 'Page title!');
+
+@View\start('content');
+    <p>Secure print: @=$message; or unsecure print @echo $message;</p>
+@View\stop();
+
+@View\start('scripts');
+    <script src="app.js"></script>
+@View\push();
+
+@echo View\render('layout');
+```
+
+```html
+<!-- layout.php -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@View\get('title', 'Hey!');</title>
+</head>
+<body>
+    @View\get('content');
+
+    @View\get('scripts');
+</body>
+</html>
 ```
 
 All methods and constants are documented at the source. The general documentation will be published soon.
