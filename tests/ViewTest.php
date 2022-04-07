@@ -26,6 +26,9 @@ class ViewTest extends TestCase
         $result = \View\render('view', ['data' => 'foo']);
 
         $this->assertEquals($result, 'content foo');
+
+        \View\clear();
+        rmdir($mikro[\View\PATH] . '/cache');
     }
 
     public function testViewBlocks()
@@ -61,5 +64,30 @@ class ViewTest extends TestCase
         $this->assertEquals(\View\get('content1'), 'content1');
         $this->assertEquals(\View\get('content2'), 'content2');
         $this->assertEquals(\View\get('foo'), 'bar');
+    }
+
+    public function testTemplateRenderer()
+    {
+        $this->assertSame(\View\template('@echo PHP_EOL;'), '<?php echo PHP_EOL ?>');
+        $this->assertSame(\View\template('@echo "\;";'), '<?php echo ";" ?>');
+        $this->assertSame(\View\template('@=$var;'), '<?php echo \View\e($var) ?>');
+        $this->assertSame(\View\template('@="\;";'), '<?php echo \View\e(";") ?>');
+
+        \View\method('foo', fn($body) => '<?php foo(' . $body . ') ?>');
+
+        $this->assertSame(\View\template('@foo $variable;'), '<?php foo($variable) ?>');
+
+        global $mikro;
+
+        $mikro[\View\DELIMITER] = ['%{', '}%'];
+
+        $this->assertSame(\View\template('%{echo PHP_EOL}%'), '<?php echo PHP_EOL ?>');
+        $this->assertSame(\View\template('%{echo "\}%"}%'), '<?php echo "}%" ?>');
+        $this->assertSame(\View\template('%{=$var}%'), '<?php echo \View\e($var) ?>');
+        $this->assertSame(\View\template('%{="\}%"}%'), '<?php echo \View\e("}%") ?>');
+
+        \View\method('foo', fn($body) => '<?php foo(' . $body . ') ?>');
+
+        $this->assertSame(\View\template('%{foo $variable}%'), '<?php foo($variable) ?>');
     }
 }

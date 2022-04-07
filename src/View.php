@@ -37,7 +37,7 @@ namespace View
         \ob_start();
 
         if (! empty($data)) {
-            \extract($data, \EXTR_SKIP);
+            \extract($data);
         }
 
         require cache($path);
@@ -80,7 +80,8 @@ namespace View
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * View\stop();
+     * View\stop(); // stop and write
+     * View\stop(true); // stop and push
      * ```
      */
     function stop(bool $push = false): void
@@ -101,7 +102,7 @@ namespace View
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * View\stop();
+     * View\push();
      * ```
      */
     function push(): void
@@ -131,12 +132,12 @@ namespace View
     /**
      * Gets view block
      *
-     *
      * {@inheritDoc} **Example:**
      * ```php
      * View\get('title');
      * View\get('count');
      * View\get('input')('title');
+     * ```
      */
     function get(string $name, mixed $default = null): mixed
     {
@@ -145,6 +146,9 @@ namespace View
         return $mikro[BLOCKS][$name] ?? ($default instanceof \Closure ? $default() : $default);
     }
 
+    /**
+     * Get or create cached view file content
+     */
     function cache(string $path): string
     {
         global $mikro;
@@ -165,6 +169,17 @@ namespace View
         return $cachedPath;
     }
 
+    /**
+     * Parse view template content
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * template('@echo "hello world";'); // '<?php echo "hello world" ?>'
+     * template('@some_function("data");'); // '<?php some_function("data") ?>'
+     * template('@$x = 5;@=$x;');
+     * // <?php $x = 5 ?><?php echo \View\e($x) ?>
+     * ```
+     */
     function template(string $data): string
     {
         global $mikro;
@@ -208,6 +223,36 @@ namespace View
         );
     }
 
+    /**
+     * Add new view template method
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * method('foreach', function($body) {
+     *     return '<?php foreach (' . $body . '): ?>';
+     * });
+     *
+     * template('@foreach $items as $item;');
+     * // <?php foreach ($items as $item): ?>
+     *
+     * method('if', function($body) {
+     *     return '<?php if (' . $body . '): ?>';
+     * });
+     *
+     * template('
+     *      @if isset($items);
+     *          @foreach $items as $item;
+     *              <p>@=$item->name;</p>
+     *          @endforeach;
+     *      @endif;
+     * ');
+     * // <?php if (isset($items)): ?>
+     * //     <?php foreach ($items as $item): ?>
+     * //         <p><?php echo \View\e($item->name) ?></p>
+     * //     <?php endforeach ?>
+     * // <?php endif ?>
+     * ```
+     */
     function method(string $method, callable $callback): void
     {
         global $mikro;
@@ -215,6 +260,14 @@ namespace View
         $mikro[METHODS][$method] = $callback;
     }
 
+    /**
+     * Clear cached templates on the filesystem
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * View\clear();
+     * ```
+     */
     function clear(): void
     {
         global $mikro;
