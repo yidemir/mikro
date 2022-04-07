@@ -189,4 +189,87 @@ class RouterTest extends TestCase
 
         unset($mikro[\Router\FOUND]);
     }
+
+    public function testRouteWithOptionalParameter()
+    {
+        global $mikro;
+
+        $_SERVER['REQUEST_URI'] = '/posts/5';
+
+        ob_start();
+        \Router\map('GET', '/posts/{post:num}?', fn() => print(\Router\parameters('post')));
+        $this->assertEquals(ob_get_clean(), '5');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts/';
+
+        ob_start();
+        \Router\map('GET', '/posts/{post:num}?', fn() => print(\Router\parameters('post', 10)));
+        $this->assertEquals(ob_get_clean(), '10');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts';
+
+        ob_start();
+        \Router\map('GET', '/posts/{post:num}?', fn() => print(\Router\parameters('post', 10)));
+        $this->assertEquals(ob_get_clean(), '10');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts/category-name/16';
+
+        ob_start();
+        \Router\map(
+            'GET',
+            '/posts/{category:str}?/{post:num}?',
+            fn() => print(
+                \Router\parameters('category') . \Router\parameters('post')
+            )
+        );
+        $this->assertEquals(ob_get_clean(), 'category-name16');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts';
+
+        ob_start();
+        \Router\map(
+            'GET',
+            '/posts/{category:str}?/{post:num}?',
+            fn() => print(
+                \Router\parameters('category', 'foo') . \Router\parameters('post', 'bar')
+            )
+        );
+        $this->assertEquals(ob_get_clean(), 'foobar');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+
+        $_SERVER['REQUEST_URI'] = '/posts/';
+
+        ob_start();
+        \Router\map(
+            'GET',
+            '/posts/{category:str}?/{post:num}?',
+            fn() => print(
+                \Router\parameters('category', 'foo') . \Router\parameters('post', 'bar')
+            )
+        );
+        $this->assertEquals(ob_get_clean(), 'foobar');
+
+        $this->assertTrue(\Router\is_found());
+
+        unset($mikro[\Router\FOUND]);
+    }
 }
