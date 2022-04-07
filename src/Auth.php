@@ -132,9 +132,7 @@ namespace Auth
         }
 
         $user = DB\table($mikro[TABLE] ?? 'users')
-            ->where('email=:email AND type=:type')
-            ->bindStr(':email', $email)
-            ->bindStr(':type', type())
+            ->where('email=? AND type=?', [$email, type()])
             ->find();
 
         if (! $user) {
@@ -224,10 +222,8 @@ namespace Auth
 
         $payload = Jwt\decode($token);
         $user = DB\table($mikro[TABLE] ?? 'users')
-            ->find('where email=:email and type=:type', [
-                'email' => $payload->uid ?? '',
-                'type' => $type ?? type()
-            ]);
+            ->where('email=? AND type=?', [$payload->uid ?? '', $type ?? type()])
+            ->find();
 
         if ($user) {
             $mikro[USER] = $user;
@@ -276,9 +272,7 @@ namespace Auth
 
         if (
             DB\table($table)
-                ->where('email=:email AND type=:type')
-                ->bindStr(':email', $data['email'])
-                ->bindStr(':type', $data['type'] ?? type())
+                ->where('email=? AND type=?', [$data['email'], $data['type'] ?? type()])
                 ->find()
         ) {
             return false;

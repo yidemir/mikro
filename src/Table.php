@@ -358,11 +358,44 @@ namespace DB
         };
     }
 
+    /**
+     * Simple query builder
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * $sql = DB\builder()->select('title, body')->from('posts')->where('id=5')->orderBy('id DESC');
+     * (string) $sql; // SELECT title, body FROM posts WHERE id=5 ORDER BY id DESC
+     *
+     * DB\builder()->insertInto('items (name, price)')->values('(:name, :price)');
+     * DB\builder()->insertInto('items (name, price)')->valuesArray([':name', ':price']);
+     * // INSERT INTO items (name, price) VALUES (:name, :price)
+     *
+     * DB\builder()->insertInto('items')->setArray(['foo' => 'bar', 'baz' => 5]);
+     * // INSERT INTO items SET foo='bar', baz=5
+     *
+     * DB\builder()->update('table')->set('name=:name, foo=:foo');
+     * DB\builder()->update('table')->setArray(['name' => ':name', 'foo' => ':foo']);
+     * // UPDATE table SET name=:name, foo=:foo
+     *
+     * DB\builder()->deleteFrom('posts')->where('id=5');
+     * // DELETE FROM posts WHERE id=5
+     * ```
+     */
     function builder(): object
     {
         return new class implements \Stringable {
+            /**
+             * Query type (select, insert, update or delete)
+             *
+             * @var string
+             */
             protected string $type = '';
 
+            /**
+             * SELECT clauses
+             *
+             * @var array<string, string>
+             */
             protected array $select = [
                 'SELECT' => '',
                 'FROM' => '',
@@ -379,6 +412,11 @@ namespace DB
                 'LIMIT' => '',
             ];
 
+            /**
+             * INSERT INTO clauses
+             *
+             * @var array<string, string>
+             */
             protected array $insert = [
                 'INSERT INTO' => '',
                 'SET' => '',
@@ -386,6 +424,11 @@ namespace DB
                 'ON DUPLICATE KEY UPDATE' => '',
             ];
 
+            /**
+             * UPDATE clauses
+             *
+             * @var array<string, string>
+             */
             protected array $update = [
                 'UPDATE' => '',
                 'SET' => '',
@@ -394,6 +437,11 @@ namespace DB
                 'LIMIT' => '',
             ];
 
+            /**
+             * DELETE clauses
+             *
+             * @var array<string, string>
+             */
             protected array $delete = [
                 'DELETE FROM' => '',
                 'WHERE' => '',
@@ -401,15 +449,49 @@ namespace DB
                 'LIMIT' => '',
             ];
 
+            /**
+             * In query bindings collection
+             *
+             * @var array<string, array>
+             */
             protected array $binds = [];
+
+            /**
+             * PDO compatible bindings
+             *
+             * @var array<array<string, mixed>>
+             */
             protected array $parameters = [];
+
+            /**
+             * Binding sequence
+             *
+             * @var int
+             */
             protected int $sequence = 1;
 
+            /**
+             * Make new query
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $builder = builder()->select('foo, bar');
+             * $newBuilder = $builder->make()->select('*');
+             * ```
+             */
             public static function make(): self
             {
                 return new self();
             }
 
+            /**
+             * Make SELECT statement
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->select('foo, bar as b');
+             * ```
+             */
             public function select(string $select): self
             {
                 $this->setType('select');
@@ -419,6 +501,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make from clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->select('*')->from('table');
+             * ```
+             */
             public function from(string $from): self
             {
                 $this->select['FROM'] = $from . ' ';
@@ -426,6 +516,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make SELECT statement and FROM clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*');
+             * ```
+             */
             public function table(string $from, ?string $select = null): self
             {
                 if ($select) {
@@ -439,6 +537,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make JOIN clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->join('table on ...');
+             * ```
+             */
             public function join(string $join, array $binds = []): self
             {
                 $this->select['JOIN'] .= $join . ' ';
@@ -447,6 +553,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make WHERE clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->where('id=100');
+             * ```
+             */
             public function where(string $where, array $binds = []): self
             {
                 $this->checkType();
@@ -458,6 +572,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make GROUP BY clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->groupBy('column');
+             * ```
+             */
             public function groupBy(string $groupBy, array $binds = []): self
             {
                 $this->select['GROUP BY'] .= $groupBy . ' ';
@@ -466,6 +588,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make HAVING clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->having('column=value');
+             * ```
+             */
             public function having(string $having, array $binds = []): self
             {
                 $this->select['HAVING'] .= $having . ' ';
@@ -474,6 +604,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make ORDER BY clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->orderBy('id DESC');
+             * ```
+             */
             public function orderBy(string $orderBy, array $binds = []): self
             {
                 $this->checkType();
@@ -485,6 +623,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make LIMIT clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->limit('100');
+             * ```
+             */
             public function limit(string $limit, array $binds = []): self
             {
                 $this->checkType();
@@ -496,6 +642,15 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make INSERT INTO statement
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->insertInto('items');
+             builder()->insertInto('items (name, price)');
+             * ```
+             */
             public function insertInto(string $insert, array $binds = []): self
             {
                 $this->setType('insert');
@@ -506,6 +661,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make VALEUS clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->insertInto('items (name, price)')->values('(:name, :price)');
+             * ```
+             */
             public function values(string $values, array $binds = []): self
             {
                 $this->insert['VALUES'] .= $values . ' ';
@@ -514,6 +677,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make VALEUS clause with array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->insertInto('items (name, price)')->valuesArray([':name', ':price']);
+             * ```
+             */
             public function valuesArray(array $values, array $binds = []): self
             {
                 $string = '';
@@ -529,6 +700,17 @@ namespace DB
                 return $this->values('(' . \trim($string, ', ') . ')', $binds);
             }
 
+            /**
+             * Make ON DUPLICATE KEY UPDATE clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()
+             *     ->insertInto('items (name, price)')
+             *     ->valuesArray([':name', ':price'])
+             *     ->onDuplicateKeyUpdate('foo=:bar');
+             * ```
+             */
             public function onDuplicateKeyUpdate(string $onDuplicateKeyUpdate, array $binds = []): self
             {
                 $this->insert['ON DUPLICATE KEY UPDATE'] .= $onDuplicateKeyUpdate . ' ';
@@ -537,6 +719,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make UPDATE statement
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->update('items');
+             * ```
+             */
             public function update(string $update, array $binds = []): self
             {
                 $this->setType('update');
@@ -547,6 +737,15 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make SET clause
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->update('items')->set('foo=:foo, bar=5');
+             * builder()->insertInto('items')->set('foo=:foo, bar=5');
+             * ```
+             */
             public function set(string $set, array $binds = []): self
             {
                 $this->checkType();
@@ -558,6 +757,15 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Make SET clause with array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->update('items')->setArray(['foo' => ':foo', 'bar' => 5']);
+             * builder()->insertInto('items')->setArray(['foo' => ':foo', 'bar' => 5']);
+             * ```
+             */
             public function setArray(array $values, array $binds = []): self
             {
                 $string = '';
@@ -573,6 +781,14 @@ namespace DB
                 return $this->set(\trim($string, ', '), $binds);
             }
 
+            /**
+             * Make DELETE FROM statement
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->deleteFrom('items');
+             * ```
+             */
             public function deleteFrom(string $deleteFrom, array $binds = []): self
             {
                 $this->setType('delete');
@@ -583,6 +799,9 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Set active query type (select, insert, update or delete)
+             */
             protected function setType(string $type): void
             {
                 $oldType = $this->type;
@@ -597,6 +816,9 @@ namespace DB
                 }
             }
 
+            /**
+             * Check query type is set
+             */
             protected function checkType(): void
             {
                 if (empty($this->type)) {
@@ -604,6 +826,9 @@ namespace DB
                 }
             }
 
+            /**
+             * Check statement/clause availability
+             */
             protected function checkAvailability(string $statement): void
             {
                 if (! isset($this->{$this->type}[$statement])) {
@@ -613,6 +838,14 @@ namespace DB
                 }
             }
 
+            /**
+             * Bind parameter for PDO
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->bind(':id', 5, \PDO::PARAM_INT);
+             * ```
+             */
             public function bind(string|int|array $param, mixed $var = null, int $type = \PDO::PARAM_STR): self
             {
                 if (\is_array($param) && $var === null) {
@@ -624,6 +857,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Bind parameter with sequence
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->bindSequence(['parameter value 1', 'parameter value 2']);
+             * ```
+             */
             public function bindSequence(array $binds, int $type = \PDO::PARAM_STR): self
             {
                 foreach ($binds as $bind) {
@@ -634,6 +875,14 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Bind multiple parameter with key-value array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->binds([':foo' => 'foo', ':bar' => 5]);
+             * ```
+             */
             public function binds(array $binds): self
             {
                 foreach ($binds as $key => $value) {
@@ -647,6 +896,9 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Merge in query bindings
+             */
             protected function mergeBinds(string $query, array $binds = []): void
             {
                 if (! \array_is_list($binds)) {
@@ -662,11 +914,28 @@ namespace DB
                 }
             }
 
+            /**
+             * Get defined parameters
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->getParameters(); // array
+             * ```
+             */
             public function getParameters(): array
             {
                 return $this->parameters;
             }
 
+            /**
+             * Convert to SQL string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * (string) builder()->table('items', '*');
+             * // SELECT * FROM items
+             * ```
+             */
             public function __toString(): string
             {
                 $this->checkType();
@@ -686,11 +955,38 @@ namespace DB
                 return \trim($result);
             }
 
+            /**
+             * Convert to SQL string
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * builder()->table('items', '*')->toSql();
+             * // SELECT * FROM items
+             * ```
+             */
             public function toSql(): string
             {
                 return $this->__toString();
             }
 
+            /**
+             * Get SQL and parameters
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $builder = builder()
+             *     ->table('items', '*')
+             *     ->where('id=:id')
+             *     ->bind(':id', 5, \PDO::PARAM_INT);
+             * $builder->build();
+             * // [
+             * //     'sql' => 'SELECT * from items WHERE id=:id',
+             * //     'parameters' => [
+             * //         ['param' => ':id', 'var' => 5, 'type' => 1]
+             * //     ]
+             * // ]
+             * ```
+             */
             public function build(): array
             {
                 return [
