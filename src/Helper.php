@@ -807,24 +807,6 @@ namespace Helper
                 unset($this->arr[$key]);
             }
 
-            /**
-             * Get array or apply callback and get result
-             *
-             * {@inheritDoc} **Example:**
-             * ```php
-             * arr([1, 2, 3])(); // [1, 2, 3]
-             * arr([1, 2, 3])(fn($arr) => $arr->keys()); // [0, 1, 2]
-             * ```
-             */
-            public function __invoke(?callable $callback = null): mixed
-            {
-                if ($callback) {
-                    return $callback($this);
-                }
-
-                return $this->toArray();
-            }
-
             public function __call(string $method, array $args): mixed
             {
                 if (isset(self::$methods[$method])) {
@@ -1430,15 +1412,6 @@ namespace Helper
             public function __toString(): string
             {
                 return $this->str;
-            }
-
-            public function __invoke(?callable $callback = null): mixed
-            {
-                if ($callback) {
-                    return $callback($this);
-                }
-
-                return $this->__toString();
             }
 
             public function __call(string $method, array $args): mixed
