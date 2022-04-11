@@ -70,7 +70,7 @@ namespace DB
     {
         $query = "INSERT INTO {$table} ";
         $query .= querify($data, 'insert');
-        $query .= empty($queryPart) ? '' : ' {$queryPart}';
+        $query .= empty($queryPart) ? '' : " {$queryPart}";
 
         return query($query, \array_values($data));
     }
