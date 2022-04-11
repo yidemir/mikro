@@ -9,8 +9,7 @@ This project is a tool developed to solve some tasks and requests with simple me
 I tried to take this project, which I started as a hobby, one step further. There have been fundamental changes compared to the previous version.
 
 Available packages:
-* **Auth** - It is an authorization structure developed with JWT that can keep a simple authorization of users with abilities and can be separated by user type.
-* **Cache** - It is a simple file-based caching structure. It does not have a expire/timeout feature. It is stored only as key-value.
+* **Cache** - It is a simple caching structure.
 * **Config**  - It is a simple config structure with setter and getter. It supports multi-dimensional arrays with dot notation.
 * **Console** - Executes a callback according to the parameter from the command line.
 * **Container** - A simple service container.
@@ -49,17 +48,16 @@ Router\get('/', fn() => Response\view('home'));
 
 ```php
 Router\group('/admin', fn() => [
-    Router\get(''. 'DashboardController::index',
+    Router\get('/', 'DashboardController::index'),
     Router\resource('/posts', PostController::class),
     Router\get('/service/status', fn() => Response\json(['status' => true], 200)
 ], ['AdminMiddleware::handle']);
+
+Router\files('/', __DIR__ . '/sync-directory');
 ```
 
 ```php
-Router\error([
-    fn() => Response\html('Default 404 error', 404),
-    '/posts' => Response\html('if request path is `/posts*`, returns this error', 404)
-]);
+Router\error(fn() => Response\html('Default 404 error', 404));
 ```
 
 **Database**
