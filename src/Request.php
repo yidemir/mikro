@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Request
 {
+    use Helper;
+
     /**
      * Gets request method
      *
@@ -180,5 +182,46 @@ namespace Request
         $first = $pieces[0] ?? '';
 
         return \str_contains($first, '/json') || \str_contains($first, '+json');
+    }
+
+    /**
+     * Get bearer token.
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\bearer_token(); // token string
+     * ```
+     */
+    function bearer_token(): ?string
+    {
+        $auth = header('Authorization');
+
+        return $auth ? \preg_replace('/^Bearer /', '', $auth) : null;
+    }
+
+    /**
+     * Returns certain parameters.
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\only(['param1', 'param2']); // array
+     * ```
+     */
+    function only(array $keys): array
+    {
+        return Helper\arr(all())->only($keys)->all();
+    }
+
+    /**
+     * Returns it by excluding certain parameters.
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Request\except(['param3', 'param2']); // array
+     * ```
+     */
+    function except(array $keys): array
+    {
+        return Helper\arr(all())->except($keys)->all();
     }
 };

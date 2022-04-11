@@ -44,4 +44,15 @@ class RequestTest extends TestCase
         $this->assertEquals(\Request\get('foo-x', 'qux'), 'qux');
         $this->assertEquals(\Request\input('foo-x', 'qux'), 'qux');
     }
+
+    public function testBearerTokenOnlyAndExceptMethods()
+    {
+        $this->assertNull(\Request\bearer_token());
+        $_SERVER['QUERY_STRING'] = 'foo=bar&baz=qux&a=b&c=d';
+        $this->assertArrayHasKey('foo', \Request\only(['foo', 'baz']));
+        $this->assertArrayNotHasKey('a', \Request\only(['foo']));
+        $this->assertArrayNotHasKey('baz', \Request\only(['foo']));
+        $this->assertArrayNotHasKey('a', \Request\except(['a']));
+        $this->assertArrayNotHasKey('foo', \Request\except(['foo']));
+    }
 }
