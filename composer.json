@@ -32,7 +32,6 @@
     },
     "autoload": {
         "files": [
-            "src/Auth.php",
             "src/Cache.php",
             "src/Config.php",
             "src/Console.php",
