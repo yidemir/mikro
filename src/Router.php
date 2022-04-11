@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Router
 {
+    use Helper;
     use Request;
     use Response;
     use Mikro\Exceptions\ValidatorException;
@@ -432,6 +433,61 @@ namespace Router
                 $method();
             }
         }
+    }
+
+    /**
+     * Sync routes with files in specific directory
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Router\files('/', __DIR__ . '/pages/front');
+     * Router\files('/admin', __DIR__ . '/pages/back', ['AdminMiddleware::handle']);
+     * ```
+     */
+    function files(string $routePath, string $filesPath, array|string $middleware = []): void
+    {
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($filesPath)
+        );
+
+        foreach ($iterator as $item) {
+            if ($item->isDir() || ! \str_ends_with($item->getFilename(), '.php')) {
+                continue;
+            }
+
+            $route = resolve_file($item, \realpath($filesPath));
+
+            map(
+                [$route['method']],
+                '/' . trim($routePath . $route['path'], '/'),
+                fn() => require($item->getPathName()),
+                $middleware
+            );
+        }
+    }
+
+    /**
+     * Resolve file for route
+     *
+     * @internal
+     */
+    function resolve_file(\SplFileInfo $file, string $base): array
+    {
+        $prefix = \str_replace($base, '', \dirname($file->getRealPath()));
+        $method = 'GET';
+        $path = $file->getBaseName('.php');
+
+        foreach (['get', 'post', 'put', 'patch', 'delete', 'options'] as $item) {
+            if (\str_ends_with($file->getBaseName('.php'), $item)) {
+                $method = \strtoupper($item);
+                $path = $file->getBaseName('.' . $item . '.php');
+            }
+        }
+
+        $path = $path === 'index' ? '' : $path;
+        $path = \rtrim($prefix . '/' . $path, '/') ?: '/';
+
+        return \compact('method', 'path');
     }
 
     /**
