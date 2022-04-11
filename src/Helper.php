@@ -525,7 +525,7 @@ namespace Helper
              */
             public function pull(mixed $key, mixed $default = null): mixed
             {
-                $item = $this->arr[$key] ?? $default;;
+                $item = $this->arr[$key] ?? $default;
                 unset($this->arr[$key]);
 
                 return $item;
