@@ -147,7 +147,6 @@ namespace Request
      * ```php
      * Request\header('Content-type'); // string 'text/html'
      * ```
-     *
      */
     function header(string $key, mixed $default = null): mixed
     {

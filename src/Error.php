@@ -48,7 +48,7 @@ namespace Error
                 return;
             }
 
-            if (\in_array($class, $mikro[DONT_REPORT_COLLECTION] ?? [])) {
+            if (\in_array($class, $mikro[DONT_REPORT] ?? [])) {
                 return;
             }
 
@@ -59,7 +59,7 @@ namespace Error
     /**
      * Prepare exception response
      *
-      * {@inheritDoc} **Example:**
+     * {@inheritDoc} **Example:**
      * ```php
      * Error\handler(function (\Throwable $e) {
      *     // handler
@@ -171,7 +171,7 @@ namespace Error
     {
         global $mikro;
 
-        $mikro[DONT_REPORT_COLLECTION][] = $class;
+        $mikro[DONT_REPORT][] = $class;
     }
 
     /**
@@ -186,5 +186,5 @@ namespace Error
      *
      * @internal
      */
-    const DONT_REPORT_COLLECTION = 'Error\DONT_REPORT_COLLECTION';
+    const DONT_REPORT = 'Error\DONT_REPORT';
 };
