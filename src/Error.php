@@ -8,6 +8,7 @@ namespace Error
     use Html;
     use Request;
     use Response;
+    use Logger;
 
     /**
      * Sets error to exception
@@ -37,19 +38,38 @@ namespace Error
      */
     function handler(?callable $callback = null): void
     {
-        \set_exception_handler($callback ?? function (\Throwable $exception) {
+
+        \set_exception_handler(function (\Throwable $exception) use ($callback) {
             global $mikro;
 
             $class = \get_class($exception);
 
-            if (isset($mikro[EXCEPTIONS][$class])) {
-                $mikro[EXCEPTIONS][$class]($exception);
-
+            if (\in_array($class, $mikro[DONT_REPORT] ?? [])) {
                 return;
             }
 
-            if (\in_array($class, $mikro[DONT_REPORT] ?? [])) {
-                return;
+            if (isset($mikro[LOG][$class]) || isset($mikro[LOG]['*'])) {
+                Logger\log(
+                    $mikro[LOG][$class] ?? $mikro[LOG]['*'],
+                    $exception->getMessage(),
+                    $exception->getTrace()
+                );
+            }
+
+            if (isset($mikro[EXCEPTIONS][$class])) {
+                $specific = $mikro[EXCEPTIONS][$class]($exception);
+
+                if ($specific) {
+                    return $specific;
+                }
+            }
+
+            if ($callback) {
+                $callback = $callback($exception);
+
+                if ($callback) {
+                    return $callback;
+                }
             }
 
             return response($exception);
@@ -74,7 +94,7 @@ namespace Error
 
         if (\PHP_SAPI === 'cli') {
             Console\error("{$class} with message '{$exception->getMessage()}'");
-            Console\write("in {$exception->getFile()}:{$exception->getLine()}");
+            Console\write("in {$exception->getFile()} line {$exception->getLine()}");
             Console\write(\str_repeat('-', \strlen($class)));
             Console\write($exception->getTraceAsString());
 
@@ -101,13 +121,20 @@ namespace Error
         return Response\html('<!doctype html>' . Html\tag('html', [
             Html\tag('head', [
                 Html\tag('title', $class),
-                Html\tag('style', 'html { font: .9em/1.5 sans-serif }')
+                Html\tag('style', '
+                    html { font: .9em/1.5 sans-serif }
+                    div.exception-wrapper { width: 50%; margin: 0 auto }
+                    h1.exception-title { color: gray; margin: 0 }
+                    h2.exception-message { margin: 0 }
+                    h3.exception-file { color: gray; margin: 0 }
+                ')
             ]),
             Html\tag('body', Html\tag('div', [
-                Html\tag('h1', $class),
-                Html\tag('h2', \htmlentities($exception->getMessage())),
-                Html\tag('pre', $exception->getTraceAsString())
-            ]))
+                Html\tag('h1', $class)->class('exception-title'),
+                Html\tag('h2', \htmlentities($exception->getMessage()))->class('exception-message'),
+                Html\tag('h3', "in {$exception->getFile()} line {$exception->getLine()}")->class('exception-file'),
+                Html\tag('pre', $exception->getTraceAsString())->class('exception-trace')
+            ])->class('exception-wrapper'))
         ]), 500);
     }
 
@@ -175,6 +202,21 @@ namespace Error
     }
 
     /**
+     * Log spesific exception with specific log level
+     *
+      * {@inheritDoc} **Example:**
+     * ```php
+     * Error\log(PDOException::class, Logger\LEVEL_CRITICAL);
+     * ```
+     */
+    function log(string $exception = '*', string $logLevel = Logger\LEVEL_DEBUG): void
+    {
+        global $mikro;
+
+        $mikro[LOG][$exception] = $logLevel;
+    }
+
+    /**
      * Handled exceptions collection constant
      *
      * @internal
@@ -187,4 +229,11 @@ namespace Error
      * @internal
      */
     const DONT_REPORT = 'Error\DONT_REPORT';
+
+    /**
+     * Collection of exception logger
+     *
+     * @internal
+     */
+    const LOG = 'Error\LOG';
 };
