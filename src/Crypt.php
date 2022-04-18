@@ -21,6 +21,10 @@ namespace Crypt
     {
         global $mikro;
 
+        if (! \extension_loaded('openssl')) {
+            throw new MikroException('Openssl extension is not available, please install');
+        }
+
         if (! isset($mikro[SECRET])) {
             throw new MikroException('Please define secret key');
         }

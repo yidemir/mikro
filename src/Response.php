@@ -32,6 +32,7 @@ namespace Response
     /**
      * Output a html response
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\html('Hello world!');
      * Response\html('404 page not found!', Response\STATUS['HTTP_NOT_FOUND']);
@@ -53,6 +54,7 @@ namespace Response
     /**
      * Output a json response
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\json(['status' => true]);
      * Response\json(['status' => false], Response\STATUS['HTTP_NOT_FOUND']);
@@ -76,6 +78,7 @@ namespace Response
     /**
      * Output a text response
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\text('Hello world!');
      * Response\text('404 page not found!', Response\STATUS['HTTP_NOT_FOUND']);
@@ -97,6 +100,7 @@ namespace Response
     /**
      * Redirect response
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\redirect('url');
      * Response\redirect('url', STATUS['HTTP_PERMANENTLY_REDIRECT']);
@@ -112,6 +116,7 @@ namespace Response
     /**
      * Redirect response to referer url
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\redirect_back();
      * ```
@@ -127,6 +132,7 @@ namespace Response
     /**
      * Render view and output html response
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\view('view_file');
      * Response\view('view_file', ['data' => 'foo']);
@@ -146,6 +152,7 @@ namespace Response
     /**
      * Send header with key/value
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\header('Content-type', 'text/html');
      * Response\header('Location', 'url');
@@ -157,8 +164,46 @@ namespace Response
     }
 
     /**
+     * Output a success response (status code: 200)
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Response\ok(['response_type' => 'JSON']);
+     * Response\ok('Response type: HTML');
+     * ```
+     */
+    function ok(mixed $data, int $code = STATUS['HTTP_OK'], array $headers = [])
+    {
+        if (\is_array($data) || \is_object($data)) {
+            return json($data, $code, $headers);
+        }
+
+        return html($data, $code, $headers);
+    }
+
+    /**
+     * Output a fail response (status code: 500)
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Response\error(['response_type' => 'JSON']);
+     * Response\error('Response type: HTML');
+     * Response\error('error details', Response\STATUS['HTTP_NOT_FOUND']);
+     * ```
+     */
+    function error(mixed $data, int $code = STATUS['HTTP_INTERNAL_SERVER_ERROR'], array $headers = [])
+    {
+        if (\is_array($data) || \is_object($data)) {
+            return json($data, $code, $headers);
+        }
+
+        return html($data, $code, $headers);
+    }
+
+    /**
      * Http status codes
      *
+     * {@inheritDoc} **Example:**
      * ```php
      * Response\json($data, Response\STATUS['HTTP_OK']);
      * Response\html($data, Response\STATUS['HTTP_NOT_FOUND']);
