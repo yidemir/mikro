@@ -40,7 +40,7 @@ namespace Validator
                 // Split rule and parameters
                 [$rule, $stringParameters] = \explode(':', $rule, 2);
                 // Split parameters
-                $parameters = explode(',', $stringParameters);
+                $parameters = \explode(',', $stringParameters);
 
                 // Set splitted parameters
                 $normalizedRule['parameters'] = $parameters;
@@ -87,22 +87,12 @@ namespace Validator
      * {@inheritDoc} **Example:**
      * ```php
      * Validator\validate_all(
-     *     [
-     *         'title' => 'foo',
-     *         'email' => 'bar'
-     *     ],
+     *     ['title' => 'foo', 'email' => 'bar'],
      *     [
      *        'title' => 'isset|!empty|ctype_alnum',
      *        'email' => 'isset|!empty|filter_var:' . FILTER_VALIDATE_EMAIL
      *    ]
-     * );
-     *
-     * array(2) {
-     *   ["title"]=>
-     *   bool(true)
-     *   ["email"]=>
-     *   bool(false)
-     * }
+     * ); // ['title' => true, 'email' => false]
      * ```
      */
     function validate_all(array $data, array $rules): array
@@ -114,6 +104,20 @@ namespace Validator
         return \array_combine(\array_keys($rules), \array_values($results));
     }
 
+    /**
+     * Validate array and get result in boolean
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * Validator\is_validate_all(
+     *     ['title' => 'foo', 'email' => 'bar'],
+     *     [
+     *        'title' => 'isset|!empty|ctype_alnum',
+     *        'email' => 'isset|!empty|filter_var:' . FILTER_VALIDATE_EMAIL
+     *    ]
+     * ); // true|false
+     * ```
+     */
     function is_validated_all(array $data, array $rules): bool
     {
         $results = \array_map(function ($key, $rule) use ($data) {
@@ -131,14 +135,7 @@ namespace Validator
      * Validator\validate_request([
      *     'title' => 'isset|!empty|ctype_alnum',
      *     'email' => 'isset|!empty|filter_var:' . FILTER_VALIDATE_EMAIL
-     * ]);
-     *
-     * array(2) {
-     *   ["title"]=>
-     *   bool(true)
-     *   ["email"]=>
-     *   bool(false)
-     * }
+     * ]); // ['title' => true, 'email' => false]
      * ```
      */
     function validate_request(array $rules): array

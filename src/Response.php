@@ -172,7 +172,7 @@ namespace Response
      * Response\ok('Response type: HTML');
      * ```
      */
-    function ok(mixed $data, int $code = STATUS['HTTP_OK'], array $headers = [])
+    function ok(mixed $data, int $code = STATUS['HTTP_OK'], array $headers = []): int
     {
         if (\is_array($data) || \is_object($data)) {
             return json($data, $code, $headers);
@@ -191,7 +191,7 @@ namespace Response
      * Response\error('error details', Response\STATUS['HTTP_NOT_FOUND']);
      * ```
      */
-    function error(mixed $data, int $code = STATUS['HTTP_INTERNAL_SERVER_ERROR'], array $headers = [])
+    function error(mixed $data, int $code = STATUS['HTTP_INTERNAL_SERVER_ERROR'], array $headers = []): int
     {
         if (\is_array($data) || \is_object($data)) {
             return json($data, $code, $headers);

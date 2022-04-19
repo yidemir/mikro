@@ -28,10 +28,8 @@ namespace View
             throw new MikroException('Please set the view path');
         }
 
-        $path = $mikro[PATH] . \DIRECTORY_SEPARATOR . $file . ($mikro[EXTENSION] ?? '.php');
-
-        if (! \is_file($path)) {
-            throw new ViewException('View file not found in: ' . $path);
+        if (($path = exists($file)) === false) {
+            throw new ViewException("View file ({$file}) not found in: {$path}");
         }
 
         \ob_start();
@@ -184,15 +182,8 @@ namespace View
     {
         global $mikro;
 
-        if (
-            isset($mikro[DELIMITER]) &&
-            \is_array($mikro[DELIMITER]) &&
-            \count($mikro[DELIMITER]) === 2
-        ) {
-            [$start, $end] = $mikro[DELIMITER];
-        } else {
-            [$start, $end] = ['@', ';'];
-        }
+        [$start, $end] = \is_array(($mikro[DELIMITER] ?? null)) && \count($mikro[DELIMITER]) === 2 ?
+            $mikro[DELIMITER] : ['@', ';'];
 
         $data = \preg_replace_callback(
             "~(?!<\?php.*){$start}=(.+?[^\\\;]){$end}(?!.*\?>)~m",
@@ -228,14 +219,14 @@ namespace View
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * method('foreach', function($body) {
+     * method('foreach', function ($body) {
      *     return '<?php foreach (' . $body . '): ?>';
      * });
      *
      * template('@foreach $items as $item;');
      * // <?php foreach ($items as $item): ?>
      *
-     * method('if', function($body) {
+     * method('if', function ($body) {
      *     return '<?php if (' . $body . '): ?>';
      * });
      *
@@ -275,6 +266,23 @@ namespace View
         foreach (\glob($mikro[CACHE_PATH] ?? $mikro[PATH] . '/cache/*.php') as $file) {
             \unlink($file);
         }
+    }
+
+    /**
+     * Check view file exists on the filesystem
+     *
+     * {@inheritDoc} **Example:**
+     * ```php
+     * View\exists('viewfile'); // false|full view path
+     * ```
+     */
+    function exists(string $file): string|bool
+    {
+        global $mikro;
+
+        $path = $mikro[PATH] . \DIRECTORY_SEPARATOR . $file . ($mikro[EXTENSION] ?? '.php');
+
+        return \is_file($path) ? $path : false;
     }
 
     /**
