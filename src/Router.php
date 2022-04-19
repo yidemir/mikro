@@ -473,7 +473,7 @@ namespace Router
      */
     function resolve_file(\SplFileInfo $file, string $base): array
     {
-        $prefix = \str_replace($base, '', \dirname($file->getRealPath()));
+        $prefix = \str_replace([$base, \DIRECTORY_SEPARATOR], ['', '/'], \dirname($file->getRealPath()));
         $method = 'GET';
         $path = $file->getBaseName('.php');
 
