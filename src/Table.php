@@ -54,8 +54,25 @@ namespace DB
     function table(string $table, string $primaryKey = 'id'): object
     {
         return new class ($table, $primaryKey) {
+            /**
+             * Builder object
+             *
+             * @var object $builder
+             */
             protected object $builder;
+
+            /**
+             * Model data
+             *
+             * @var array $model
+             */
             protected array $model = [];
+
+            /**
+             * Model attributes
+             *
+             * @var array $attributes
+             */
             protected array $attributes = [];
 
             public function __construct(
@@ -73,6 +90,14 @@ namespace DB
                 }
             }
 
+            /**
+             * Get executed statement
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->getStatement()->fetchAll();
+             * ```
+             */
             public function getStatement(): \PDOStatement
             {
                 $query = $this->builder->build();
@@ -87,6 +112,15 @@ namespace DB
                 return $statement;
             }
 
+            /**
+             * Get multiple query result
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->get();
+             * DB\table('items')->where('status=?', [$status])->get();
+             * ```
+             */
             public function get(): \Iterator
             {
                 return Helper\arr(
@@ -97,6 +131,15 @@ namespace DB
                 )->transform([$this, 'applyGetter']);
             }
 
+            /**
+             * Get singular query result
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->find($id);
+             * DB\table('items')->where('id=?', [$id])->find();
+             * ```
+             */
             public function find(?int $primaryKey = null): ?\Iterator
             {
                 if ($primaryKey) {
@@ -110,6 +153,15 @@ namespace DB
                 return $result ? $this->applyGetter(Helper\arr($result)) : null;
             }
 
+            /**
+             * Get singular query result or throw an exception
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->findOrFail($id);
+             * DB\table('items')->where('id=?', [$id])->findOrFail();
+             * ```
+             */
             public function findOrFail(?int $primaryKey = null): \Iterator
             {
                 $result = $this->find($primaryKey);
@@ -121,11 +173,28 @@ namespace DB
                 return $result;
             }
 
+            /**
+             * Execute query and get column
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->select('COUNT(*)')->column();
+             * ```
+             */
             public function column(): mixed
             {
                 return $this->getStatement()->fetchColumn();
             }
 
+            /**
+             * Get item count
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->count();
+             * DB\table('items')->where('status=5')->count();
+             * ```
+             */
             public function count(): int
             {
                 $this->builder->select('COUNT(*)');
@@ -133,9 +202,25 @@ namespace DB
                 return $this->getStatement()->fetchColumn();
             }
 
-            public function paginate(int $currentPage = 1, int $perPage = 10): \Iterator
+            /**
+             * Paginate data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $items = DB\table('items')->paginate();
+             * $items = DB\table('items')->paginate(Request\input('page', 1), 25);
+             *
+             * $pageLinks = $items->getPagination()->getLinks();
+             * $pageLinksRendered = $items->getPagination()->getLinks();
+             * ```
+             */
+            public function paginate(int|string $currentPage = 1, int|string $perPage = 10): \Iterator
             {
-                $pagination = Pagination\paginate((clone $this)->count(), $currentPage, $perPage);
+                $pagination = Pagination\paginate(
+                    (clone $this)->count(),
+                    (int) $currentPage,
+                    (int) $perPage
+                );
 
                 $this->builder->limit("{$pagination['offset']},{$pagination['limit']}");
 
@@ -147,6 +232,23 @@ namespace DB
                 )->setPagination($pagination)->transform([$this, 'applyGetter']);
             }
 
+            /**
+             * Insert filled data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $item = DB\table('items');
+             * $item->name = 'foo';
+             * $item->price = 100;
+             * $item->insert();
+             *
+             * // or
+             *
+             * DB\table('items')->fill(['name' => 'foo', 'price' => 100])->insert();
+             *
+             * DB\last_insert_id();
+             * ```
+             */
             public function insert(): ?\PDOStatement
             {
                 if ($this->applyEvent('inserting', $this->attributes) === false) {
@@ -173,6 +275,23 @@ namespace DB
                 return $statement;
             }
 
+            /**
+             * Update filled data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $item = DB\table('items');
+             * $item->price = 305;
+             * $item->where('id=:id', [':id' => $id])->update();
+             *
+             * // or
+             *
+             * DB\table('items')
+             *     ->fill(['price' => 110])
+             *     ->where('id=:id', [':id' => $id])
+             *     ->update();
+             * ```
+             */
             public function update(): ?\PDOStatement
             {
                 if ($this->applyEvent('updating', $this->attributes) === false) {
@@ -198,6 +317,14 @@ namespace DB
                 return $statement;
             }
 
+            /**
+             * Update data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * DB\table('items')->where('id=?', [$id])->delete();
+             * ```
+             */
             public function delete(): ?\PDOStatement
             {
                 if ($this->applyEvent('deleting', $this->attributes) === false) {
@@ -213,6 +340,17 @@ namespace DB
                 return $statement;
             }
 
+            /**
+             * Fill data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $item = DB\table('items')->fill(['name' => 'foo', 'price' => 305]);
+             *
+             * $item->price; // 305
+             * $item->name; // 'foo'
+             * ```
+             */
             public function fill(array $attributes): self
             {
                 foreach ($attributes as $key => $attribute) {
@@ -253,6 +391,9 @@ namespace DB
                 $this->builder = clone $this->builder;
             }
 
+            /**
+             * Apply defined model
+             */
             protected function buildModel(): void
             {
                 if (isset($this->model['table'])) {
@@ -264,6 +405,9 @@ namespace DB
                 }
             }
 
+            /**
+             * Apply defined getters
+             */
             public function applyGetter(object $item): object
             {
                 foreach ($item as $key => $value) {
@@ -290,6 +434,9 @@ namespace DB
                 return $item;
             }
 
+            /**
+             * Apply defined setters
+             */
             public function applySetter(string $key, mixed $value): mixed
             {
                 if (
@@ -302,6 +449,9 @@ namespace DB
                 return $value;
             }
 
+            /**
+             * Apply defined events
+             */
             protected function applyEvent(string $event, mixed $data): mixed
             {
                 if (
@@ -314,6 +464,9 @@ namespace DB
                 return $data;
             }
 
+            /**
+             * Get fillable attributes
+             */
             protected function getFillableAttributes(): array
             {
                 if (
