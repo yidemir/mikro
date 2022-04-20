@@ -72,4 +72,4 @@ namespace Event
      * @internal
      */
     const COLLECTION = 'Event\COLLECTION';
-};
+}

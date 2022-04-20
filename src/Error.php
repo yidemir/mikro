@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Error
 {
     use Console;
-    use Html;
     use Request;
     use Response;
     use Logger;
+    use Helper;
 
     /**
      * Sets error to exception
@@ -118,10 +118,10 @@ namespace Error
             ], 500);
         }
 
-        return Response\html('<!doctype html>' . Html\tag('html', [
-            Html\tag('head', [
-                Html\tag('title', $class),
-                Html\tag('style', '
+        return Response\html('<!doctype html>' . Helper\html('html', [
+            Helper\html('head', [
+                Helper\html('title', $class),
+                Helper\html('style', '
                     html { font: .9em/1.5 sans-serif }
                     div.exception-wrapper { width: 50%; margin: 0 auto }
                     h1.exception-title { color: gray; margin: 0 }
@@ -129,11 +129,11 @@ namespace Error
                     h3.exception-file { color: gray; margin: 0 }
                 ')
             ]),
-            Html\tag('body', Html\tag('div', [
-                Html\tag('h1', $class)->class('exception-title'),
-                Html\tag('h2', \htmlentities($exception->getMessage()))->class('exception-message'),
-                Html\tag('h3', "in {$exception->getFile()} line {$exception->getLine()}")->class('exception-file'),
-                Html\tag('pre', $exception->getTraceAsString())->class('exception-trace')
+            Helper\html('body', Helper\html('div', [
+                Helper\html('h1', $class)->class('exception-title'),
+                Helper\html('h2', \htmlentities($exception->getMessage()))->class('exception-message'),
+                Helper\html('h3', "in {$exception->getFile()} line {$exception->getLine()}")->class('exception-file'),
+                Helper\html('pre', $exception->getTraceAsString())->class('exception-trace')
             ])->class('exception-wrapper'))
         ]), 500);
     }
@@ -236,4 +236,4 @@ namespace Error
      * @internal
      */
     const LOG = 'Error\LOG';
-};
+}

@@ -97,4 +97,4 @@ namespace Crypt
      * ```
      */
     const SECRET = 'Crypt\SECRET';
-};
+}

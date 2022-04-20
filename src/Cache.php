@@ -125,4 +125,4 @@ namespace Cache
      * ```
      */
     const PATH = 'Cache\PATH';
-};
+}

@@ -1,8 +1,15 @@
 # mikro docs
 
 - [Router](Router.md)
+   - [Basics](Router.md#basics)
+   - [Parameters](Router.md#route-parameters)
+   - [Groups](Router.md#route-groups)
+   - [Middleware](Router.md#middleware)
+   - [Handling 404](Router.md#handling-404)
 - [Request](Request.md)
 - [Response](Response.md)
 - [Database](Database.md)
-- [Validator](Validator.md)
 - [View](View.md)
+    - [Basics](View.md#basics)
+    - [Blocks](View.md#blocks)
+    - [Templating](View.md#templating)

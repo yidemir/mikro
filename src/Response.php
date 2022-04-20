@@ -275,4 +275,4 @@ namespace Response
         'HTTP_NOT_EXTENDED' => 510,
         'HTTP_NETWORK_AUTHENTICATION_REQUIRED' => 511,
     ];
-};
+}

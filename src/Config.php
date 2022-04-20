@@ -43,4 +43,4 @@ namespace Config
      * @internal
      */
     const COLLECTION = 'Config\COLLECTION';
-};
+}

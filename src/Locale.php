@@ -116,4 +116,4 @@ namespace Locale
      * @internal
      */
     const DATA = 'Locale\DATA';
-};
+}

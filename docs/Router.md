@@ -12,40 +12,38 @@ Router\patch('/update', 'callback');
 Router\put('/update', 'callback');
 Router\delete('/delete', 'callback');
 Router\any('/page', 'callback');
+Router\redirect('/page', '/to');
+Router\view('/path', 'viewfile');
 ```
 
-The `callback` parameter must be contain a PHP callback. Examples:
+The `callback` parameter must be contain a PHP [callable](https://www.php.net/manual/en/language.types.callable.php).
+
+### File Based Routing
+Converts files in the path and directory specified using the `RecursiveDirectoryIterator` to the route. For example:
 
 ```php
-function foo () {}
-is_callable('foo'); // true
-Router\get('/', 'foo'); // calls foo function
-
-$foo = function () {};
-is_callable($foo); // true
-Router\get('/foo', $foo); // calls foo Closure
-
-class Foo
-{
-    public static function bar() {}
-}
-is_callable('Foo::bar'); // true
-Router\get('/bar', 'Foo::bar'); // calls bar() static method
-
-class Bar
-{
-    public function baz() {}
-    public function __invoke() {}
-}
-is_callable([new Bar(), 'baz']); // true
-is_callable(new Bar()); // true
-Router\get('/', [new Bar(), 'baz']); // calls baz() method
-Router\get('/', fn() => [new Bar(), 'baz']()); // calls baz() method (correct usage)
-Router\get('/', new Bar()); // invoke Bar class
+Router\files('/', __DIR__ . '/pages');
 ```
 
-## Router Parameters
-The Router uses regex strings to map the routes. If you don't want to use Regex strings, you can use ready-made basic patterns.
+| File Path | Router Equivalent |
+|--|--|
+| `/pages/index.php` | `Router\get('/', 'callback');` |
+| `/pages/filename.php` | `Router\get('/filename', 'callback');` |
+| `/pages/index.post.php` | `Router\post('/', 'callback');` |
+| `/pages/index.put.php` | `Router\put('/', 'callback');` |
+| `/pages/index.patch.php` | `Router\patch('/', 'callback');` |
+| `/pages/index.options.php` | `Router\options('/', 'callback');` |
+| `/pages/index.delete.php` | `Router\delete('/', 'callback');` |
+| `/pages/filename.post.php` | `Router\post('/filename', 'callback');` |
+| `/pages/with-{param}.php` | `Router\get('/with-{param}', 'callback');` |
+| `/pages/with-{param}.post.php` | `Router\post('/with-{param}', 'callback');` |
+| `/pages/items/index.php` | `Router\get('/items', 'callback');` |
+| `/pages/items/index.post.php` | `Router\post('/items', 'callback');` |
+| `/pages/items/{id}.php` | `Router\get('/items/{id}', 'callback');` |
+| `/pages/items/{id}.put.php` | `Router\put('/items/{id}', 'callback');` |
+
+## Route Parameters
+The Router uses regular expressions to map the routes. If you don't want to use Regex strings, you can use patterns.
 
 ```php
 Router\get('/items/{name}', 'ItemController::show');
@@ -62,27 +60,13 @@ Available patterns:
 {parameter:all} => .* (any string on full uri)
 ```
 
-### Using Route Parameters on Callback
+### Getting Route Parameters
 To use the resolved route parameters in the callback, you must use the `parameters()` method. For example:
 
 ```php
-// index.php
-
-Router\get('/posts/{id}', 'Controllers\PostController::show');
-```
-
-```php
-// PostController.php
-
-class PostController
-{
-    public static function show()
-    {
-        // GET /posts/5
-        $allParameters = \Router\parameters(); // ['id' => '5']
-        $id = \Router\parameters('id'); // '5'
-    }
-}
+Router\get('/posts/{slug}', function () {
+    $slug = Router\parameters('slug');
+});
 ```
 
 ## Route Groups
@@ -105,7 +89,7 @@ Router\group('/admin', function () {
 });
 ```
 
-## Middleware Support
+## Middleware
 The routes and groups includes a simple middleware support.
 
 **Usage**
@@ -125,7 +109,7 @@ function middleware(\Closure $next)
 Router\get('/', 'callback', ['middleware']);
 ```
 
-### Route Group Middleware Example
+### Route Group Middleware
 ```php
 Router\group('/admin', fn() => [
     Router\get('/dashboard', 'DashboardController::index', ['DashboardMiddleware::handle'])
@@ -137,19 +121,8 @@ It should be located at the end of the route definitions.
 
 **Usage**
 ```php
-// Router\get(...);
-// Router\post(...);
-// other route definitions
-
-Router\error('not_found_callback');
-```
-
-**Example**
-```php
 Router\error(function () {
-    return Response\json([
-        'message' => '404 not found',
-        'data' => []
-    ]);
+    return Response\html('404 page not found');
 });
 ```
+

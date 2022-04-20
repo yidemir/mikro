@@ -96,4 +96,4 @@ namespace Console
 
         return $line;
     }
-};
+}

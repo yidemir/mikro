@@ -104,4 +104,4 @@ namespace Container
      * @internal
      */
     const COLLECTION = 'Container\COLLECTION';
-};
+}

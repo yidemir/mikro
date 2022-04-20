@@ -249,4 +249,4 @@ namespace Logger
      * ```
      */
     const TYPE = 'Logger\TYPE';
-};
+}

@@ -346,4 +346,4 @@ namespace View
      * @internal
      */
     const METHODS = 'View\METHODS';
-};
+}

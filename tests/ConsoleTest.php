@@ -10,7 +10,8 @@ class ConsoleTest extends TestCase
 {
     public function testWriteMethods()
     {
+        $this->expectOutputString("foo\r\n");
+
         \Console\write('foo');
-        $this->expectOutputString("foo\n");
     }
 }

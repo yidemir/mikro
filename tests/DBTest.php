@@ -160,7 +160,7 @@ class DBTest extends TestCase
         $this->assertInstanceOf(\ArrayAccess::class, $paginatedItems);
         $this->assertInstanceOf(\Countable::class, $paginatedItems);
         $this->assertFalse($paginatedItems->isEmpty());
-        $this->assertIsString($paginatedItems->getPagination()->getLinks());
+        $this->assertIsArray($paginatedItems->getPagination()->getPageNumbers());
         $this->assertIsNotArray($paginatedItems);
         $this->assertIsArray($paginatedItems->toArray());
 

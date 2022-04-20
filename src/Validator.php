@@ -142,4 +142,4 @@ namespace Validator
     {
         return validate_all(Request\all(), $rules);
     }
-};
+}

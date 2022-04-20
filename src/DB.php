@@ -173,4 +173,4 @@ namespace DB
      * ```
      */
     const CONNECTION = 'DB\CONNECTION';
-};
+}

@@ -517,4 +517,4 @@ namespace Router
      * @internal
      */
     const PARAMETERS = 'Router\PARAMETERS';
-};
+}

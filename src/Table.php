@@ -216,13 +216,13 @@ namespace DB
              */
             public function paginate(int|string $currentPage = 1, int|string $perPage = 10): \Iterator
             {
-                $pagination = Pagination\paginate(
+                $pagination = Helper\paginate(
                     (clone $this)->count(),
                     (int) $currentPage,
                     (int) $perPage
                 );
 
-                $this->builder->limit("{$pagination['offset']},{$pagination['limit']}");
+                $this->builder->limit(\sprintf('%u, %u', $pagination->getOffset(), $pagination->getLimit()));
 
                 return Helper\arr(
                     $this->getStatement()->fetchAll(
@@ -1241,4 +1241,4 @@ namespace DB
     }
 
     const MODELS = 'DB\MODELS';
-};
+}

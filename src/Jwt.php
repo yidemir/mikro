@@ -226,4 +226,4 @@ namespace Jwt
      * ```
      */
     const SECRET = 'Jwt\SECRET';
-};
+}
