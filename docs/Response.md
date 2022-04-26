@@ -38,3 +38,22 @@ Response\redirect('/to-path');
 Response\redirect('https://to-url.com');
 Response\redirect_back();
 ```
+
+## Success Response
+```php
+Response\ok('html response');
+Response\ok(['message' => 'json respnose']);
+
+// Response\ok(data: 'mixed', code: 200, headers: []): int
+```
+
+## Error Response
+```php
+Response\error('html response'); // 500 server error
+Response\error(['message' => 'json respnose']); // 500 server error
+
+Response\error('404 page not found', Response\STATUS['HTTP_NOT_FOUND']);
+Response\error(['message' => '404 not found'], 404);
+
+// Response\error(data: 'mixed', code: 500, headers: []): int
+```

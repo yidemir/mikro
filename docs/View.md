@@ -10,12 +10,12 @@ View\render('view-file', ['data' => 'value']); // returns string
 **Set view block:**
 ```php
 View\start('content');
-<p>Content</p>
+echo '<p>Content</p>';
 View\stop();
 
 // or
 
-View\set('content', 'String Content');
+View\set('content', '<p>Content</p>');
 ```
 
 **Call view block:**
@@ -56,4 +56,36 @@ View\render('index', ['message' => 'Hello world!']);
 <?php View\stop() ?>
 
 <?= View\render('layout') ?>
+```
+
+## View Templates
+
+```php
+@echo 'simple php block';
+@='print secure string';
+```
+
+rendered to:
+
+```php
+<?php echo 'simple php block' ?>
+<?php echo \View\e('print secure string') ?>
+```
+
+another example:
+
+```php
+@$data = [1, 2, 3, 4, 5];
+@foreach ($data as $number):;
+    Number is: @=$number;<br>
+@endforeach;
+```
+
+rendered to:
+
+```php
+<?php $data = [1, 2, 3, 4, 5] ?>
+<?php foreach ($data as $number): ?>
+    Number is: <?php echo \View\e($number) ?><br>
+<?php endforeach ?>
 ```
