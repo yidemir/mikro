@@ -24,7 +24,8 @@
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-openssl": "*",
-        "ext-pdo": "*"
+        "ext-pdo": "*",
+        "ext-readline": "*"
     },
     "require-dev": {
         "phpstan/phpstan": "^1.2",
