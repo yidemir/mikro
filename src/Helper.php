@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Helper
 {
-    use Html;
     use Request;
-    use Pagination;
     use Mikro\Exceptions\{ValidatorException, MikroException, CurlException};
 
     /**
@@ -1669,7 +1667,7 @@ namespace Helper
                     throw new MikroException('Start the PHP Session first');
                 }
 
-                $messages = $_SESSION['__flash_' . $type] ?? null;
+                $messages = $_SESSION['__flash_' . $type] ?? [];
                 unset($_SESSION['__flash_' . $type]);
 
                 return $messages;

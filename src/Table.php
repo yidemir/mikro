@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace DB
 {
     use Helper;
-    use Pagination;
     use Mikro\Exceptions\{MikroException, DataNotFoundException};
 
     /**

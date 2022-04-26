@@ -51,9 +51,9 @@ namespace View
      * echo View\e('<script>');
      * ```
      */
-    function e(string $string): string
+    function e(mixed $data): string
     {
-        return \htmlentities((string) $string, \ENT_QUOTES);
+        return \htmlentities((string) $data, \ENT_QUOTES);
     }
 
     /**

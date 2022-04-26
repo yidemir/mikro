@@ -244,4 +244,196 @@ class HelperTest extends TestCase
         $this->assertNull($class->foo);
         $this->assertNull($class['foo']);
     }
+
+    public function testCsrfInvalidRandomValue()
+    {
+        $this->assertTrue(is_string(\Helper\csrf()->generateRandom(32)));
+    }
+
+    public function testSessionNotActiveException()
+    {
+        $this->expectException(\Exception::class);
+
+        \Helper\csrf()->get();
+    }
+
+    public function testGetAndValidateCsrfToken()
+    {
+        session_start();
+
+        $this->assertTrue(\Helper\csrf()->validate(\Helper\csrf()->get()));
+        $this->assertTrue(is_string(\Helper\csrf()->field()));
+        $this->assertTrue(strpos(\Helper\csrf()->field(), 'input') !== false);
+
+        session_destroy();
+    }
+
+    public function testCurlGetMethod()
+    {
+        $curl = \Helper\curl('https://jsonplaceholder.typicode.com/posts', 'GET')->exec();
+
+        $this->assertTrue(is_string((string) $curl));
+    }
+
+    public function testCurlPostMethod()
+    {
+        $curl = \Helper\curl('https://jsonplaceholder.typicode.com/posts')
+            ->method('post')
+            ->asForm()
+            ->data([
+                'title' => 'foo',
+                'body' => 'bar',
+                'userId' => 1
+            ])
+            ->exec();
+
+        $this->assertArrayHasKey('title', (array) $curl->json());
+        $this->assertSame($curl->json()['title'] ?? null, 'foo');
+    }
+
+    public function testCurlPutMethod()
+    {
+        $curl = \Helper\curl('https://jsonplaceholder.typicode.com/posts/1')
+            ->method('put')
+            ->asForm()
+            ->data([
+                'id' => 1,
+                'title' => 'foo',
+                'body' => 'bar',
+                'userId' => 1
+            ])
+            ->exec();
+
+        $this->assertArrayHasKey('title', (array) $curl->json());
+        $this->assertSame($curl->json()['title'] ?? null, 'foo');
+    }
+
+    public function testCurlJsonMethod()
+    {
+        $response = \Helper\curl('https://jsonplaceholder.typicode.com/posts')->json();
+
+        $this->assertCount(100, (array) $response);
+    }
+
+    public function testCurlInfoMethod()
+    {
+        $curl = \Helper\curl($url = 'https://jsonplaceholder.typicode.com/posts')->exec();
+
+        $this->assertTrue(is_array($curl->getInfo()));
+        $this->assertArrayHasKey('url', $curl->getInfo());
+        $this->assertSame($url, $curl->getInfo('url'));
+        $this->assertSame(200, $curl->getInfo('http_code'));
+    }
+
+    public function testCurlRequestIsOk()
+    {
+        $curl = \Helper\curl('https://jsonplaceholder.typicode.com/posts')->exec();
+
+        $this->assertTrue($curl->isOk());
+        $this->assertFalse($curl->isRedirect());
+        $this->assertFalse($curl->isFailed());
+        $this->assertFalse($curl->isServerError());
+        $this->assertFalse($curl->isClientError());
+    }
+
+    public function testCurlRequestIsFailed()
+    {
+        $curl = \Helper\curl('https://jsonplaceholder.typicode.com/posts~')->exec();
+
+        $this->assertTrue($curl->isFailed());
+        $this->assertTrue($curl->isClientError());
+        $this->assertFalse($curl->isServerError());
+        $this->assertFalse($curl->isRedirect());
+        $this->assertFalse($curl->isOk());
+    }
+
+    public function testHtmlObject()
+    {
+        $div = \Helper\html('div');
+        $this->assertIsObject($div);
+        $this->assertInstanceOf(\Stringable::class, $div);
+    }
+
+    public function testHtmlString()
+    {
+        $div = \Helper\html('div');
+        $this->assertSame((string) $div, '<div></div>');
+
+        $div = \Helper\html('div', 'foo');
+        $this->assertSame((string) $div, '<div>foo</div>');
+
+        $div = \Helper\html('div', 'foo', ['class' => 'foo']);
+        $this->assertSame((string) $div, '<div class="foo">foo</div>');
+
+        $div->id('bar');
+        $this->assertSame((string) $div, '<div class="foo" id="bar">foo</div>');
+
+        $div->style(['background-color' => 'red']);
+        $this->assertSame((string) $div, '<div class="foo" id="bar" style="background-color:red;">foo</div>');
+
+        $div = \Helper\html('br');
+        $this->assertSame((string) $div, '<br>');
+
+        $div = \Helper\html('div', attributes: ['PascalCase' => 'false'])->snakeCase('true')->ABC('def');
+        $this->assertSame((string) $div, '<div PascalCase="false" snake-case="true" a-b-c="def"></div>');
+    }
+
+    public function testHelperPaginateMethod()
+    {
+        $paginate = \Helper\paginate(100);
+        $data = $paginate->getData();
+
+        $this->assertArrayHasKey('offset', $data);
+        $this->assertArrayHasKey('limit', $data);
+        $this->assertArrayHasKey('current_page', $data);
+        $this->assertArrayHasKey('next_page', $data);
+        $this->assertArrayHasKey('previous_page', $data);
+        $this->assertArrayHasKey('total_page', $data);
+
+        $this->assertSame($data['offset'], 0);
+        $this->assertSame($data['limit'], 10);
+        $this->assertSame($data['current_page'], 1);
+        $this->assertSame($data['next_page'], 2);
+        $this->assertSame($data['previous_page'], 1);
+        $this->assertSame($data['total_page'], 10);
+
+        $this->assertSame($paginate->getOffset(), 0);
+        $this->assertSame($paginate->getLimit(), 10);
+        $this->assertSame($paginate->getCurrentPage(), 1);
+        $this->assertSame($paginate->getNextPage(), 2);
+        $this->assertSame($paginate->getPreviousPage(), 1);
+        $this->assertSame($paginate->getTotalPage(), 10);
+
+        $paginate = \Helper\paginate(100, 7, 10);
+
+        $this->assertSame($paginate->getOffset(), 60);
+        $this->assertSame($paginate->getLimit(), 10);
+        $this->assertSame($paginate->getCurrentPage(), 7);
+        $this->assertSame($paginate->getNextPage(), 8);
+        $this->assertSame($paginate->getPreviousPage(), 6);
+        $this->assertSame($paginate->getTotalPage(), 10);
+    }
+
+    public function testHelperFlashMethod()
+    {
+        session_start();
+        \Helper\flash()->add('error1');
+        \Helper\flash()->add('error2');
+        $this->assertTrue(in_array('error1', \Helper\flash()->get()));
+        \Helper\flash('error3');
+        $this->assertTrue(in_array('error3', \Helper\flash()->get()));
+        \Helper\flash('default1');
+        \Helper\flash('default2');
+        \Helper\flash()->add('warning1', 'warning');
+        \Helper\flash()->add('warning2', 'warning');
+        $default = \Helper\flash()->get();
+        $warning = \Helper\flash()->get('warning');
+        $this->assertTrue(in_array('default1', $default));
+        $this->assertTrue(in_array('default2', $default));
+        $this->assertTrue(in_array('warning1', $warning));
+        $this->assertTrue(in_array('warning2', $warning));
+        $this->assertArrayNotHasKey(0, \Helper\flash()->get());
+        $this->assertArrayNotHasKey(0, \Helper\flash()->get('warning'));
+        session_destroy();
+    }
 }
