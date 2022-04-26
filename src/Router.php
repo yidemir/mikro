@@ -69,7 +69,7 @@ namespace Router
                 };
             }, $callback);
 
-            $result();
+            \call_user_func($result);
         }
     }
 
@@ -297,14 +297,14 @@ namespace Router
                         throw new ValidatorException("Error callback `$key` is not valid");
                     }
 
-                    $_callback();
+                    \call_user_func($_callback);
 
                     return;
                 }
             }
 
             if (isset($callback[0]) && \is_callable($callback[0])) {
-                $callback[0]();
+                \call_user_func($callback[0]);
             }
         }
     }
@@ -346,7 +346,7 @@ namespace Router
         $mikro[PREFIX] .= $prefix;
         $mikro[MIDDLEWARE] = \array_merge($mikro[MIDDLEWARE], $middleware);
 
-        $callback();
+        \call_user_func($callback);
 
         if (($pos = \strrpos($mikro[PREFIX], $prefix)) !== false) {
             $mikro[PREFIX] = \substr_replace($mikro[PREFIX], '', $pos, \strlen($prefix));

@@ -65,7 +65,7 @@ namespace Error
             }
 
             if ($callback) {
-                $callback = $callback($exception);
+                $callback = \call_user_func_array($callback, [$exception]);
 
                 if ($callback) {
                     return $callback;

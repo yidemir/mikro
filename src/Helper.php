@@ -146,7 +146,7 @@ namespace Helper
             public function each(callable $callback): self
             {
                 foreach ($this->arr as $key => $value) {
-                    $callback($value, $key);
+                    \call_user_func_array($callback, [$value, $key]);
                 }
 
                 return $this;
@@ -687,7 +687,7 @@ namespace Helper
             public function transform(callable $callback): self
             {
                 foreach ($this->arr as $key => $item) {
-                    $this->arr[$key] = $callback($item, $key);
+                    $this->arr[$key] = \call_user_func_array($callback, [$item, $key]);
                 }
 
                 return $this;
@@ -732,7 +732,7 @@ namespace Helper
             public function when(bool $boolean, callable $callback): self
             {
                 if ($boolean) {
-                    $callback($this);
+                    \call_user_func_array($callback, [$this]);
                 }
 
                 return $this;
@@ -1354,7 +1354,7 @@ namespace Helper
             public function when(bool $when, callable $callback): self
             {
                 if ($when) {
-                    $callback($this);
+                    \call_user_func_array($callback, [$this]);
                 }
 
                 return $this;

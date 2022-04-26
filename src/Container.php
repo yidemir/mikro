@@ -76,7 +76,7 @@ namespace Container
             static $object;
 
             if ($object === null) {
-                $object = $callback();
+                $object = \call_user_func($callback);
             }
 
             return $object;

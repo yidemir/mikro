@@ -91,7 +91,7 @@ namespace Console
         $line = \readline();
 
         if ($callback) {
-            $callback($line);
+            \call_user_func_array($callback, [$line]);
         }
 
         return $line;

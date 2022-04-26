@@ -204,7 +204,10 @@ namespace View
                     if (\str_starts_with($data, $method . ' ') || $method === $data) {
                         $data = \preg_replace('/' . $method . ' /', '', $data, 1);
 
-                        return $callback(\str_replace('\\' . $end, $end, $data));
+                        return \call_user_func_array(
+                            $callback,
+                            [\str_replace('\\' . $end, $end, $data)]
+                        );
                     }
                 }
 
