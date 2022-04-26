@@ -409,7 +409,7 @@ namespace Router
         }
 
         $call = fn(string $method) =>
-            (is_callable("{$class}::{$method}") ?
+            (\is_callable("{$class}::{$method}") ?
                 "{$class}::{$method}" : fn() => \call_user_func([new $class(),  $method]));
 
         $methods = [
@@ -459,7 +459,7 @@ namespace Router
 
             map(
                 [$route['method']],
-                '/' . trim($routePath . $route['path'], '/'),
+                '/' . \trim($routePath . $route['path'], '/'),
                 fn() => require($item->getPathName()),
                 $middleware
             );
