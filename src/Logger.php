@@ -81,8 +81,9 @@ namespace Logger
     function format(string $level, string $message, array|object|null $context = null): string
     {
         $context = $context ? \json_encode($context) : '';
+        $message = '[' . \date('Y-m-d H:i:s') . '] ' . \mb_strtoupper($level) . ': ' . $message;
 
-        return '[' . \date('Y-m-d H:i:s') . '] ' . \mb_strtoupper($level) . ': ' . $message . ' ' . $context . \PHP_EOL;
+        return \trim($message . ' ' . $context) . \PHP_EOL;
     }
 
     /**
