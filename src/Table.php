@@ -120,14 +120,15 @@ namespace DB
              * DB\table('items')->where('status=?', [$status])->get();
              * ```
              */
-            public function get(): \Iterator
+            public function get(): array
             {
-                return Helper\arr(
-                    $this->getStatement()->fetchAll(
-                        \PDO::FETCH_PROPS_LATE | \PDO::FETCH_CLASS,
-                        Helper\arr()::class
-                    )
-                )->transform([$this, 'applyGetter']);
+                $result = $this->getStatement()->fetchAll(\PDO::FETCH_OBJ);
+
+                foreach ($result as $key => $item) {
+                    $result[$key] = $this->applyGetter($item);
+                }
+
+                return $result;
             }
 
             /**
@@ -147,9 +148,9 @@ namespace DB
                         ->bindInt(':' . $this->primaryKey, $primaryKey);
                 }
 
-                $result = $this->getStatement()->fetch(\PDO::FETCH_NAMED);
+                $result = $this->getStatement()->fetch(\PDO::FETCH_OBJ);
 
-                return $result ? $this->applyGetter(Helper\arr($result)) : null;
+                return $result ? $this->applyGetter($result) : null;
             }
 
             /**
@@ -169,7 +170,7 @@ namespace DB
                     throw new DataNotFoundException();
                 }
 
-                return $this->applyGetter(Helper\arr((array) $result));
+                return $this->applyGetter($result);
             }
 
             /**
@@ -213,7 +214,7 @@ namespace DB
              * $pageLinksRendered = $items->getPagination()->getLinks();
              * ```
              */
-            public function paginate(int|string $currentPage = 1, int|string $perPage = 10): \Iterator
+            public function paginate(int|string $currentPage = 1, int|string $perPage = 10): object
             {
                 $pagination = Helper\paginate(
                     (clone $this)->count(),
@@ -223,12 +224,15 @@ namespace DB
 
                 $this->builder->limit(\sprintf('%u, %u', $pagination->getOffset(), $pagination->getLimit()));
 
-                return Helper\arr(
-                    $this->getStatement()->fetchAll(
-                        \PDO::FETCH_PROPS_LATE | \PDO::FETCH_CLASS,
-                        Helper\arr()::class
-                    )
-                )->setPagination($pagination)->transform([$this, 'applyGetter']);
+                $result = $this->getStatement()->fetchAll(\PDO::FETCH_OBJ);
+
+                foreach ($result as $key => $item) {
+                    $result[$key] = $this->applyGetter($item);
+                }
+
+                $pagination->setItems($result);
+
+                return $pagination;
             }
 
             /**
@@ -298,12 +302,13 @@ namespace DB
                 }
 
                 $data = $this->getFillableAttributes();
+                $update = [];
 
-                $this->builder->update($this->table)->setArray(
-                    Helper\arr($data)
-                        ->mapWithKeys(fn($value, $key) => [$key => ':' . $key])
-                        ->all()
-                );
+                foreach ($data as $key => $value) {
+                    $update[$key] = ':' . $key;
+                }
+
+                $this->builder->update($this->table)->setArray($update);
 
                 foreach ($data as $key => $value) {
                     $this->builder->bind(':' . $key, $value);

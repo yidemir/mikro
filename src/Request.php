@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Request
 {
-    use Helper;
-
     /**
      * Gets request method
      *
@@ -208,7 +206,7 @@ namespace Request
      */
     function only(array $keys): array
     {
-        return Helper\arr(all())->only($keys)->all();
+        return \array_intersect_key(all(), \array_flip($keys));
     }
 
     /**
@@ -221,6 +219,6 @@ namespace Request
      */
     function except(array $keys): array
     {
-        return Helper\arr(all())->except($keys)->all();
+        return \array_diff_key(all(), \array_flip($keys));
     }
 }

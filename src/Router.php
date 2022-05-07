@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Router
 {
-    use Helper;
     use Request;
     use Response;
     use Mikro\Exceptions\ValidatorException;

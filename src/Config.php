@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Config
 {
-    use Helper;
-
     /**
      * Sets the configuration value
      *
@@ -18,7 +16,13 @@ namespace Config
     {
         global $mikro;
 
-        $mikro[COLLECTION] = Helper\arr($mikro[COLLECTION] ?? [])->put($key, $value)->all();
+        $replace = \array_reduce(
+            \array_reverse(\explode('.', $key)),
+            fn($value, $key) => [$key => $value],
+            $value
+        );
+
+        $mikro[COLLECTION] = \array_replace_recursive($mikro[COLLECTION] ?? [], $replace);
     }
 
     /**
@@ -34,7 +38,15 @@ namespace Config
     {
         global $mikro;
 
-        return Helper\arr($mikro[COLLECTION] ?? [])->get($key, $default);
+        if (\array_key_exists($key, $mikro[COLLECTION] ?? [])) {
+            return $mikro[COLLECTION][$key];
+        }
+
+        return \array_reduce(
+            \explode('.', $key),
+            fn($config, $key) => $config[$key] ?? $default,
+            $mikro[COLLECTION] ?? []
+        ) ?? $default;
     }
 
     /**

@@ -90,14 +90,13 @@ class DBTest extends TestCase
 
         $find = \DB\table('items')->find((int) $id);
 
-        $this->assertIsIterable($find);
-        $this->assertIsArray($find->toArray());
-        $this->assertArrayHasKey('id', $find->toArray());
-        $this->assertArrayHasKey('name', $find->toArray());
-        $this->assertArrayHasKey('value', $find->toArray());
-        $this->assertEquals($find['id'], $id);
-        $this->assertEquals($find['name'], 'bar');
-        $this->assertEquals($find['value'], '100');
+        $this->assertIsObject($find);
+        $this->assertArrayHasKey('id', (array) $find);
+        $this->assertArrayHasKey('name', (array) $find);
+        $this->assertArrayHasKey('value', (array) $find);
+        $this->assertEquals($find->id, $id);
+        $this->assertEquals($find->name, 'bar');
+        $this->assertEquals($find->value, '100');
     }
 
     public function testUpdateRowFromTable()
@@ -156,13 +155,11 @@ class DBTest extends TestCase
     {
         $paginatedItems = \DB\table('items')->paginate();
         $this->assertEquals(count($paginatedItems), 10);
-        $this->assertInstanceOf(\Iterator::class, $paginatedItems);
-        $this->assertInstanceOf(\ArrayAccess::class, $paginatedItems);
+        $this->assertInstanceOf(\IteratorAggregate::class, $paginatedItems);
         $this->assertInstanceOf(\Countable::class, $paginatedItems);
-        $this->assertFalse($paginatedItems->isEmpty());
-        $this->assertIsArray($paginatedItems->getPagination()->getPageNumbers());
+        $this->assertIsArray($paginatedItems->getPageNumbers());
         $this->assertIsNotArray($paginatedItems);
-        $this->assertIsArray($paginatedItems->toArray());
+        $this->assertIsArray($paginatedItems->getItems());
 
         $paginatedItems = \DB\table('items')->paginate(perPage: 3);
         $this->assertEquals(count($paginatedItems), 3);
