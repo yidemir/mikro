@@ -139,7 +139,7 @@ namespace DB
              * DB\table('items')->where('id=?', [$id])->find();
              * ```
              */
-            public function find(?int $primaryKey = null): ?\Iterator
+            public function find(?int $primaryKey = null): ?object
             {
                 if ($primaryKey) {
                     $this->builder
@@ -161,7 +161,7 @@ namespace DB
              * DB\table('items')->where('id=?', [$id])->findOrFail();
              * ```
              */
-            public function findOrFail(?int $primaryKey = null): \Iterator
+            public function findOrFail(?int $primaryKey = null): object
             {
                 $result = $this->find($primaryKey);
 
@@ -169,7 +169,7 @@ namespace DB
                     throw new DataNotFoundException();
                 }
 
-                return $result;
+                return $this->applyGetter(Helper\arr((array) $result));
             }
 
             /**
@@ -250,7 +250,7 @@ namespace DB
              */
             public function insert(): ?\PDOStatement
             {
-                if ($this->applyEvent('inserting', $this->attributes) === false) {
+                if ($this->applyEvent('inserting', $this) === false) {
                     return null;
                 }
 
@@ -269,7 +269,7 @@ namespace DB
                 $statement = $this->getStatement();
 
                 $this->attributes[$this->primaryKey] = last_insert_id();
-                $this->applyEvent('inserted', $this->attributes);
+                $this->applyEvent('inserted', $this);
 
                 return $statement;
             }
@@ -293,7 +293,7 @@ namespace DB
              */
             public function update(): ?\PDOStatement
             {
-                if ($this->applyEvent('updating', $this->attributes) === false) {
+                if ($this->applyEvent('updating', $this) === false) {
                     return null;
                 }
 
@@ -311,7 +311,7 @@ namespace DB
 
                 $statement = $this->getStatement();
 
-                $this->applyEvent('updated', $this->attributes);
+                $this->applyEvent('updated', $this);
 
                 return $statement;
             }
@@ -326,7 +326,7 @@ namespace DB
              */
             public function delete(): ?\PDOStatement
             {
-                if ($this->applyEvent('deleting', $this->attributes) === false) {
+                if ($this->applyEvent('deleting', $this) === false) {
                     return null;
                 }
 
@@ -334,7 +334,7 @@ namespace DB
 
                 $statement = $this->getStatement();
 
-                $this->applyEvent('deleted', $this->attributes);
+                $this->applyEvent('deleted', $this);
 
                 return $statement;
             }
