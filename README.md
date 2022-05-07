@@ -14,17 +14,12 @@ Available packages:
 * **Console** - Executes a callback according to the parameter from the command line.
 * **Container** - A simple service container.
 * **Crypt** - It encrypts and decrypts strings with OpenSSL.
-* **Csrf** - It helps you to prevent CSRF deficit for forms.
-* **Curl** - It allows you to use the Curl library in a simple way.
 * **DB** - It simplifies your CRUD operations with a PDO instance.
 * **Event** - A simple event listener and emitter.
-* **Flash** - It is a structure that works with PHP session, allows you to move errors and messages between requests.
 * **Helper** - String and array helpers and more
-* **Html** - It provides a class that allows you to generate HTML code.
 * **Jwt** - A simple JSON web token authentication structure.
 * **Locale** - Multi-language/localization structure
 * **Logger** - Basic logging
-* **Pagination** - Paginate any array data with total count
 * **Request** - An easy way to access PHP global request variables.
 * **Response** - Sends data/response to the client.
 * **Router** - An ultra-simple router with grouping and middleware support.
