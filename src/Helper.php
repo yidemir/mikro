@@ -2261,46 +2261,119 @@ namespace Helper
                 ];
             }
 
+            /**
+             * Get pagination data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getData();
+             * ```
+             */
             public function getData(): array
             {
                 return $this->data;
             }
 
+            /**
+             * Get current page
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getPage();
+             * ```
+             */
             public function getPage(): int
             {
                 return $this->data['page'];
             }
 
+            /**
+             * Get pagination limit
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getLimit();
+             * ```
+             */
             public function getLimit(): int
             {
                 return $this->data['limit'];
             }
 
+            /**
+             * Get pagination offset
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getOffset();
+             * ```
+             */
             public function getOffset(): int
             {
                 return $this->data['offset'];
             }
 
+            /**
+             * Get pagination total page
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $totalPage = Helper\paginate(100, Request\get('currentPage'))->getTotalPage();
+             * $pages = range(1, $totalPage);
+             * ```
+             */
             public function getTotalPage(): int
             {
                 return $this->data['total_page'];
             }
 
+            /**
+             * Get pagination current page
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getCurrentPage();
+             * ```
+             */
             public function getCurrentPage(): int
             {
                 return $this->data['current_page'];
             }
 
+            /**
+             * Get pagination next page
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getNextPage();
+             * ```
+             */
             public function getNextPage(): int
             {
                 return $this->data['next_page'];
             }
 
+            /**
+             * Get pagination previous page
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getPreviousPage();
+             * ```
+             */
             public function getPreviousPage(): int
             {
                 return $this->data['previous_page'];
             }
 
+            /**
+             * Get pagination pages data as array
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * Helper\paginate(100, Request\get('currentPage'))->getPages();
+             * ```
+             */
             public function getPageNumbers(): array
             {
                 return \range(1, $this->getTotalPage());
