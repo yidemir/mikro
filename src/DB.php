@@ -153,7 +153,7 @@ namespace DB
                 $string = "({$columnsString}) VALUES ({$valuesString})";
                 break;
             case 'update':
-                foreach ($data as $key => $value) {
+                foreach (\array_keys($data) as $key) {
                     $string .= "{$key}=?,";
                 }
 

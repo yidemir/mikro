@@ -46,7 +46,7 @@ namespace Console
      */
     function write(string $str): int
     {
-        return print($str . \PHP_EOL);
+        return print($str . "\n");
     }
 
     /**
