@@ -24,15 +24,28 @@ namespace Console
      * // php console.php say:hello Foo // prints "Hello Foo!"
      * ```
      */
-    function command(string $name, callable $callback): void
+    function command(string $name, callable $callback): mixed
     {
         global $argv;
 
         if (\PHP_SAPI === 'cli' && isset($argv[1]) && $argv[1] === $name) {
-            \call_user_func_array(
-                $callback,
-                [\array_values(\array_slice($argv, 2))]
-            );
+            $args = \array_values(\array_slice($argv, 2));
+
+            foreach ($args as $arg) {
+                if (\str_starts_with($arg, '-')) {
+                    $pieces = \explode('=', \preg_replace('/^-{1,2}(\w+)/', '$1', $arg));
+
+                    if (\str_starts_with($arg, '--')) {
+                        $args[$pieces[0]]  = $pieces[1] ?? false;
+                    } else {
+                        foreach (\str_split($pieces[0]) as $letter) {
+                            $args[$letter] = false;
+                        }
+                    }
+                }
+            }
+
+            return \call_user_func_array($callback, [$args]);
         }
     }
 
