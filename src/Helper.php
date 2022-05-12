@@ -802,7 +802,11 @@ namespace Helper
      */
     function paginate(int|string $total, int|string $page = 1, int|string $limit = 10): object
     {
-        return new class (\intval($total), \intval($page), \intval($limit)) implements \IteratorAggregate, \Countable {
+        return new class (
+            \intval($total),
+            \intval($page),
+            \intval($limit)
+        ) implements \ArrayAccess, \IteratorAggregate, \Countable {
             public array $data;
             public array $items = [];
 
@@ -977,6 +981,30 @@ namespace Helper
             public function count(): int
             {
                 return \count($this->getItems());
+            }
+
+            public function offsetExists(mixed $offset): bool
+            {
+                return isset($this->items[$offset]);
+            }
+
+            public function offsetGet(mixed $offset): mixed
+            {
+                return $this->items[$offset];
+            }
+
+            public function offsetSet(mixed $offset, mixed $value): void
+            {
+                if ($offset === null) {
+                    $this->items[] = $value;
+                } else {
+                    $this->items[$offset] = $value;
+                }
+            }
+
+            public function offsetUnset(mixed $offset): void
+            {
+                unset($this->items[$offset]);
             }
         };
     }
