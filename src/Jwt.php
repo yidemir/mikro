@@ -187,7 +187,7 @@ namespace Jwt
             decode($token);
 
             return true;
-        } catch (JwtException $e) {
+        } catch (JwtException) {
             return false;
         }
     }
