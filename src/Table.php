@@ -106,6 +106,23 @@ namespace DB
                     $statement->bindParam(...$parameter);
                 }
 
+                if ($class = $this->model['class'] ?? null) {
+                    $params = match (true) {
+                        \is_string($class) && \class_exists($class) => [
+                            \PDO::FETCH_CLASS,
+                            $class,
+                            \method_exists($class, '__construct') ? [$this] : []
+                        ],
+                        \is_object($class) => [\PDO::FETCH_CLASS, $class::class],
+                        default => [\PDO::FETCH_OBJ],
+                    };
+
+                    $statement->setFetchMode(...$params);
+                } else {
+                    $statement->setFetchMode(\PDO::FETCH_OBJ);
+                }
+
+
                 $statement->execute();
 
                 return $statement;
@@ -122,7 +139,7 @@ namespace DB
              */
             public function get(): array
             {
-                $result = $this->getStatement()->fetchAll(\PDO::FETCH_OBJ);
+                $result = $this->getStatement()->fetchAll();
 
                 foreach ($result as $key => $item) {
                     $result[$key] = $this->applyGetter($item);
@@ -140,17 +157,17 @@ namespace DB
              * DB\table('items')->where('id=?', [$id])->find();
              * ```
              */
-            public function find(?int $primaryKey = null): ?object
+            public function find(int|string|null $primaryKey = null, ?string $column = null): ?object
             {
-                if ($primaryKey) {
-                    $this->builder
-                        ->where($this->primaryKey . '=:' . $this->primaryKey)
-                        ->bindInt(':' . $this->primaryKey, $primaryKey);
+                if ($primaryKey !== null) {
+                    $this->id($primaryKey, $column);
                 }
 
-                $result = $this->getStatement()->fetch(\PDO::FETCH_OBJ);
+                $result = $this->getStatement()->fetch();
+                $this->attributes = (array) $result;
+                $result = $result ? $this->applyGetter($result) : null;
 
-                return $result ? $this->applyGetter($result) : null;
+                return $result;
             }
 
             /**
@@ -216,15 +233,13 @@ namespace DB
              */
             public function paginate(int|string $currentPage = 1, int|string $perPage = 10): object
             {
-                $pagination = Helper\paginate(
-                    (clone $this)->count(),
-                    (int) $currentPage,
-                    (int) $perPage
+                $pagination = Helper\paginate((clone $this)->count(), $currentPage, $perPage);
+
+                $this->builder->limit(
+                    \sprintf('%u, %u', $pagination->getOffset(), $pagination->getLimit())
                 );
 
-                $this->builder->limit(\sprintf('%u, %u', $pagination->getOffset(), $pagination->getLimit()));
-
-                $result = $this->getStatement()->fetchAll(\PDO::FETCH_OBJ);
+                $result = $this->getStatement()->fetchAll();
 
                 foreach ($result as $key => $item) {
                     $result[$key] = $this->applyGetter($item);
@@ -254,7 +269,7 @@ namespace DB
              */
             public function insert(): ?\PDOStatement
             {
-                if ($this->applyEvent('inserting', $this) === false) {
+                if ($this->applyEvent('inserting') === false) {
                     return null;
                 }
 
@@ -273,7 +288,7 @@ namespace DB
                 $statement = $this->getStatement();
 
                 $this->attributes[$this->primaryKey] = last_insert_id();
-                $this->applyEvent('inserted', $this);
+                $this->applyEvent('inserted');
 
                 return $statement;
             }
@@ -297,7 +312,7 @@ namespace DB
              */
             public function update(): ?\PDOStatement
             {
-                if ($this->applyEvent('updating', $this) === false) {
+                if ($this->applyEvent('updating') === false) {
                     return null;
                 }
 
@@ -316,7 +331,7 @@ namespace DB
 
                 $statement = $this->getStatement();
 
-                $this->applyEvent('updated', $this);
+                $this->applyEvent('updated');
 
                 return $statement;
             }
@@ -331,7 +346,7 @@ namespace DB
              */
             public function delete(): ?\PDOStatement
             {
-                if ($this->applyEvent('deleting', $this) === false) {
+                if ($this->applyEvent('deleting') === false) {
                     return null;
                 }
 
@@ -339,7 +354,7 @@ namespace DB
 
                 $statement = $this->getStatement();
 
-                $this->applyEvent('deleted', $this);
+                $this->applyEvent('deleted');
 
                 return $statement;
             }
@@ -366,6 +381,46 @@ namespace DB
                 return $this;
             }
 
+            /**
+             * Fill and insert data
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $item = DB\table('items')->create(['name' => 'foo', 'price' => 100]);
+             * ```
+             */
+            public function create(array $data): ?\PDOStatement
+            {
+                return $this->fill($data)->insert();
+            }
+
+            /**
+             * Where primary key
+             *
+             * {@inheritDoc} **Example:**
+             * ```php
+             * $item = DB\table('items')->id(5)->update($item);
+             * ```
+             */
+            public function id(int|string|array $id, ?string $column = null): self
+            {
+                $column ??= $this->primaryKey;
+
+                if (\is_array($id)) {
+                    $keys = \array_map(fn($id) => "{$column}{$id}", \array_keys($id));
+                    $in = \trim(\implode(', ', \array_map(fn($item) => ":{$item}", $keys)), ', ');
+
+                    $this->builder->where(
+                        "{$column} IN ({$in})",
+                        \array_combine($keys, \array_values($id))
+                    );
+                } else {
+                    $this->builder->where("{$column}=:{$column}", [":{$column}" => $id]);
+                }
+
+                return $this;
+            }
+
             public function __call(string $method, array $args): mixed
             {
                 $builderMethods = [
@@ -383,7 +438,7 @@ namespace DB
                     return $this;
                 }
 
-                if (isset($this->model[$method]) && $this->model[$method] instanceof \Closure) {
+                if (($this->model[$method] ?? null) instanceof \Closure) {
                     return $this->model[$method]->call($this, ...$args);
                 }
 
@@ -412,25 +467,28 @@ namespace DB
             /**
              * Apply defined getters
              */
-            public function applyGetter(object $item): object
+            protected function applyGetter(object $item): object
             {
                 foreach ($item as $key => $value) {
-                    if (
-                        isset($this->model['get_' . $key]) &&
-                        $this->model['get_' . $key] instanceof \Closure
-                    ) {
-                        $item[$key] = $this->model['get_' . $key]->call($this, $value);
+                    if (($this->model['get_' . $key] ?? null) instanceof \Closure) {
+                        $item->{$key} = $this->model['get_' . $key]->call($this, $value);
                     }
                 }
 
-                if (
-                    isset($this->model['hidden']) &&
-                    \is_array($this->model['hidden']) &&
-                    ! empty($this->model['hidden'])
-                ) {
+                if (\is_array(($this->model['appends'] ?? null))) {
+                    foreach ($this->model['appends'] as $append) {
+                        if (($this->model['get_' . $append] ?? null) instanceof \Closure) {
+                            $item->{$append} = $this->model['get_' . $append]->call($this);
+                        } else {
+                            throw new \ErrorException('Undefined or invalid getter: ' . $append);
+                        }
+                    }
+                }
+
+                if (\is_array(($this->model['hidden']) ?? null)) {
                     foreach ($this->model['hidden'] as $hidden) {
-                        if ($item->has($hidden)) {
-                            $item->forget($hidden);
+                        if (\property_exists($item, $hidden)) {
+                            unset($item->{$hidden});
                         }
                     }
                 }
@@ -440,13 +498,11 @@ namespace DB
 
             /**
              * Apply defined setters
+             *
              */
-            public function applySetter(string $key, mixed $value): mixed
+            protected function applySetter(string $key, mixed $value): mixed
             {
-                if (
-                    isset($this->model['set_' . $key]) &&
-                    $this->model['set_' . $key] instanceof \Closure
-                ) {
+                if (($this->model['set_' . $key] ?? null) instanceof \Closure) {
                     return $this->model['set_' . $key]->call($this, $value);
                 }
 
@@ -455,29 +511,26 @@ namespace DB
 
             /**
              * Apply defined events
+             * If the event is defined, it calls the function and returns the result.
              */
-            protected function applyEvent(string $event, mixed $data): mixed
+            protected function applyEvent(string $event): mixed
             {
-                if (
-                    isset($this->model['event_' . $event]) &&
-                    $this->model['event_' . $event] instanceof \Closure
-                ) {
-                    return $this->model['event_' . $event]->call($this, $data);
+                if (($this->model['event_' . $event] ?? null) instanceof \Closure) {
+                    return $this
+                        ->model['event_' . $event]
+                        ->call($this, $this->getAttributesAsObject());
                 }
 
-                return $data;
+                return true;
             }
 
             /**
              * Get fillable attributes
+             * Gets the fillable parameters for inserting and updating data.
              */
             protected function getFillableAttributes(): array
             {
-                if (
-                    isset($this->model['fillable']) &&
-                    \is_array($this->model['fillable']) &&
-                    ! empty($this->model['fillable'])
-                ) {
+                if (\is_array(($this->model['fillable'] ?? null))) {
                     $newAttributes = [];
 
                     foreach ($this->model['fillable'] as $fillable) {
@@ -490,6 +543,22 @@ namespace DB
                 }
 
                 return $this->attributes;
+            }
+
+            /**
+             * Get atttributes as object/class
+             * Creates a parameter for the event callback
+             */
+            protected function getAttributesAsObject(): object
+            {
+                $object = \class_exists($this->model['class'] ?? '') ?
+                    new $this->model['class']() : new \stdClass();
+
+                foreach ($this->attributes as $key => $value) {
+                    $object->{$key} = $value;
+                }
+
+                return $object;
             }
 
             public function __get(string $key): mixed
