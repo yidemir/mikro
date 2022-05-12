@@ -324,7 +324,11 @@ namespace View
      *
      * {@inheritDoc} **Example:**
      * ```php
+     * // default:
      * $mikro[View\DELIMITER] = ['@', ';'];
+     *
+     * // alternative:
+     * $mikro[View\DELIMITER] = ['{{', '}}'];
      * ```
      */
     const DELIMITER = 'View\DELIMITER';
