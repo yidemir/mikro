@@ -126,17 +126,17 @@ class DBTest extends TestCase
     {
         $id = \DB\connection()->lastInsertId();
 
-        $deleteWithId = \DB\table('items')->delete($id);
+        $deleteWithId = \DB\table('items')->where('id=?', [$id])->delete();
         $this->assertInstanceOf(\PDOStatement::class, $deleteWithId);
-        $find = \DB\table('items')->find((int) $id);
+        $find = \DB\table('items')->find($id);
         $this->assertNull($find);
 
         \DB\table('items')->fill(['name' => 'bar', 'value' => '100'])->insert();
         $id = \DB\connection()->lastInsertId();
 
-        $deleteWithWhereClause = \DB\table('items')->delete('where id=?', [$id]);
+        $deleteWithWhereClause = \DB\table('items')->where('id=?', [$id])->delete();
         $this->assertInstanceOf(\PDOStatement::class, $deleteWithWhereClause);
-        $find = \DB\table('items')->find((int) $id);
+        $find = \DB\table('items')->find($id);
         $this->assertNull($find);
     }
 
@@ -313,51 +313,55 @@ class DBTest extends TestCase
             ['param' => ':shipped_at', 'var' => null, 'type' => \PDO::PARAM_NULL],
         ];
 
-        $params = \DB\builder()->bind(':name', 'name')->getParameters();
+        $params = \DB\builder()->bind(':name', 'name')->getBindings();
         $this->assertTrue(isset($params[':name']));
         $this->assertCount(1, $params);
         $this->assertTrue($params[':name']['param'] === ':name');
         $this->assertTrue($params[':name']['var'] === 'name');
         $this->assertTrue($params[':name']['type'] === \PDO::PARAM_STR);
 
-        $builder = \DB\builder()->binds($binds);
-        $this->assertArrayHasKey(':status', $builder->getParameters());
-        $this->assertArrayHasKey(':shipped_at', $builder->getParameters());
+        $builder = \DB\builder();
+
+        foreach ($binds as $bind) {
+            $builder->bind(...$bind);
+        }
+
+        $this->assertArrayHasKey(':status', $builder->getBindings());
+        $this->assertArrayHasKey(':shipped_at', $builder->getBindings());
 
         $builder = \DB\builder()->table('items', '*');
         $builder->bindSequence([5, 6], \PDO::PARAM_INT)->bind([7, 8])->bind([9, 10]);
-        $this->assertCount(6, $builder->getParameters());
-        $this->assertArrayHasKey(1, $builder->getParameters());
-        $this->assertSame($builder->getParameters()[1]['var'], 5);
-        $this->assertSame($builder->getParameters()[1]['param'], 1);
-        $this->assertSame($builder->getParameters()[1]['type'], \PDO::PARAM_INT);
-        $this->assertArrayHasKey(3, $builder->getParameters());
-        $this->assertSame($builder->getParameters()[3]['var'], 7);
-        $this->assertSame($builder->getParameters()[3]['param'], 3);
-        $this->assertSame($builder->getParameters()[3]['type'], \PDO::PARAM_STR);
+        $this->assertCount(6, $builder->getBindings());
+        $this->assertArrayHasKey(1, $builder->getBindings());
+        $this->assertSame($builder->getBindings()[1]['var'], 5);
+        $this->assertSame($builder->getBindings()[1]['param'], 1);
+        $this->assertSame($builder->getBindings()[1]['type'], \PDO::PARAM_INT);
+        $this->assertArrayHasKey(3, $builder->getBindings());
+        $this->assertSame($builder->getBindings()[3]['var'], 7);
+        $this->assertSame($builder->getBindings()[3]['param'], 3);
+        $this->assertSame($builder->getBindings()[3]['type'], \PDO::PARAM_STR);
 
         $builder = \DB\builder()
             ->table('items', '*')
             ->where('id=?', [5])
-            ->limit('?', [100])
-            ->where('AND status=?', ['active']);
+            ->where('AND status=?', ['active'])
+            ->limit('?', [100]);
 
         $builder->build();
+        $this->assertArrayHasKey(1, $builder->getBindings());
+        $this->assertSame($builder->getBindings()[1]['var'], 5);
+        $this->assertSame($builder->getBindings()[1]['param'], 1);
+        $this->assertSame($builder->getBindings()[1]['type'], \PDO::PARAM_STR);
 
-        $this->assertArrayHasKey(1, $builder->getParameters());
-        $this->assertSame($builder->getParameters()[1]['var'], 5);
-        $this->assertSame($builder->getParameters()[1]['param'], 1);
-        $this->assertSame($builder->getParameters()[1]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(2, $builder->getBindings());
+        $this->assertSame($builder->getBindings()[2]['var'], 'active');
+        $this->assertSame($builder->getBindings()[2]['param'], 2);
+        $this->assertSame($builder->getBindings()[2]['type'], \PDO::PARAM_STR);
 
-        $this->assertArrayHasKey(2, $builder->getParameters());
-        $this->assertSame($builder->getParameters()[2]['var'], 'active');
-        $this->assertSame($builder->getParameters()[2]['param'], 2);
-        $this->assertSame($builder->getParameters()[2]['type'], \PDO::PARAM_STR);
-
-        $this->assertArrayHasKey(3, $builder->getParameters());
-        $this->assertSame($builder->getParameters()[3]['var'], 100);
-        $this->assertSame($builder->getParameters()[3]['param'], 3);
-        $this->assertSame($builder->getParameters()[3]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(3, $builder->getBindings());
+        $this->assertSame($builder->getBindings()[3]['var'], 100);
+        $this->assertSame($builder->getBindings()[3]['param'], 3);
+        $this->assertSame($builder->getBindings()[3]['type'], \PDO::PARAM_STR);
 
         $builder = \DB\builder()
             ->insertInto('items (name, quantity)')
@@ -366,56 +370,56 @@ class DBTest extends TestCase
 
         $this->assertSame($builder['sql'], 'INSERT INTO items (name, quantity) VALUES (?, ?)');
 
-        $this->assertArrayHasKey(1, $builder['parameters']);
-        $this->assertSame($builder['parameters'][1]['var'], 'name');
-        $this->assertSame($builder['parameters'][1]['param'], 1);
-        $this->assertSame($builder['parameters'][1]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(1, $builder['bindings']);
+        $this->assertSame($builder['bindings'][1]['var'], 'name');
+        $this->assertSame($builder['bindings'][1]['param'], 1);
+        $this->assertSame($builder['bindings'][1]['type'], \PDO::PARAM_STR);
 
-        $this->assertArrayHasKey(2, $builder['parameters']);
-        $this->assertSame($builder['parameters'][2]['var'], 'quantity');
-        $this->assertSame($builder['parameters'][2]['param'], 2);
-        $this->assertSame($builder['parameters'][2]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(2, $builder['bindings']);
+        $this->assertSame($builder['bindings'][2]['var'], 'quantity');
+        $this->assertSame($builder['bindings'][2]['param'], 2);
+        $this->assertSame($builder['bindings'][2]['type'], \PDO::PARAM_STR);
 
         $builder = \DB\builder()
             ->update('items')
-            ->where('id=?', [1])
-            ->setArray(['name' => '?'], ['new name'])
-            ->where('AND status=?', ['active'])
+            ->where('id=:id', [':id' => 1])
+            ->setArray(['name' => ':name'], [':name' => 'new name'])
+            ->where('AND status=:status', [':status' => 'active'])
             ->build();
 
-        $this->assertSame($builder['sql'], 'UPDATE items SET name=? WHERE id=? AND status=?');
+        $this->assertSame($builder['sql'], 'UPDATE items SET name=:name WHERE id=:id AND status=:status');
 
-        $this->assertArrayHasKey(1, $builder['parameters']);
-        $this->assertSame($builder['parameters'][1]['var'], 'new name');
-        $this->assertSame($builder['parameters'][1]['param'], 1);
-        $this->assertSame($builder['parameters'][1]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(':name', $builder['bindings']);
+        $this->assertSame($builder['bindings'][':name']['var'], 'new name');
+        $this->assertSame($builder['bindings'][':name']['param'], ':name');
+        $this->assertSame($builder['bindings'][':name']['type'], \PDO::PARAM_STR);
 
-        $this->assertArrayHasKey(2, $builder['parameters']);
-        $this->assertSame($builder['parameters'][2]['var'], 1);
-        $this->assertSame($builder['parameters'][2]['param'], 2);
-        $this->assertSame($builder['parameters'][2]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(':id', $builder['bindings']);
+        $this->assertSame($builder['bindings'][':id']['var'], 1);
+        $this->assertSame($builder['bindings'][':id']['param'], ':id');
+        $this->assertSame($builder['bindings'][':id']['type'], \PDO::PARAM_STR);
 
-        $this->assertArrayHasKey(3, $builder['parameters']);
-        $this->assertSame($builder['parameters'][3]['var'], 'active');
-        $this->assertSame($builder['parameters'][3]['param'], 3);
-        $this->assertSame($builder['parameters'][3]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(':status', $builder['bindings']);
+        $this->assertSame($builder['bindings'][':status']['var'], 'active');
+        $this->assertSame($builder['bindings'][':status']['param'], ':status');
+        $this->assertSame($builder['bindings'][':status']['type'], \PDO::PARAM_STR);
 
         $builder = \DB\builder()
             ->deleteFrom('items')
-            ->limit('?', [100])
-            ->where('id=?', [3])
+            ->limit(':limit', [':limit' => 100])
+            ->where('id=:id', [':id' => 3])
             ->build();
 
-        $this->assertSame($builder['sql'], 'DELETE FROM items WHERE id=? LIMIT ?');
+        $this->assertSame($builder['sql'], 'DELETE FROM items WHERE id=:id LIMIT :limit');
 
-        $this->assertArrayHasKey(1, $builder['parameters']);
-        $this->assertSame($builder['parameters'][1]['var'], 3);
-        $this->assertSame($builder['parameters'][1]['param'], 1);
-        $this->assertSame($builder['parameters'][1]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(':id', $builder['bindings']);
+        $this->assertSame($builder['bindings'][':id']['var'], 3);
+        $this->assertSame($builder['bindings'][':id']['param'], ':id');
+        $this->assertSame($builder['bindings'][':id']['type'], \PDO::PARAM_STR);
 
-        $this->assertArrayHasKey(2, $builder['parameters']);
-        $this->assertSame($builder['parameters'][2]['var'], 100);
-        $this->assertSame($builder['parameters'][2]['param'], 2);
-        $this->assertSame($builder['parameters'][2]['type'], \PDO::PARAM_STR);
+        $this->assertArrayHasKey(':limit', $builder['bindings']);
+        $this->assertSame($builder['bindings'][':limit']['var'], 100);
+        $this->assertSame($builder['bindings'][':limit']['param'], ':limit');
+        $this->assertSame($builder['bindings'][':limit']['type'], \PDO::PARAM_STR);
     }
 }

@@ -102,8 +102,8 @@ namespace DB
                 $query = $this->builder->build();
                 $statement = connection()->prepare($query['sql']);
 
-                foreach ($query['parameters'] as $parameter) {
-                    $statement->bindParam(...$parameter);
+                foreach ($query['bindings'] as $binding) {
+                    $statement->bindParam(...$binding);
                 }
 
                 if ($class = $this->model['class'] ?? null) {
@@ -337,11 +337,13 @@ namespace DB
             }
 
             /**
-             * Update data
+             * Delete data
              *
              * {@inheritDoc} **Example:**
              * ```php
              * DB\table('items')->where('id=?', [$id])->delete();
+             * // or
+             * DB\table('items')->id($id)->delete();
              * ```
              */
             public function delete(): ?\PDOStatement
@@ -676,18 +678,11 @@ namespace DB
             ];
 
             /**
-             * In query bindings collection
-             *
-             * @var array<string, array>
-             */
-            protected array $binds = [];
-
-            /**
              * PDO compatible bindings
              *
              * @var array<array<string, mixed>>
              */
-            protected array $parameters = [];
+            protected array $bindings = [];
 
             /**
              * Binding sequence
@@ -774,7 +769,7 @@ namespace DB
             public function join(string $join, array $binds = []): self
             {
                 $this->select['JOIN'] .= $join . ' ';
-                $this->mergeBinds('JOIN', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -793,7 +788,7 @@ namespace DB
                 $this->checkAvailability('WHERE');
 
                 $this->{$this->type}['WHERE'] .= $where . ' ';
-                $this->mergeBinds('WHERE', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -809,7 +804,7 @@ namespace DB
             public function groupBy(string $groupBy, array $binds = []): self
             {
                 $this->select['GROUP BY'] .= $groupBy . ' ';
-                $this->mergeBinds('GROUP BY', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -825,7 +820,7 @@ namespace DB
             public function having(string $having, array $binds = []): self
             {
                 $this->select['HAVING'] .= $having . ' ';
-                $this->mergeBinds('HAVING', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -844,7 +839,7 @@ namespace DB
                 $this->checkAvailability('ORDER BY');
 
                 $this->{$this->type}['ORDER BY'] .= $orderBy . ' ';
-                $this->mergeBinds('ORDER BY', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -863,7 +858,7 @@ namespace DB
                 $this->checkAvailability('LIMIT');
 
                 $this->{$this->type}['LIMIT'] .= $limit . ' ';
-                $this->mergeBinds('LIMIT', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -882,7 +877,7 @@ namespace DB
                 $this->setType('insert');
 
                 $this->insert['INSERT INTO'] .= $insert . ' ';
-                $this->mergeBinds('INSERT INTO', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -898,7 +893,7 @@ namespace DB
             public function values(string $values, array $binds = []): self
             {
                 $this->insert['VALUES'] .= $values . ' ';
-                $this->mergeBinds('VALUES', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -940,7 +935,7 @@ namespace DB
             public function onDuplicateKeyUpdate(string $onDuplicateKeyUpdate, array $binds = []): self
             {
                 $this->insert['ON DUPLICATE KEY UPDATE'] .= $onDuplicateKeyUpdate . ' ';
-                $this->mergeBinds('ON DUPLICATE KEY UPDATE', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -958,7 +953,7 @@ namespace DB
                 $this->setType('update');
 
                 $this->update['UPDATE'] .= $update . ' ';
-                $this->mergeBinds('UPDATE', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -978,7 +973,7 @@ namespace DB
                 $this->checkAvailability('SET');
 
                 $this->{$this->type}['SET'] .= $set . ' ';
-                $this->mergeBinds('SET', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -1020,7 +1015,7 @@ namespace DB
                 $this->setType('delete');
 
                 $this->delete['DELETE FROM'] .= $deleteFrom . ' ';
-                $this->mergeBinds('DELETE FROM', $binds);
+                $this->binds($binds);
 
                 return $this;
             }
@@ -1074,11 +1069,11 @@ namespace DB
              */
             public function bind(string|int|array $param, mixed $var = null, int $type = \PDO::PARAM_STR): self
             {
-                if (\is_array($param) && $var === null) {
+                if (\is_array($param) && \array_is_list($param)) {
                     return $this->bindSequence($param, $type);
                 }
 
-                $this->parameters[$param] = \compact('param', 'var', 'type');
+                $this->bindings[$param] = \compact('param', 'var', 'type');
 
                 return $this;
             }
@@ -1111,10 +1106,10 @@ namespace DB
              */
             public function binds(array $binds): self
             {
-                foreach ($binds as $key => $value) {
-                    if (\is_int($key) && \is_array($value)) {
-                        $this->bind(...$value);
-                    } else {
+                if (\array_is_list($binds)) {
+                    $this->bindSequence($binds);
+                } else {
+                    foreach ($binds as $key => $value) {
                         $this->bind($key, $value);
                     }
                 }
@@ -1123,34 +1118,16 @@ namespace DB
             }
 
             /**
-             * Merge in query bindings
-             */
-            protected function mergeBinds(string $query, array $binds = []): void
-            {
-                if (! \array_is_list($binds)) {
-                    $this->binds($binds);
-                } elseif (
-                    isset($this->binds[$this->type][$query]) &&
-                    ! empty($this->binds[$this->type][$query])
-                ) {
-                    $this->binds[$this->type][$query] =
-                        \array_merge($this->binds[$this->type][$query], $binds);
-                } else {
-                    $this->binds[$this->type][$query] = $binds;
-                }
-            }
-
-            /**
-             * Get defined parameters
+             * Get bindings
              *
              * {@inheritDoc} **Example:**
              * ```php
-             * builder()->getParameters(); // array
+             * builder()->getBindings(); // array
              * ```
              */
-            public function getParameters(): array
+            public function getBindings(): array
             {
-                return $this->parameters;
+                return $this->bindings;
             }
 
             /**
@@ -1172,10 +1149,6 @@ namespace DB
                     if (! empty(\trim($value))) {
                         $result .= \sprintf('%s %s ', $key, \trim($value));
                     }
-
-                    if (isset($this->binds[$this->type][$key])) {
-                        $this->bind($this->binds[$this->type][$key]);
-                    }
                 }
 
                 return \trim($result);
@@ -1192,11 +1165,11 @@ namespace DB
              */
             public function toSql(): string
             {
-                return $this->__toString();
+                return (string) $this;
             }
 
             /**
-             * Get SQL and parameters
+             * Get SQL and bindings
              *
              * {@inheritDoc} **Example:**
              * ```php
@@ -1207,7 +1180,7 @@ namespace DB
              * $builder->build();
              * // [
              * //     'sql' => 'SELECT * from items WHERE id=:id',
-             * //     'parameters' => [
+             * //     'bindings' => [
              * //         ['param' => ':id', 'var' => 5, 'type' => 1]
              * //     ]
              * // ]
@@ -1217,7 +1190,7 @@ namespace DB
             {
                 return [
                     'sql' => $this->toSql(),
-                    'parameters' => $this->parameters
+                    'bindings' => $this->bindings
                 ];
             }
 
@@ -1238,7 +1211,7 @@ namespace DB
                         $this->select[$type . ' JOIN'] .= $args[0];
 
                         if (isset($args[1]) && \is_array($args[1]) && ! empty($args[1])) {
-                            $this->mergeBinds($type . ' JOIN', $args[1]);
+                            $this->binds($args[1]);
                         }
 
                         return $this;
