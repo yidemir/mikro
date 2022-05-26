@@ -11,8 +11,9 @@ class ErrorTest extends TestCase
     public function testErrorsToException()
     {
         $this->expectException(\ErrorException::class);
+        $this->expectExceptionMessage('Error!');
 
-        \Error\to_exception();
+        \Error\handler();
 
         trigger_error('Error!');
     }
