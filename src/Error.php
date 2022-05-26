@@ -11,21 +11,6 @@ namespace Error
     use Helper;
 
     /**
-     * Sets error to exception
-     *
-      * {@inheritDoc} **Example:**
-     * ```php
-     * Error\to_exception();
-     * ```
-     */
-    function to_exception(): void
-    {
-        \set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
-    }
-
-    /**
      * Sets default exception handler
      *
       * {@inheritDoc} **Example:**
@@ -38,6 +23,9 @@ namespace Error
      */
     function handler(?callable $callback = null): void
     {
+        \set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
+            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+        });
 
         \set_exception_handler(function (\Throwable $exception) use ($callback) {
             global $mikro;
