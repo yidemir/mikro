@@ -14,11 +14,4 @@ class ConsoleTest extends TestCase
 
         \Console\write('foo');
     }
-
-    public function testConsoleAskMethod()
-    {
-        $this->expectOutputString("How old are you?\n");
-
-        \Console\ask('How old are you?');
-    }
 }
