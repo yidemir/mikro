@@ -48,7 +48,6 @@
             "src/Request.php",
             "src/Response.php",
             "src/Router.php",
-            "src/Table.php",
             "src/Validator.php",
             "src/View.php"
         ],
