@@ -6,31 +6,8 @@ namespace Mikro\Tests;
 
 use PHPUnit\Framework\TestCase;
 
-use function Helper\optional;
-
 class HelperTest extends TestCase
 {
-    public function testOptionalHelperMethods()
-    {
-        $array = optional(['name' => 'value']);
-        $stdClass = new \stdClass();
-        $stdClass->name = 'value';
-        $class = optional($stdClass);
-
-        $this->assertIsObject($array);
-        $this->assertIsObject($class);
-        $this->assertInstanceOf(\ArrayAccess::class, $array);
-        $this->assertInstanceOf(\ArrayAccess::class, $class);
-        $this->assertIsString($array->name);
-        $this->assertIsString($array['name']);
-        $this->assertNull($array->foo);
-        $this->assertNull($array['foo']);
-        $this->assertIsString($class->name);
-        $this->assertIsString($class['name']);
-        $this->assertNull($class->foo);
-        $this->assertNull($class['foo']);
-    }
-
     public function testCsrfInvalidRandomValue()
     {
         $this->assertTrue(is_string(\Helper\csrf()->generateRandom(32)));
