@@ -59,7 +59,7 @@ namespace Cache
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * Cache\set('items', DB\table('items')->get());
+     * Cache\set('items', $itemsData);
      * ```
      *
      * @throws PathException if cache path is not writeable
@@ -195,7 +195,7 @@ namespace Cache
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * $data = Cache\remember('posts', fn() => DB\table('posts')->get(), 60);
+     * $data = Cache\remember('posts', fn() => DB\query('...')->fetchAll(), 60);
      * ```
      */
     function remember(string $key, \Closure $callback, int $ttl = 0): mixed

@@ -10,7 +10,7 @@ I tried to take this project, which I started as a hobby, one step further. Ther
 
 Available packages:
 * **Cache** - It is a simple caching structure.
-* **Config**  - It is a simple config structure with setter and getter. It supports multi-dimensional arrays with dot notation.
+* **Config**  - It is a simple config structure with setter and getter.
 * **Console** - Executes a callback according to the parameter from the command line.
 * **Container** - A simple service container.
 * **Crypt** - It encrypts and decrypts strings with OpenSSL.
@@ -23,7 +23,7 @@ Available packages:
 * **Request** - An easy way to access PHP global request variables.
 * **Response** - Sends data/response to the client.
 * **Router** - An ultra-simple router with grouping and middleware support.
-* **Validator** - A validation library that allows you to verify data and in doing so you can only use functions in the PHP library or callbacks that you have prepared yourself.
+* **Validator** - A simple data validation library.
 * **View** - A view renderer with block and template support.
 
 ## Installation
@@ -57,28 +57,14 @@ Router\error(fn() => Response\html('Default 404 error', 404));
 
 **Database**
 ```php
-DB\model('products', [
-    // definitions
-    'table' => 'products',
-    'fillable' => ['title', 'description', 'price'],
+$products = DB\query('select * from products order by id desc')->fetchAll();
+$product = DB\query('select * from products where id=?', [$id])->fetch();
 
-    // getters and setters
-    'get_title' => fn($title) => strtoupper($title),
-    'get_price' => fn($price) => Html\tag('span', $price)->class('price'),
-    'set_description' => fn($description) => Helper\str($description)->upper(),
+DB\insert('products', ['name' => $name, 'description' => $description]);
+$id = DB\last_insert_id();
 
-    // events
-    'event_created' => fn(array $attributes) => Event\emit('product.created', [$attributes]),
-    'updating_event' => fn(array $attributes) => isset($attributes['key']),
-
-    // custom methods
-    'getActiveCount' => fn() => $this->where('status=?', [true])->count()
-]);
-
-DB\table('products')->fill(['title' => 'Product title'])->insert();
-DB\table('products')->fill(['title' => 'New product title'])->where('id=5')->update();
-$products = DB\table('products')->where('status=?', [true])->paginate();
-$count = DB\table('products')->getActiveCount();
+DB\update('products', ['name' => $newName], 'where id=?', [$id]);
+DB\delete('products', 'where id=?', [$id]);
 ```
 
 **View and Templates**
