@@ -8,11 +8,11 @@ namespace Cache
     use Mikro\Exceptions\{PathException, MikroException};
 
     /**
-     * Get cache path
+     * Get defined cache path
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * $mikro[Cache\PATH] = 'path/to/app/storage/cache';
+     * $mikro[Cache\PATH] = 'path/to/app/storage/cache'; // define mikro config
      * Cache\path(); // 'path/to/app/storage/cache'
      * ```
      *
@@ -23,7 +23,7 @@ namespace Cache
         global $mikro;
 
         if (! isset($mikro[PATH])) {
-            throw new MikroException('Please set the cache path');
+            throw new MikroException('Please set the cache path first');
         }
 
         return $key === null ?
@@ -35,7 +35,7 @@ namespace Cache
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * Cache\get('items');
+     * Cache\get('items'); 
      * ```
      */
     function get(string $key): mixed
@@ -80,11 +80,11 @@ namespace Cache
     }
 
     /**
-     * Checks whether the Cache item is defined
+     * Checks whether the cache item is defined
      *
      * {@inheritDoc} **Example:**
      * ```php
-     * Cache\has('items'); // true or false
+     * Cache\has('items'); // returns bool
      * ```
      */
     function has(string $key): bool
@@ -99,7 +99,7 @@ namespace Cache
     }
 
     /**
-     * Deletes a defined cache item from the file system
+     * Deletes a defined cache item
 
      * {@inheritDoc} **Example:**
      * ```php
@@ -126,7 +126,7 @@ namespace Cache
     }
 
     /**
-     * Deletes all defined cache items from the file system
+     * Deletes all defined cache items
      *
      * {@inheritDoc} **Example:**
      * ```php
